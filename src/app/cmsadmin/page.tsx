@@ -23,7 +23,7 @@ function ChangePasswordButton() {
     e.preventDefault();
     if (next !== confirm) { setIsError(true); setMsg("New passwords don't match"); return; }
     setSaving(true); setMsg("");
-    const res = await fetch("/api/cmsadmin/change-password", {
+    const res = await fetch("/api/admin/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword: current, newPassword: next }),
@@ -196,7 +196,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     try {
       const [summaryRes, catalogRes] = await Promise.all([
-        fetch("/api/cmsadmin/summary"),
+        fetch("/api/admin/summary"),
         fetch("/api/catalog"),
       ]);
       const summary = await summaryRes.json();
@@ -217,7 +217,7 @@ export default function AdminPage() {
   const markAsPaid = async (orderId: string) => {
     setMarkingPaid(orderId);
     try {
-      const res = await fetch(`/api/cmsadmin/orders/${orderId}`, {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "paid" }),
@@ -234,7 +234,7 @@ export default function AdminPage() {
     if (!confirm("Delete this item?")) return;
     setDeletingItem(itemId);
     try {
-      const res = await fetch(`/api/cmsadmin/orders/items/${itemId}`, {
+      const res = await fetch(`/api/admin/orders/items/${itemId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -248,7 +248,7 @@ export default function AdminPage() {
   const handleSaveItem = async (itemId: number) => {
     setSavingItem(true);
     try {
-      const res = await fetch(`/api/cmsadmin/orders/items/${itemId}`, {
+      const res = await fetch(`/api/admin/orders/items/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editFields),
@@ -265,7 +265,7 @@ export default function AdminPage() {
   const handleAddItem = async (orderId: string) => {
     setAddingItem(true);
     try {
-      const res = await fetch("/api/cmsadmin/orders/items", {
+      const res = await fetch("/api/admin/orders/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...addFields, orderId }),
