@@ -17,12 +17,17 @@ export async function GET(
   url.search = request.nextUrl.search;
   
   try {
-    const response = await fetch(url, {
+    console.log(`[PROXY] GET /api/cmsadmin/${routePath} -> /api/admin/${routePath}`);
+    const response = await fetch(url.toString(), {
       method: 'GET',
-      headers: request.headers,
+      headers: {
+        ...Object.fromEntries(request.headers.entries()),
+      },
     });
+    console.log(`[PROXY] Response status: ${response.status}`);
     return response;
   } catch (error) {
+    console.error(`[PROXY] Error: ${error}`);
     return NextResponse.json(
       { error: 'Failed to proxy request' },
       { status: 500 }
