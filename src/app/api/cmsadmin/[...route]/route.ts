@@ -11,25 +11,21 @@ export async function GET(
   const { route } = await params;
   const routePath = route?.join('/') || '';
   
-  // Create URL for internal request
-  const url = new URL(request.url);
-  url.pathname = `/api/admin/${routePath}`;
-  url.search = request.nextUrl.search;
+  // Create URL for internal request using localhost
+  const url = `http://localhost:3000/api/admin/${routePath}${request.nextUrl.search}`;
   
   try {
-    console.log(`[PROXY] GET /api/cmsadmin/${routePath} -> /api/admin/${routePath}`);
-    const response = await fetch(url.toString(), {
+    console.log(`[PROXY] GET /api/cmsadmin/${routePath} -> ${url}`);
+    const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        ...Object.fromEntries(request.headers.entries()),
-      },
+      headers: Object.fromEntries(request.headers.entries()),
     });
     console.log(`[PROXY] Response status: ${response.status}`);
     return response;
   } catch (error) {
-    console.error(`[PROXY] Error: ${error}`);
+    console.error(`[PROXY] Fetch error:`, error instanceof Error ? error.message : String(error));
     return NextResponse.json(
-      { error: 'Failed to proxy request' },
+      { error: 'Failed to proxy request', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
