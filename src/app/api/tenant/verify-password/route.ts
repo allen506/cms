@@ -14,25 +14,35 @@ export async function POST(request: NextRequest) {
       return errorResponse('Team slug and password are required', 400);
     }
 
-    // Get subdomain config from database
-    const redirect = await queryOne<any>(
-      'SELECT tenant_id, team_password FROM subdomain_redirects WHERE subdomain = ?',
+    // Get tenant by slug
+    const tenant = await queryOne<any>(
+      'SELECT id FROM tenants WHERE slug = ?',
       [teamSlug]
     );
 
-    if (!redirect) {
+    if (!tenant) {
       return errorResponse('Team not found', 404);
     }
 
+    // Get team password from tenant_settings
+    const passwordSetting = await queryOne<any>(
+      'SELECT value FROM tenant_settings WHERE tenant_id = ? AND key = ?',
+      [tenant.id, 'team_password']
+    );
+
+    if (!passwordSetting) {
+      return errorResponse('Team password not configured', 404);
+    }
+
     // Verify team password
-    if (redirect.team_password !== teamPassword) {
+    if (passwordSetting.value !== teamPassword) {
       return errorResponse('Invalid team password', 401);
     }
 
     return successResponse({
       success: true,
       message: 'Team password verified',
-      teamId: redirect.tenant_id,
+      teamId: tenant.id,
     });
   } catch (error) {
     console.error('Team password verification error:', error);
