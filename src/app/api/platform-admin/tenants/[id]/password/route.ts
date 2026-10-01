@@ -41,7 +41,7 @@ export async function PATCH(
       [newPassword, tenant.slug]
     );
 
-    if (result.rowCount === 0) {
+    if (result.changes === 0) {
       return NextResponse.json(
         { error: "Subdomain not found for this tenant" },
         { status: 404 }
