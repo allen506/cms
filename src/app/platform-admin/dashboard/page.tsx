@@ -8,6 +8,7 @@ import OrdersManager from '@/components/OrdersManager';
 import BreakdownViewer from '@/components/BreakdownViewer';
 import PerPersonViewer from '@/components/PerPersonViewer';
 import PricingTierManager from '@/components/PricingTierManager';
+import CatalogManager from '@/components/CatalogManager';
 
 interface Tenant {
   id: string;
@@ -18,7 +19,7 @@ interface Tenant {
   created_at: string;
 }
 
-type DashboardTab = 'tenants' | 'orders' | 'breakdown' | 'per-person' | 'pricing';
+type DashboardTab = 'tenants' | 'catalog' | 'orders' | 'breakdown' | 'per-person' | 'pricing';
 
 export default function PlatformAdminDashboard() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -95,7 +96,7 @@ export default function PlatformAdminDashboard() {
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-8 flex gap-4 overflow-x-auto">
-          {(['tenants', 'orders', 'breakdown', 'per-person', 'pricing'] as const).map((tab) => (
+          {(['tenants', 'catalog', 'orders', 'breakdown', 'per-person', 'pricing'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -107,8 +108,10 @@ export default function PlatformAdminDashboard() {
             >
               {tab === 'tenants'
                 ? '👥 Teams'
+                : tab === 'catalog'
+                ? '📦 Catalog'
                 : tab === 'orders'
-                ? '📦 Orders'
+                ? '📋 Orders'
                 : tab === 'breakdown'
                 ? '📊 Breakdown'
                 : tab === 'per-person'
@@ -204,6 +207,15 @@ export default function PlatformAdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'catalog' && (
+          <div className="space-y-4">
+            <CatalogManager 
+              productsEndpoint="/api/platform-admin/products"
+              pricingTiersEndpoint="/api/platform-admin/pricing-tiers"
+            />
           </div>
         )}
 
