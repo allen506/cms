@@ -20,34 +20,20 @@ export async function PATCH(
       return errorResponse("Password is required", 400);
     }
 
-    // Get tenant to find its slug
-    const tenant = await queryOne<any>(
-      "SELECT id, slug FROM tenants WHERE id = ?",
-      [tenantId]
-    );
-
-    if (!tenant) {
-      return errorResponse("Tenant not found", 404);
-    }
-
-    if (!tenant.slug) {
-      return errorResponse("Tenant has no slug", 400);
-    }
-
-    // Check if subdomain redirect exists for this tenant
+    // Get subdomain redirect for this tenant
     const redirect = await queryOne<any>(
-      "SELECT id, subdomain FROM subdomain_redirects WHERE subdomain = ?",
-      [tenant.slug]
+      "SELECT id FROM subdomain_redirects WHERE tenant_id = ?",
+      [tenantId]
     );
 
     if (!redirect) {
       return errorResponse("Team subdomain not configured", 404);
     }
 
-    // Update using the same pattern as admin endpoint - update by id
+    // Update using tenant_id to find the record
     await execute(
-      "UPDATE subdomain_redirects SET team_password = ?, updated_at = NOW() WHERE id = ?",
-      [newPassword, redirect.id]
+      "UPDATE subdomain_redirects SET team_password = ?, updated_at = NOW() WHERE tenant_id = ?",
+      [newPassword, tenantId]
     );
 
     return successResponse({
