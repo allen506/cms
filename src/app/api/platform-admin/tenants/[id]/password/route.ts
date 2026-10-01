@@ -25,7 +25,7 @@ export async function PATCH(
 
     // Get tenant to find its slug
     const tenant = await queryOne<any>(
-      "SELECT id, slug FROM tenants WHERE id = $1",
+      "SELECT id, slug FROM tenants WHERE id = ?",
       [tenantId]
     );
 
@@ -36,8 +36,8 @@ export async function PATCH(
     // Update subdomain_redirects with new password
     const result = await execute(
       `UPDATE subdomain_redirects 
-       SET team_password = $1, updated_at = NOW()
-       WHERE subdomain = $2`,
+       SET team_password = ?, updated_at = NOW()
+       WHERE subdomain = ?`,
       [newPassword, tenant.slug]
     );
 
