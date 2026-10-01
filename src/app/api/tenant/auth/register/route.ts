@@ -41,16 +41,6 @@ export async function POST(request: NextRequest) {
       return errorResponse('Email already in use', 400);
     }
 
-    // Validate team password if required
-    const teamPasswordSetting = await queryOne<{ value: string }>(
-      'SELECT value FROM tenant_settings WHERE tenant_id = ? AND key = ?',
-      [tenant.id, 'team_password']
-    );
-
-    if (teamPasswordSetting?.value && teamPasswordSetting.value !== teamPassword) {
-      return errorResponse('Invalid team password', 401);
-    }
-
     // Create user account
     const userId = uuidv4();
     const passwordHash = hashPassword(password);
