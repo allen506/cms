@@ -39,25 +39,41 @@ export async function PATCH(
       return NextResponse.json({ error: "Tenant has no slug" }, { status: 400 });
     }
 
+    // First, get the subdomain_redirect id by slug
+    const subdomainRecord = await queryOne<any>(
+      "SELECT id FROM subdomain_redirects WHERE subdomain = ?",
+      [tenant.slug]
+    );
+
+    console.log("Debug - subdomain record:", { slug: tenant.slug, subdomainRecord });
+
+    if (!subdomainRecord) {
+      return NextResponse.json(
+        { error: "Subdomain not found for this tenant" },
+        { status: 404 }
+      );
+    }
+
     console.log("Debug - about to update password", { 
       newPassword: newPassword.substring(0, 3) + "***",
-      slug: tenant.slug
+      slug: tenant.slug,
+      recordId: subdomainRecord.id
     });
 
-    // Update subdomain_redirects with new password
+    // Update subdomain_redirects with new password using id
     const result = await execute(
       `UPDATE subdomain_redirects 
        SET team_password = ?, updated_at = NOW()
-       WHERE subdomain = ?`,
-      [newPassword, tenant.slug]
+       WHERE id = ?`,
+      [newPassword, subdomainRecord.id]
     );
 
     console.log("Debug - execute result:", result);
 
     if (result.changes === 0) {
       return NextResponse.json(
-        { error: "Subdomain not found for this tenant" },
-        { status: 404 }
+        { error: "Failed to update subdomain password" },
+        { status: 500 }
       );
     }
 
