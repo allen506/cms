@@ -36,10 +36,8 @@ export default function CatalogManager() {
 
         <div className="p-6">
           {activeTab === "products" && <ProductManager />}
-          {activeTab === "designs" && <DesignManager endpoint="/api/admin/designs" />}
-          {activeTab === "associations" && (
-            <ProductDesignAssociations endpoint="/api/admin/product-designs" />
-          )}
+          {activeTab === "designs" && <DesignManager />}
+          {activeTab === "associations" && <ProductDesignAssociations />}
         </div>
       </div>
     </div>
