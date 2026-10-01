@@ -25,6 +25,7 @@ function ChangePasswordButton() {
     setSaving(true); setMsg("");
     const res = await fetch("/api/admin/change-password", {
       method: "POST",
+      credentials: 'include',
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword: current, newPassword: next }),
     });
@@ -196,16 +197,31 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     try {
       const [summaryRes, catalogRes] = await Promise.all([
-        fetch("/api/admin/summary"),
-        fetch("/api/catalog"),
+        fetch("/api/admin/summary", { credentials: 'include' }),
+        fetch("/api/catalog", { credentials: 'include' }),
       ]);
       const summary = await summaryRes.json();
       const catalogData = await catalogRes.json();
-      setData(summary);
-      setCatalog(catalogData);
+      
+      // Only set data if the response was successful and has expected structure
+      if (summaryRes.ok && summary && summary.summary) {
+        setData(summary);
+      } else {
+        console.error("Invalid summary response:", summary);
+        setData(null);
+      }
+      
+      if (catalogRes.ok && catalogData) {
+        setCatalog(catalogData);
+      } else {
+        console.error("Invalid catalog response:", catalogData);
+        setCatalog({ productTypes: [], designs: [], sizes: [], productDesigns: [] });
+      }
       setLoading(false);
     } catch (error) {
       console.error("Error fetching data:", error);
+      setData(null);
+      setCatalog({ productTypes: [], designs: [], sizes: [], productDesigns: [] });
       setLoading(false);
     }
   }, []);
@@ -219,6 +235,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "paid" }),
       });
@@ -236,6 +253,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/admin/orders/items/${itemId}`, {
         method: "DELETE",
+        credentials: 'include',
       });
       if (res.ok) {
         fetchData();
@@ -250,6 +268,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/admin/orders/items/${itemId}`, {
         method: "PATCH",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editFields),
       });
@@ -267,6 +286,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/orders/items", {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...addFields, orderId }),
       });

@@ -100,6 +100,7 @@ export default function PasswordGate({
       try {
         const res = await fetch(verifyEndpoint, {
           method: "POST",
+          credentials: 'include',
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: input }),
         });
