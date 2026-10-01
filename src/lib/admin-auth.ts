@@ -3,18 +3,23 @@ import { queryOne } from "@/lib/db-async";
 
 /** Validates the admin session cookie. Returns true if authenticated. */
 export async function isAdminAuthenticated(request: NextRequest): Promise<boolean> {
-  const token = request.cookies.get("admin-session")?.value;
+  // Try to get token from cookie first
+  let token = request.cookies.get("admin-session")?.value;
+  
+  // Fallback: check for token in X-Admin-Token header
+  if (!token) {
+    token = request.headers.get("x-admin-token");
+  }
   
   // Debug logging
-  const allCookies = request.cookies.getSetCookie ? request.cookies.getSetCookie() : [];
-  console.log("📋 Admin auth check - Received cookies:", {
-    adminSessionToken: token ? `${token.substring(0, 10)}...` : 'MISSING',
-    allCookiesCount: allCookies.length,
-    cookieHeader: request.headers.get('cookie'),
+  console.log("📋 Admin auth check", {
+    hasCookie: !!request.cookies.get("admin-session")?.value,
+    hasHeader: !!request.headers.get("x-admin-token"),
+    tokenFound: !!token,
   });
   
   if (!token) {
-    console.warn("⚠️ No admin-session cookie found");
+    console.warn("⚠️ No admin-session cookie or X-Admin-Token header found");
     return false;
   }
   

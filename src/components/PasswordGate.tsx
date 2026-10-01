@@ -109,6 +109,12 @@ export default function PasswordGate({
         if (!isValid && data.error) {
           setErrorMsg(data.error);
         }
+        // Store the token from the response for use in headers
+        if (isValid && data.token) {
+          try {
+            sessionStorage.setItem(`${storageKey}-token`, data.token);
+          } catch {}
+        }
       } catch {
         isValid = false;
         setErrorMsg("Connection error. Please try again.");

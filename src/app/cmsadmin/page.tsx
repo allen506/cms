@@ -10,6 +10,16 @@ import ProductDesignAssociations from "@/components/ProductDesignAssociations";
 import SubmittedPayments from "@/components/SubmittedPayments";
 import * as XLSX from "xlsx";
 
+// Helper function to add admin token to request headers if available
+function getAdminHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('auth-admin-token') : null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) {
+    headers["x-admin-token"] = token;
+  }
+  return headers;
+}
+
 function ChangePasswordButton() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("");
@@ -26,7 +36,7 @@ function ChangePasswordButton() {
     const res = await fetch("/api/admin/change-password", {
       method: "POST",
       credentials: 'include',
-      headers: { "Content-Type": "application/json" },
+      headers: { ...getAdminHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword: current, newPassword: next }),
     });
     const data = await res.json();
@@ -196,9 +206,16 @@ export default function AdminPage() {
 
   const fetchData = useCallback(async () => {
     try {
+      const adminHeaders = getAdminHeaders();
       const [summaryRes, catalogRes] = await Promise.all([
-        fetch("/api/admin/summary", { credentials: 'include' }),
-        fetch("/api/catalog", { credentials: 'include' }),
+        fetch("/api/admin/summary", { 
+          credentials: 'include',
+          headers: adminHeaders
+        }),
+        fetch("/api/catalog", { 
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" }
+        }),
       ]);
       const summary = await summaryRes.json();
       const catalogData = await catalogRes.json();
@@ -236,7 +253,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         credentials: 'include',
-        headers: { "Content-Type": "application/json" },
+        headers: { ...getAdminHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ status: "paid" }),
       });
       if (res.ok) {
@@ -254,6 +271,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/orders/items/${itemId}`, {
         method: "DELETE",
         credentials: 'include',
+        headers: getAdminHeaders(),
       });
       if (res.ok) {
         fetchData();
@@ -269,7 +287,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/orders/items/${itemId}`, {
         method: "PATCH",
         credentials: 'include',
-        headers: { "Content-Type": "application/json" },
+        headers: { ...getAdminHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify(editFields),
       });
       if (res.ok) {
@@ -287,7 +305,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/orders/items", {
         method: "POST",
         credentials: 'include',
-        headers: { "Content-Type": "application/json" },
+        headers: { ...getAdminHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ ...addFields, orderId }),
       });
       if (res.ok) {

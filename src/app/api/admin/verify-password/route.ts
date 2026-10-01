@@ -42,7 +42,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Set secure httpOnly cookie for the session
-    const response = NextResponse.json({ valid: true });
+    const response = NextResponse.json({ 
+      valid: true,
+      token: token  // Also return token for fallback header-based auth
+    });
     response.cookies.set({
       name: "admin-session",
       value: token,
