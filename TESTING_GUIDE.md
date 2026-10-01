@@ -1,9 +1,9 @@
 # ThinkMTB Order System - Testing Guide
 
 **Deployment Date:** September 23, 2026  
-**Latest Update:** Single SSL Certificate Configuration  
+**Latest Update:** Platform Admin Dashboard with Global Multi-Tenant Management  
 **Server:** Production (74.208.132.71)  
-**Status:** ✅ Live
+**Status:** ✅ Live and Fully Deployed
 
 ---
 
@@ -11,7 +11,22 @@
 
 ### ✅ SINGLE DOMAIN - All services use custom.cmssportswear.us
 
-#### Admin Management Portal
+#### Platform Admin Dashboard (NEW)
+```
+https://custom.cmssportswear.us/platform-admin
+```
+- **Login URL:** `https://custom.cmssportswear.us/platform-admin/login`
+- **Email:** `admin@regusa.com`
+- **Password:** `Password123!` ⚠️ (DO NOT CHANGE)
+- **Features:**
+  - 👥 Teams Management - Create and manage all tenants/teams
+  - 📦 Orders Management - Create orders on behalf of teams
+  - 📊 Breakdown Analysis - View detailed analytics by product/design/size/fit/user
+  - 👤 Per-Person Analysis - Team member totals and contribution tracking
+  - 💰 Pricing Manager - Manage pricing tiers across all teams
+- **Dashboard URL:** `https://custom.cmssportswear.us/platform-admin/dashboard`
+
+#### Team Admin Management Portal (Legacy)
 ```
 https://custom.cmssportswear.us/cmsadmin
 ```
@@ -90,22 +105,200 @@ Team Password: thinkmtb2024
 
 ```bash
 # Step 1: Direct access to login (after password verified)
-https://custom.cmssportswear.us/custom/thinkmtb/login
+https://custTeam Admin Dashboard
+**Purpose:** Test team admin access via single domain
 
-# Step 2: Enter credentials
-Email: demo@cmssportswear.us
-Password: Demo123!
+```bash
+# Step 1: Visit admin at unified path
+https://custom.cmssportswear.us/cmsadmin
+
+# Step 2: Login with admin credentials
+Email: admin@regusa.com
+Password: Password123!
 
 # Expected behavior:
-# - Login form displays
-# - Redirects to dashboard on success
-# - "Create New Account" link available
-# - "Forgot password" link available
+# - Admin dashboard loads
+# - Can manage products, designs, orders
+# - Access to pricing tiers
+# - Payment management
 ```
 
 ---
 
-### Test 4: Admin Dashboard
+### Test 4a: Platform Admin Dashboard - Login
+**Purpose:** Access global admin dashboard for multi-tenant management
+
+```bash
+# Step 1: Navigate to platform admin login
+https://custom.cmssportswear.us/platform-admin/login
+
+# Step 2: Enter credentials
+Email: admin@regusa.com
+Password: Password123!
+
+# Step 3: Verify redirect
+# Auto-redirects to /platform-admin/dashboard
+
+# Expected behavior:
+# - Login form displays with clean UI
+# - Credentials accepted
+# - Redirects to dashboard after login
+# - Session cookie set (platform_admin_token)
+```
+
+### Test 4b: Platform Admin Dashboard - Teams Tab
+**Purpose:** Test global tenant/team management
+
+```bash
+# Prerequisites: Login to platform admin (Test 4a)
+
+# Step 1: Click Teams tab on dashboard
+https://custom.cmssportswear.us/platform-admin/dashboard
+
+# Expected UI:
+# - Summary cards: Total Teams, Active, Suspended
+# - List of all teams with columns: Name, Slug, Status, Created Date
+# - "+ Create New Team" button
+# - Search and filter options
+
+# Step 2: View team details
+# - Each team shows: ID, name, slug, status, admin email, created date
+# - Click team to view more details
+
+# Expected behavior:
+# - All teams from database display
+# - Status indicators show team state
+# - Create button opens modal for new team
+```
+
+### Test 4c: Platform Admin Dashboard - Orders Tab
+**Purpose:** Test global order management across all teams
+
+```bash
+# Prerequisites: Login to platform admin (Test 4a)
+
+# Step 1: Click Orders tab
+# Expected UI:
+# - Team selector dropdown ("All Teams" default)
+# - Status filter dropdown (All/Draft/Submitted/Completed)
+# - Search by team member name or order number
+# - Order table with: Order #, Team Member, Team, Items, Status, Date
+# - "+ Create Order" button
+
+# Step 2: Select a team from dropdown
+# - Table filters to show only that team's orders
+
+# Step 3: Create order on behalf of team
+# - Click "+ Create Order"
+# - Modal opens with fields:
+#   * Team (auto-filled with selected team)
+#   * Team Member Name
+#   * Team Member Email
+#   * Items section (expandable)
+# - Fill in sample data
+# - Click "Create Order"
+
+# Expected behavior:
+# - Order created in draft status
+# - Success message displayed
+# - New order appears in table
+# - Order can be edited/viewed
+```
+
+### Test 4d: Platform Admin Dashboard - Breakdown Tab
+**Purpose:** Test detailed analytics across all orders
+
+```bash
+# Prerequisites: Login to platform admin (Test 4a)
+
+# Step 1: Click Breakdown tab
+# Expected UI:
+# - Team selector dropdown
+# - Sub-tabs: Product, Design, Size, Fit, User
+# - Summary cards: Total Orders, Total Items, Exchange Rate (CRC/USD)
+
+# Step 2: View Product breakdown
+# - Table columns: Product Type, Order Count, Total Quantity, % of Total
+# - Shows aggregate data across all orders
+
+# Step 3: View Design breakdown
+# - Table columns: Design, Order Count, Total Quantity, % of Total
+
+# Step 4: View Size breakdown
+# - Table columns: Size, Order Count, Total Quantity, % of Total
+
+# Step 5: View Fit breakdown
+# - Table columns: Fit Option, Order Count, Total Quantity
+
+# Step 6: View User breakdown
+# - Table columns: Team Member, Team, Orders, Total Items, % of Total
+
+# Step 7: Select specific team
+# - Breakdown updates to show only that team's data
+
+# Expected behavior:
+# - All breakdowns load data from database
+# - Numbers are accurate and consistent
+# - Team filter works on all tabs
+# - Exchange rate displays correctly
+```
+
+### Test 4e: Platform Admin Dashboard - Per-Person Tab
+**Purpose:** Test per-team-member analysis and totals
+
+```bash
+# Prerequisites: Login to platform admin (Test 4a)
+
+# Step 1: Click Per-Person tab
+# Expected UI:
+# - Team selector dropdown
+# - Stats cards: Total Team Members, Total Orders, Total Items
+# - Search by name or email
+# - Table with columns: Name, Email, Team, Orders, Items, Products
+
+# Step 2: View all team members
+# - See list of all people who have placed orders
+# - View their order count and item totals
+# - See products they ordered
+
+# Step 3: Search for specific person
+# - Enter name or email in search box
+# - Table filters to matching results
+
+# Step 4: Select specific team
+# - Team filter limits to that team's members only
+
+# Expected behavior:
+# - Accurate totals per team member
+# - Search works on name and email
+# - Team filter works correctly
+# - Product list shows what each person ordered
+```
+
+### Test 4f: Platform Admin Dashboard - Pricing Tab
+**Purpose:** Test pricing manager integration
+
+```bash
+# Prerequisites: Login to platform admin (Test 4a)
+
+# Step 1: Click Pricing tab
+# Expected UI:
+# - Team selector dropdown
+# - Pricing tier list with columns: Product, Quantity Range, Price (USD/CRC)
+# - "+ Add Pricing Tier" button
+
+# Step 2: View pricing tiers
+# - See all tiers for selected team
+# - View quantity breakpoints and corresponding prices
+
+# Step 3: Select different team
+# - Pricing tiers update for that team
+# - Can see team-specific overrides
+
+# Expected behavior:
+# - Pricing data loads correctly
+# - Team filter switches pricing context
+# - UI shows USD and CRC amountsboard
 **Purpose:** Test admin access via single domain
 
 ```bash
@@ -394,13 +587,14 @@ custom.cmssportswear.us/
 
 ## 📝 Testing Credentials Reference
 
-| Component | Email | Password | Notes |
-|-----------|-------|----------|-------|
-| Admin Portal | `admin@regusa.com` | `Password123!` | ⚠️ Final - DO NOT CHANGE |
-| Team Portal (thinkmtb) | - | `thinkmtb2024` | Team password, not user password |
-| Demo User | `demo@cmssportswear.us` | `Demo123!` | Test user in thinkmtb team |
-| Database | N/A | N/A | SQLite - file-based (no password) |
-| SSH Server | root | N/A | SSH key auth only (no password) |
+| Component | Email/User | Password | URL | Notes |
+|-----------|----------|----------|-----|-------|
+| **Platform Admin** | `admin@regusa.com` | `Password123!` | https://custom.cmssportswear.us/platform-admin/login | ⚠️ Global admin - DO NOT CHANGE |
+| **Team Admin Portal** | `admin@regusa.com` | `Password123!` | https://custom.cmssportswear.us/cmsadmin | Legacy admin panel |
+| **Team Portal (thinkmtb)** | - | `thinkmtb2024` | https://custom.cmssportswear.us/custom/thinkmtb/unlock | Team password gate |
+| **Demo User** | `demo@cmssportswear.us` | `Demo123!` | https://custom.cmssportswear.us/custom/thinkmtb/login | Test user in thinkmtb team |
+| **Database** | N/A | N/A | PostgreSQL on server | Production database |
+| **SSH Server** | root | N/A | `ssh cmssportswear` | SSH key auth only |
 
 ---
 
@@ -451,13 +645,54 @@ ssh cmssportswear "sudo cat /etc/nginx/sites-available/custom.cmssportswear.us |
 
 ---
 
+## �️ Server Access & Setup
+
+### Server Details
+- **IP Address:** 74.208.132.71
+- **SSH Alias:** `cmssportswear`
+- **SSH Config:** Add to `~/.ssh/config`:
+  ```
+  Host cmssportswear
+    HostName 74.208.132.71
+    User root
+    IdentityFile ~/.ssh/id_rsa
+  ```
+- **OS:** Ubuntu Linux
+- **Domain:** custom.cmssportswear.us
+- **SSL Certificate:** Expires 2026-12-22
+
+### Application Locations
+- **App Directory:** `/opt/thinkmtb-order`
+- **Database Type:** PostgreSQL 14+
+- **Database Name:** `thinkmtb_order`
+- **DB User:** `thinkmtb`
+- **DB Password:** `postgres123` (in ecosystem.config.js)
+- **Process Manager:** PM2
+- **Reverse Proxy:** Nginx
+
+### Environment Variables (in ecosystem.config.js)
+```bash
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgresql://thinkmtb:postgres123@localhost:5432/thinkmtb_order
+DB_TYPE=postgresql
+ADMIN_PASSWORD=Password123!
+PLATFORM_ADMIN_EMAIL=admin@regusa.com
+PLATFORM_ADMIN_PASSWORD=Password123!
+```
+
+### GitHub Repository
+- **Repo:** https://github.com/allen506/thinkmtb-order
+- **Branch:** main (production)
+- **Clone:** `git clone https://github.com/allen506/thinkmtb-order.git`
+
 ## 📞 Support & Troubleshooting
 
 **Server Details:**
 - **IP:** 74.208.132.71
 - **SSH Alias:** `cmssportswear`
 - **App Directory:** `/opt/thinkmtb-order`
-- **Database:** `/opt/thinkmtb-order/data/orders.db`
+- **Database:** PostgreSQL at localhost:5432
 - **Domain:** custom.cmssportswear.us
 
 **Quick Debug Commands:**
@@ -465,17 +700,32 @@ ssh cmssportswear "sudo cat /etc/nginx/sites-available/custom.cmssportswear.us |
 # SSH to server
 ssh cmssportswear
 
-# Check if app is listening
+# Check app status
+pm2 status
+
+# View application logs (last 50 lines)
+pm2 logs thinkmtb-order --lines 50
+
+# Restart application
+pm2 restart thinkmtb-order
+
+# Deploy latest from GitHub
+cd /opt/thinkmtb-order && git pull origin main && npm run build && pm2 restart thinkmtb-order
+
+# Check if app is listening locally
 curl -s http://localhost:3000/
 
 # Check Nginx config
 sudo nginx -t
 
-# View application logs
-pm2 logs thinkmtb-order
-
 # View Nginx access logs
 tail -f /var/log/nginx/custom-cmssportswear-access.log
+
+# View PostgreSQL database
+sudo -u postgres psql -d thinkmtb_order -c "SELECT COUNT(*) as total_orders FROM orders;"
+
+# Check PM2 logs for errors
+pm2 logs thinkmtb-order --nostream | grep -i error
 ```
 
 ---
@@ -484,22 +734,31 @@ tail -f /var/log/nginx/custom-cmssportswear-access.log
 
 ### Pre-Testing Setup
 - [ ] Application deployed to production (PM2 running)
-- [ ] Database initialized with schema migrations
+- [ ] Database initialized with schema migrations (PostgreSQL)
 - [ ] Admin credentials verified (admin@regusa.com / Password123!)
+- [ ] Platform admin login working at /platform-admin/login
 - [ ] Demo user exists (demo@cmssportswear.us / Demo123!)
 - [ ] Team password set (thinkmtb2024)
 - [ ] Design files available for upload (JPG/PNG images)
+- [ ] SSH access configured to cmssportswear
+- [ ] GitHub repo cloned locally for development
 
 ### Test Execution Order
 1. [ ] Test 1: Landing Page
 2. [ ] Test 2: Team Portal Access
 3. [ ] Test 3: Team Login
-4. [ ] Test 4: Admin Dashboard
-5. [ ] Test 5: Admin API Endpoints
-6. [ ] Test 6: Phase 1 - Design Request
-7. [ ] Test 7: Phase 2 - Product Selection
-8. [ ] Test 8: Phase 3 - Payment Review
-9. [ ] Test 9: End-to-End Workflow
+4. [ ] Test 4: Team Admin Dashboard
+5. [ ] Test 4a: Platform Admin Login
+6. [ ] Test 4b: Platform Admin - Teams Tab
+7. [ ] Test 4c: Platform Admin - Orders Tab
+8. [ ] Test 4d: Platform Admin - Breakdown Tab
+9. [ ] Test 4e: Platform Admin - Per-Person Tab
+10. [ ] Test 4f: Platform Admin - Pricing Tab
+11. [ ] Test 5: Team Admin API Endpoints
+12. [ ] Test 6: Phase 1 - Design Request
+13. [ ] Test 7: Phase 2 - Product Selection
+14. [ ] Test 8: Phase 3 - Payment Review
+15. [ ] Test 9: End-to-End Workflow
 
 ### Post-Testing Verification
 - [ ] All API endpoints returning expected responses
@@ -512,7 +771,8 @@ tail -f /var/log/nginx/custom-cmssportswear-access.log
 
 ---
 
-**Last Updated:** September 23, 2026  
-**Status:** 🟢 Phase 1-3 Testing Guide Complete
-**Database:** SQLite (4.4 compatible)
+**Last Updated:** October 1, 2026  
+**Status:** 🟢 Platform Admin Dashboard Complete - Phase 1-3 Testing Ready  
+**Database:** PostgreSQL 14+ (Production)  
+**Latest Feature:** Global Multi-Tenant Admin Dashboard with 5 tabs
 
