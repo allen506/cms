@@ -18,36 +18,43 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     let whereClause = '1=1';
+    let paramIndex = 1;
     const params: any[] = [];
 
     if (tenantId) {
-      whereClause += ' AND o.tenant_id = ?';
+      whereClause += ` AND o.tenant_id = $${paramIndex}`;
       params.push(tenantId);
+      paramIndex++;
     }
 
     if (status) {
-      whereClause += ' AND o.status = ?';
+      whereClause += ` AND o.status = $${paramIndex}`;
       params.push(status);
+      paramIndex++;
     }
 
+    params.push(limit, offset);
+
     const orders = await query<any>(
-      `SELECT o.*, t.name as tenant_name, t.slug as tenant_slug,
+      `SELECT o.id, o.tenant_id, o.user_name, o.user_email, o.order_number, o.status, o.created_at,
+              t.name as tenant_name, t.slug as tenant_slug,
               COUNT(oi.id) as item_count
        FROM orders o
        LEFT JOIN tenants t ON o.tenant_id = t.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
        WHERE ${whereClause}
-       GROUP BY o.id
+       GROUP BY o.id, t.name, t.slug
        ORDER BY o.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      params
     );
 
+    const countParams = params.slice(0, params.length - 2);
     const total = await queryOne<{ count: number }>(
       `SELECT COUNT(DISTINCT o.id) as count FROM orders o
        LEFT JOIN tenants t ON o.tenant_id = t.id
        WHERE ${whereClause}`,
-      params
+      countParams
     );
 
     return NextResponse.json({
@@ -85,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Verify tenant exists
     const tenant = await queryOne<any>(
-      'SELECT id FROM tenants WHERE id = ?',
+      'SELECT id FROM tenants WHERE id = $1',
       [tenantId]
     );
 
@@ -97,18 +104,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate order number
-    const lastOrder = await queryOne<{ id: string }>(
-      'SELECT id FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 1',
-      [tenantId]
-    );
-    
     const orderNumber = `ORD-${Date.now()}`;
     const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create order
     await execute(
       `INSERT INTO orders (id, tenant_id, user_name, user_email, order_number, status, total_crc, total_usd, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [orderId, tenantId, userName, userEmail, orderNumber, 'draft', 0, 0, new Date().toISOString()]
     );
 
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
         const itemId = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         await execute(
           `INSERT INTO order_items (id, order_id, product_type_id, design_id, size_id, quantity, sleeve_length, fit, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [itemId, orderId, item.productTypeId, item.designId, item.sizeId, item.quantity, item.sleeveLength, item.fit, new Date().toISOString()]
         );
       }

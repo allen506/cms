@@ -15,11 +15,13 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenant_id');
 
     let tenantWhere = '';
+    let paramIndex = 1;
     const params: any[] = [];
 
     if (tenantId) {
-      tenantWhere = ' AND o.tenant_id = ?';
+      tenantWhere = ` AND o.tenant_id = $${paramIndex}`;
       params.push(tenantId);
+      paramIndex++;
     }
 
     const { compra: exchangeRate } = await getExchangeRate();
@@ -30,8 +32,7 @@ export async function GET(request: NextRequest) {
         pt.id,
         pt.name,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.quantity) as total_qty,
-        GROUP_CONCAT(DISTINCT o.tenant_id) as tenant_ids
+        COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        JOIN product_types pt ON oi.product_type_id = pt.id
        JOIN orders o ON oi.order_id = o.id
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
         d.id,
         d.name,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.quantity) as total_qty
+        COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        LEFT JOIN designs d ON oi.design_id = d.id
        JOIN orders o ON oi.order_id = o.id
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
         s.id,
         s.name,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.quantity) as total_qty
+        COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        LEFT JOIN sizes s ON oi.size_id = s.id
        JOIN orders o ON oi.order_id = o.id
@@ -78,11 +79,11 @@ export async function GET(request: NextRequest) {
       `SELECT 
         COALESCE(oi.fit, 'unspecified') as fit,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.quantity) as total_qty
+        COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        JOIN orders o ON oi.order_id = o.id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY oi.fit
+       GROUP BY COALESCE(oi.fit, 'unspecified')
        ORDER BY total_qty DESC`,
       params
     );
@@ -93,8 +94,8 @@ export async function GET(request: NextRequest) {
         o.user_name,
         o.user_email,
         COUNT(DISTINCT o.id) as order_count,
-        SUM(oi.quantity) as total_qty,
-        SUM(CASE WHEN o.status = 'completed' THEN oi.quantity ELSE 0 END) as completed_qty
+        COALESCE(SUM(oi.quantity), 0) as total_qty,
+        COALESCE(SUM(CASE WHEN o.status = 'completed' THEN oi.quantity ELSE 0 END), 0) as completed_qty
        FROM order_items oi
        JOIN orders o ON oi.order_id = o.id
        WHERE 1=1 ${tenantWhere}

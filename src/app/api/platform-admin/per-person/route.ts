@@ -13,11 +13,13 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenant_id');
 
     let tenantWhere = '';
+    let paramIndex = 1;
     const params: any[] = [];
 
     if (tenantId) {
-      tenantWhere = ' AND o.tenant_id = ?';
+      tenantWhere = ` AND o.tenant_id = $${paramIndex}`;
       params.push(tenantId);
+      paramIndex++;
     }
 
     // Per-person totals
@@ -28,14 +30,14 @@ export async function GET(request: NextRequest) {
         t.name as tenant_name,
         t.id as tenant_id,
         COUNT(o.id) as order_count,
-        SUM(oi.quantity) as total_items,
-        GROUP_CONCAT(DISTINCT pt.name) as products
+        COALESCE(SUM(oi.quantity), 0) as total_items,
+        STRING_AGG(DISTINCT pt.name, ', ') as products
        FROM orders o
        LEFT JOIN tenants t ON o.tenant_id = t.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
        LEFT JOIN product_types pt ON oi.product_type_id = pt.id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY o.user_name, o.user_email, t.id
+       GROUP BY o.user_name, o.user_email, t.id, t.name
        ORDER BY o.user_name`,
       params
     );
