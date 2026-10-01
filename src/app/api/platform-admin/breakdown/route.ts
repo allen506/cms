@@ -42,22 +42,6 @@ export async function GET(request: NextRequest) {
       params
     );
 
-    // Breakdown by product type
-    const byProduct = await query<any>(
-      `SELECT 
-        pt.id,
-        pt.name,
-        COUNT(DISTINCT o.id) as order_count,
-        COALESCE(SUM(oi.quantity), 0) as total_qty
-       FROM order_items oi
-       LEFT JOIN product_types pt ON oi.product_type_id = pt.id
-       JOIN orders o ON oi.order_id = o.id
-       WHERE 1=1 ${tenantWhere}
-       GROUP BY pt.id, pt.name
-       ORDER BY total_qty DESC`,
-      params
-    );
-
     // Breakdown by order status
     const byStatus = await query<any>(
       `SELECT 
@@ -81,7 +65,7 @@ export async function GET(request: NextRequest) {
        FROM order_items oi
        JOIN orders o ON oi.order_id = o.id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY o.user_name, o.user_email
+       GROUP BY o.user_id
        ORDER BY total_qty DESC`,
       params
     );
