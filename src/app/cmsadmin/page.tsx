@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import PasswordGate from "@/components/PasswordGate";
+import DeprecationNotice from "@/components/DeprecationNotice";
 import ProductManager from "@/components/ProductManager";
 import DesignManager from "@/components/DesignManager";
 import PricingTierManager from "@/components/PricingTierManager";
@@ -320,6 +321,9 @@ export default function AdminPage() {
   const dashboardContent = (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
+        {/* Deprecation Notice */}
+        <DeprecationNotice />
+
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
