@@ -48,7 +48,7 @@ https://custom.cmssportswear.us/
 https://custom.cmssportswear.us/custom/[teamname]/unlock
 ```
 - **Example:** `https://custom.cmssportswear.us/custom/thinkmtb/unlock`
-- **Team Password:** `thinkmtb2024`
+- **Team Password:** `thinkteam2024`
 
 #### Team Login (After Password Verification)
 ```
@@ -94,7 +94,7 @@ Click "Enter Portal"
 
 # Step 2: On unlock page, enter team password
 https://custom.cmssportswear.us/custom/thinkmtb/unlock
-Team Password: thinkmtb2024
+Team Password: thinkteam2024
 
 # Expected behavior:
 # - Form accepts password
@@ -459,7 +459,7 @@ curl https://custom.cmssportswear.us/api/cmsadmin/subdomain-redirects
 **Purpose:** Test complete design request workflow
 
 **Prerequisites:**
-- First complete Test 2: Team Portal Access (unlock with password: `thinkmtb2024`)
+- First complete Test 2: Team Portal Access (unlock with password: `thinkteam2024`)
 - Then complete Test 3: Team Login (use demo@cmssportswear.us / Demo123!)
 
 ```bash
@@ -704,7 +704,7 @@ custom.cmssportswear.us/
 |-----------|----------|----------|-----|-------|
 | **Platform Admin** | `admin@regusa.com` | `Password123!` | https://custom.cmssportswear.us/platform-admin/login | ⚠️ Global admin - DO NOT CHANGE |
 | **Team Admin Portal** | N/A | N/A | https://custom.cmssportswear.us/cmsadmin | ❌ REMOVED - Use Platform Admin |
-| **Team Portal (thinkmtb)** | - | `thinkmtb2024` | https://custom.cmssportswear.us/custom/thinkmtb/unlock | Team password gate |
+| **Team Portal (thinkmtb)** | - | `thinkteam2024` | https://custom.cmssportswear.us/custom/thinkmtb/unlock | Team password gate |
 | **Demo User** | `demo@cmssportswear.us` | `Demo123!` | https://custom.cmssportswear.us/custom/thinkmtb/login | Test user in thinkmtb team |
 | **Database** | N/A | N/A | PostgreSQL on server | Production database |
 | **SSH Server** | root | N/A | `ssh cmssportswear` | SSH key auth only |
@@ -853,7 +853,7 @@ pm2 logs thinkmtb-order --nostream | grep -i error
 - [ ] Admin credentials verified (admin@regusa.com / Password123!)
 - [ ] Platform admin login working at /platform-admin/login
 - [ ] Demo user exists (demo@cmssportswear.us / Demo123!)
-- [ ] Team password set (thinkmtb2024)
+- [ ] Team password set (thinkteam2024)
 - [ ] Design files available for upload (JPG/PNG images)
 - [ ] SSH access configured to cmssportswear
 - [ ] GitHub repo cloned locally for development
