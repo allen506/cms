@@ -1,7 +1,7 @@
 # ThinkMTB Order System - Testing Guide
 
 **Deployment Date:** September 23, 2026  
-**Latest Update:** Platform Admin Dashboard with Global Multi-Tenant Management  
+**Latest Update:** Admin Interface Consolidation - /cmsadmin removed, all functionality in /platform-admin/dashboard  
 **Server:** Production (74.208.132.71)  
 **Status:** ✅ Live and Fully Deployed
 
@@ -20,19 +20,21 @@ https://custom.cmssportswear.us/platform-admin
 - **Password:** `Password123!` ⚠️ (DO NOT CHANGE)
 - **Features:**
   - 👥 Teams Management - Create and manage all tenants/teams
-  - 📦 Orders Management - Create orders on behalf of teams
-  - 📊 Breakdown Analysis - View detailed analytics by product/design/size/fit/user
+  - 📦 Catalog Management - Manage products, designs, and associations
+  - 📋 Orders Management - Create and view orders on behalf of teams
+  - 📊 Breakdown Analysis - View detailed analytics by product/status/user
   - 👤 Per-Person Analysis - Team member totals and contribution tracking
+  - 💳 Payments Management - Track and manage submitted payments
   - 💰 Pricing Manager - Manage pricing tiers across all teams
 - **Dashboard URL:** `https://custom.cmssportswear.us/platform-admin/dashboard`
 
-#### Team Admin Management Portal (Legacy)
+#### Legacy Admin Interface (REMOVED ❌)
 ```
-https://custom.cmssportswear.us/cmsadmin
+https://custom.cmssportswear.us/cmsadmin - NO LONGER AVAILABLE
 ```
-- **Email:** `admin@regusa.com`
-- **Password:** `Password123!` ⚠️ (DO NOT CHANGE)
-- **API Access:** `https://custom.cmssportswear.us/cmsadmin/api/*`
+- **Status:** Removed as of consolidation phase
+- **Migration:** All functionality now in Platform Admin Dashboard
+- **API Access:** Legacy `/api/platform-admin/*` endpoints remain for backwards compatibility only
 
 #### Customer Landing Portal
 ```
@@ -105,22 +107,17 @@ Team Password: thinkmtb2024
 
 ```bash
 # Step 1: Direct access to login (after password verified)
-https://custTeam Admin Dashboard
-**Purpose:** Test team admin access via single domain
+https://custom.cmssportswear.us/custom/thinkmtb/login
 
-```bash
-# Step 1: Visit admin at unified path
-https://custom.cmssportswear.us/cmsadmin
-
-# Step 2: Login with admin credentials
-Email: admin@regusa.com
-Password: Password123!
+# Step 2: Enter user credentials
+User Email: (test user account)
+Password: (user password)
 
 # Expected behavior:
-# - Admin dashboard loads
-# - Can manage products, designs, orders
-# - Access to pricing tiers
-# - Payment management
+# - Login form displays with team branding
+# - Credentials validated
+# - Redirects to user dashboard
+# - Session cookie set (user_token)
 ```
 
 ---
@@ -300,51 +297,158 @@ https://custom.cmssportswear.us/platform-admin/dashboard
 # - Team filter switches pricing context
 # - UI shows USD and CRC amountsboard
 **Purpose:** Test admin access via single domain
+---
+
+### Test 4d: Platform Admin Dashboard - Catalog Tab (NEW)
+**Purpose:** Test catalog management with products, designs, and associations
 
 ```bash
-# Step 1: Visit admin at unified path
-https://custom.cmssportswear.us/cmsadmin
+# Prerequisites: Login to platform admin (Test 4a)
 
-# Step 2: Login with admin credentials
-Email: admin@regusa.com
-Password: Password123!
+# Step 1: Click Catalog tab
+# Expected UI:
+# - Tabs: Products, Designs, Associations
+# - Each tab manages its own resources
 
-# Expected behavior:
-# - Admin dashboard loads
-# - Can manage products, designs, orders
-# - Access to pricing tiers
-# - Payment management
+# Step 2: Products tab
+# - View all products
+# - Add new product
+# - Edit product details
+# - Delete products
+
+# Step 3: Designs tab
+# - View all designs
+# - Create new design
+# - Manage design assets
+# - Delete designs
+
+# Step 4: Associations tab
+# - Link products to designs
+# - View product-design combinations
+# - Manage associations
 ```
 
 ---
 
-### Test 5: Admin API Endpoints
+### Test 4e: Platform Admin Dashboard - Payments Tab (NEW)
+**Purpose:** Test payment management and tracking
 
-#### Get Admin Summary
 ```bash
-curl https://custom.cmssportswear.us/cmsadmin/api/summary
+# Prerequisites: Login to platform admin (Test 4a)
+
+# Step 1: Click Payments tab
+# Expected UI:
+# - Filter buttons: All, Pending, Confirmed, Rejected
+# - Payment list showing: User, Order #, Status, Amount, Method
+
+# Step 2: View payment details
+# - Click on payment to see full details
+# - View payment reference and notes
+# - View admin notes section
+
+# Step 3: Manage payments
+# - Update payment status
+# - Add admin notes
+# - Confirm or reject payments
+```
+
+---
+
+### Test 4f: Platform Admin Dashboard - Order Details (ENHANCED)
+**Purpose:** Test order details viewing and management
+
+```bash
+# Prerequisites: Login to platform admin, navigate to Orders tab
+
+# Step 1: Click "View" button on an order
+# Expected UI:
+# - Modal opens showing order details
+# - Order number, status, user, date displayed
+# - Full list of items in order
+# - Product, quantity, and price for each item
+
+# Step 2: Close modal
+# - Click X or click outside modal
+# - Returns to orders list
+```
+
+---
+
+### Test 5: Platform Admin APIs (Preferred over legacy /api/cmsadmin)
+
+#### Get Platform Admin Orders
+```bash
+curl -H "Cookie: platform_admin_token=<TOKEN>" \
+  https://custom.cmssportswear.us/api/platform-admin/orders
 
 # Expected response:
 {
-  "summary": {
-    "totalOrders": 0,
-    "totalItems": 0,
-    "byProduct": [...],
-    "byDesign": [...],
-    "bySize": [...]
-  }
+  "orders": [
+    {
+      "id": "uuid",
+      "order_number": "ORDER-123",
+      "user_id": "user-id",
+      "tenant_id": "tenant-id",
+      "status": "submitted",
+      "item_count": 5,
+      "created_at": "2026-10-01T..."
+    }
+  ]
 }
 ```
 
-#### Get Subdomain Redirects
+#### Get Platform Admin Breakdown
 ```bash
-curl https://custom.cmssportswear.us/cmsadmin/api/subdomain-redirects
+curl -H "Cookie: platform_admin_token=<TOKEN>" \
+  https://custom.cmssportswear.us/api/platform-admin/breakdown?type=product
 
 # Expected response:
 {
-  "success": true,
-  "redirects": [...]
+  "byProduct": [
+    {
+      "product_type": "Jersey",
+      "orders": 5,
+      "items": 12
+    }
+  ]
 }
+```
+
+#### Get Platform Admin Per-Person
+```bash
+curl -H "Cookie: platform_admin_token=<TOKEN>" \
+  https://custom.cmssportswear.us/api/platform-admin/per-person
+
+# Expected response:
+{
+  "stats": [
+    {
+      "user_id": "user-123",
+      "order_count": 2,
+      "total_items": 8
+    }
+  ]
+}
+```
+
+---
+
+### Test 5b: Legacy Admin API Endpoints (DEPRECATED)
+
+**Note:** The following endpoints remain for backwards compatibility but should not be used for new development.
+
+#### Get Admin Summary (Legacy)
+```bash
+curl https://custom.cmssportswear.us/api/cmsadmin/summary
+
+# This endpoint is deprecated. Use /api/platform-admin/* instead.
+```
+
+#### Get Subdomain Redirects (Legacy)
+```bash
+curl https://custom.cmssportswear.us/api/cmsadmin/subdomain-redirects
+
+# This endpoint is deprecated.
 ```
 
 ---
@@ -533,7 +637,7 @@ EOF"
 - ✅ Path-based routing for all services:
   - `/` - Customer landing
   - `/custom/[teamname]/*` - Team portals
-  - `/cmsadmin/*` - Admin management
+  - `/platform-admin/*` - Admin management
 
 ### 🔧 Routing Structure
 ```
@@ -545,9 +649,12 @@ custom.cmssportswear.us/
 │   ├── /register              → User registration
 │   ├── /forgot-password       → Password reset request
 │   └── /reset-password        → Complete password reset
-├── /cmsadmin/                 → Admin dashboard
-├── /cmsadmin/api/*            → Admin APIs
-└── /api/                      → Public APIs (catalog, etc.)
+├── /cmsadmin/                 → REMOVED - use /platform-admin
+├── /cmsadmin/api/*            → Legacy APIs (deprecated)
+├── /platform-admin/           → Platform admin dashboard
+├── /platform-admin/login      → Platform admin login
+├── /platform-admin/dashboard  → Main dashboard (7 tabs)
+└── /api/platform-admin/*      → Platform admin APIs
 ```
 
 ### 🔐 Security Features
@@ -569,9 +676,9 @@ custom.cmssportswear.us/
 3. Ensure cookie is set after password verification
 
 ### Issue: Admin area not loading
-**Cause:** Not authenticated as admin  
+**Cause:** Not authenticated or session expired  
 **Solution:** 
-1. Navigate to `https://custom.cmssportswear.us/cmsadmin`
+1. Navigate to `https://custom.cmssportswear.us/platform-admin/login`
 2. Login with `admin@regusa.com` / `Password123!`
 3. Check password hasn't been changed
 
@@ -590,7 +697,7 @@ custom.cmssportswear.us/
 | Component | Email/User | Password | URL | Notes |
 |-----------|----------|----------|-----|-------|
 | **Platform Admin** | `admin@regusa.com` | `Password123!` | https://custom.cmssportswear.us/platform-admin/login | ⚠️ Global admin - DO NOT CHANGE |
-| **Team Admin Portal** | `admin@regusa.com` | `Password123!` | https://custom.cmssportswear.us/cmsadmin | Legacy admin panel |
+| **Team Admin Portal** | N/A | N/A | https://custom.cmssportswear.us/cmsadmin | ❌ REMOVED - Use Platform Admin |
 | **Team Portal (thinkmtb)** | - | `thinkmtb2024` | https://custom.cmssportswear.us/custom/thinkmtb/unlock | Team password gate |
 | **Demo User** | `demo@cmssportswear.us` | `Demo123!` | https://custom.cmssportswear.us/custom/thinkmtb/login | Test user in thinkmtb team |
 | **Database** | N/A | N/A | PostgreSQL on server | Production database |
@@ -635,13 +742,15 @@ ssh cmssportswear "sudo cat /etc/nginx/sites-available/custom.cmssportswear.us |
 - [x] Single domain routing configured
 - [x] SSL certificate for custom.cmssportswear.us installed
 - [x] Path-based routing working (no subdomains required)
-- [x] Admin portal at /cmsadmin
-- [x] Admin API at /cmsadmin/api
+- [x] Platform admin portal at /platform-admin
+- [x] Platform admin API at /api/platform-admin/*
+- [x] Legacy /api/cmsadmin/* endpoints (deprecated but functional)
 - [x] Customer landing at /
 - [x] Team portals at /custom/[teamname]/*
 - [x] Nginx reverse proxy configured
 - [x] Application builds successfully
 - [x] All routes tested
+- [x] Legacy /cmsadmin interface removed (Sept 30, 2026)
 
 ---
 
@@ -747,18 +856,20 @@ pm2 logs thinkmtb-order --nostream | grep -i error
 1. [ ] Test 1: Landing Page
 2. [ ] Test 2: Team Portal Access
 3. [ ] Test 3: Team Login
-4. [ ] Test 4: Team Admin Dashboard
-5. [ ] Test 4a: Platform Admin Login
-6. [ ] Test 4b: Platform Admin - Teams Tab
-7. [ ] Test 4c: Platform Admin - Orders Tab
-8. [ ] Test 4d: Platform Admin - Breakdown Tab
-9. [ ] Test 4e: Platform Admin - Per-Person Tab
-10. [ ] Test 4f: Platform Admin - Pricing Tab
-11. [ ] Test 5: Team Admin API Endpoints
-12. [ ] Test 6: Phase 1 - Design Request
-13. [ ] Test 7: Phase 2 - Product Selection
-14. [ ] Test 8: Phase 3 - Payment Review
-15. [ ] Test 9: End-to-End Workflow
+4. [ ] Test 4a: Platform Admin Login
+5. [ ] Test 4b: Platform Admin - Teams Tab
+6. [ ] Test 4c: Platform Admin - Orders Tab
+7. [ ] Test 4d: Platform Admin - Catalog Tab (NEW)
+8. [ ] Test 4e: Platform Admin - Breakdown Tab
+9. [ ] Test 4f: Platform Admin - Per-Person Tab
+10. [ ] Test 4g: Platform Admin - Payments Tab (NEW)
+11. [ ] Test 4h: Platform Admin - Order Details (ENHANCED)
+12. [ ] Test 4i: Platform Admin - Pricing Tab
+13. [ ] Test 5: Platform Admin APIs
+14. [ ] Test 6: Phase 1 - Design Request
+15. [ ] Test 7: Phase 2 - Product Selection
+16. [ ] Test 8: Phase 3 - Payment Review
+17. [ ] Test 9: End-to-End Workflow
 
 ### Post-Testing Verification
 - [ ] All API endpoints returning expected responses
