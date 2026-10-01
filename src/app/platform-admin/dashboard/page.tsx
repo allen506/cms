@@ -231,7 +231,10 @@ export default function PlatformAdminDashboard() {
         {activeTab === 'pricing' && (
           <div className="space-y-4">
             <TenantSelector onTenantSelect={setSelectedTenantId} selectedTenantId={selectedTenantId} />
-            <PricingTierManager />
+            <PricingTierManager 
+              productsEndpoint="/api/platform-admin/products"
+              pricingTiersEndpoint="/api/platform-admin/pricing-tiers"
+            />
           </div>
         )}
       </main>

@@ -16,7 +16,15 @@ interface PricingTier {
   price_usd: number | null;
 }
 
-export default function PricingTierManager() {
+interface PricingTierManagerProps {
+  productsEndpoint?: string;
+  pricingTiersEndpoint?: string;
+}
+
+export default function PricingTierManager({
+  productsEndpoint = "/api/admin/products",
+  pricingTiersEndpoint = "/api/admin/pricing-tiers",
+}: PricingTierManagerProps = {}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [tiers, setTiers] = useState<PricingTier[]>([]);
@@ -48,7 +56,7 @@ export default function PricingTierManager() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/products");
+      const res = await fetch(productsEndpoint);
       const data = await res.json();
       setProducts(data.products || []);
       if (data.products.length > 0) {
@@ -65,7 +73,7 @@ export default function PricingTierManager() {
     if (!selectedProduct) return;
     try {
       const res = await fetch(
-        `/api/admin/pricing-tiers?productId=${selectedProduct}`
+        `${pricingTiersEndpoint}?productId=${selectedProduct}`
       );
       const data = await res.json();
       setTiers(data.tiers || []);
@@ -99,8 +107,8 @@ export default function PricingTierManager() {
 
     try {
       const url = editingId
-        ? `/api/admin/pricing-tiers/${editingId}`
-        : "/api/admin/pricing-tiers";
+        ? `${pricingTiersEndpoint}/${editingId}`
+        : pricingTiersEndpoint;
       const method = editingId ? "PATCH" : "POST";
 
       const payload = editingId
