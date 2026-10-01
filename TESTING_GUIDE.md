@@ -48,7 +48,17 @@ https://custom.cmssportswear.us/
 https://custom.cmssportswear.us/custom/[teamname]/unlock
 ```
 - **Example:** `https://custom.cmssportswear.us/custom/thinkmtb/unlock`
-- **Team Password:** ⚠️ Unknown - needs to be reset via Platform Admin Dashboard
+- **Team Password:** Set via Platform Admin Dashboard (see below)
+
+#### Manage Team Password
+1. Go to Platform Admin: `https://custom.cmssportswear.us/platform-admin/dashboard`
+2. Login with: `admin@regusa.com` / `Password123!`
+3. Click **Tenants** tab
+4. Click **Manage** button for the team you want to update
+5. Scroll down to **Team Portal Password** section
+6. Click **Change Password** button
+7. Enter new password (minimum 6 characters) and confirm
+8. Click **Update Password**
 
 #### Team Login (After Password Verification)
 ```
