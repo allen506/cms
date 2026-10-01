@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { v4 as uuidv4 } from "uuid";
 import { queryOne, execute, requirePlatformAdmin, errorResponse, successResponse } from "@/lib/route-helpers";
 
 /** Update team password for a tenant */
@@ -43,10 +44,11 @@ export async function PATCH(
         [newPassword, tenantId, "team_password"]
       );
     } else {
-      // Create new password setting
+      // Create new password setting with generated UUID
+      const settingId = uuidv4();
       await execute(
-        "INSERT INTO tenant_settings (tenant_id, key, value) VALUES (?, ?, ?)",
-        [tenantId, "team_password", newPassword]
+        "INSERT INTO tenant_settings (id, tenant_id, key, value) VALUES (?, ?, ?, ?)",
+        [settingId, tenantId, "team_password", newPassword]
       );
     }
 
