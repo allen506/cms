@@ -42,60 +42,42 @@ export async function GET(request: NextRequest) {
       params
     );
 
-    // Breakdown by design
-    const byDesign = await query<any>(
+    // Breakdown by product type
+    const byProduct = await query<any>(
       `SELECT 
-        d.id,
-        d.name,
+        pt.id,
+        pt.name,
         COUNT(DISTINCT o.id) as order_count,
         COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
-       LEFT JOIN designs d ON oi.design_id = d.id
+       LEFT JOIN product_types pt ON oi.product_type_id = pt.id
        JOIN orders o ON oi.order_id = o.id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY d.id, d.name
+       GROUP BY pt.id, pt.name
        ORDER BY total_qty DESC`,
       params
     );
 
-    // Breakdown by size
-    const bySize = await query<any>(
+    // Breakdown by order status
+    const byStatus = await query<any>(
       `SELECT 
-        s.id,
-        s.name,
-        COUNT(DISTINCT o.id) as order_count,
-        COALESCE(SUM(oi.quantity), 0) as total_qty
-       FROM order_items oi
-       LEFT JOIN sizes s ON oi.size_id = s.id
-       JOIN orders o ON oi.order_id = o.id
-       WHERE 1=1 ${tenantWhere}
-       GROUP BY s.id, s.name
-       ORDER BY total_qty DESC`,
-      params
-    );
-
-    // Breakdown by fit
-    const byFit = await query<any>(
-      `SELECT 
-        COALESCE(oi.fit, 'unspecified') as fit,
+        o.status,
         COUNT(DISTINCT o.id) as order_count,
         COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        JOIN orders o ON oi.order_id = o.id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY COALESCE(oi.fit, 'unspecified')
+       GROUP BY o.status
        ORDER BY total_qty DESC`,
       params
     );
 
-    // By team member (user)
+    // By user
     const byUser = await query<any>(
       `SELECT 
-        o.user_name,
-        o.user_email,
+        o.user_id,
         COUNT(DISTINCT o.id) as order_count,
-        COALESCE(SUM(oi.quantity), 0) as total_qty,
-        COALESCE(SUM(CASE WHEN o.status = 'completed' THEN oi.quantity ELSE 0 END), 0) as completed_qty
+        COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        JOIN orders o ON oi.order_id = o.id
        WHERE 1=1 ${tenantWhere}
@@ -104,11 +86,10 @@ export async function GET(request: NextRequest) {
       params
     );
 
+
     return NextResponse.json({
       byProduct,
-      byDesign,
-      bySize,
-      byFit,
+      byStatus,
       byUser,
       exchangeRate,
       summary: {

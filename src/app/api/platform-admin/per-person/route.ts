@@ -25,20 +25,14 @@ export async function GET(request: NextRequest) {
     // Per-person totals
     const personTotals = await query<any>(
       `SELECT 
-        o.user_name,
-        o.user_email,
-        t.name as tenant_name,
-        t.id as tenant_id,
+        o.user_id,
         COUNT(o.id) as order_count,
-        COALESCE(SUM(oi.quantity), 0) as total_items,
-        STRING_AGG(DISTINCT pt.name, ', ') as products
+        COALESCE(SUM(oi.quantity), 0) as total_items
        FROM orders o
-       LEFT JOIN tenants t ON o.tenant_id = t.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
-       LEFT JOIN product_types pt ON oi.product_type_id = pt.id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY o.user_name, o.user_email, t.id, t.name
-       ORDER BY o.user_name`,
+       GROUP BY o.user_id
+       ORDER BY o.user_id`,
       params
     );
 
