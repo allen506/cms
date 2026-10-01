@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne, execute, requirePlatformAdmin } from "@/lib/route-helpers";
+import { queryOne, execute, requirePlatformAdmin, errorResponse, successResponse } from "@/lib/route-helpers";
 
 /** Update team password for a tenant */
 export async function PATCH(
@@ -17,10 +17,7 @@ export async function PATCH(
     const { newPassword } = body;
 
     if (!newPassword || newPassword.trim() === "") {
-      return NextResponse.json(
-        { error: "Password is required" },
-        { status: 400 }
-      );
+      return errorResponse("Password is required", 400);
     }
 
     // Get tenant to find its slug
@@ -29,67 +26,39 @@ export async function PATCH(
       [tenantId]
     );
 
-    console.log("Debug - tenant query result:", { tenantId, tenant });
-
     if (!tenant) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+      return errorResponse("Tenant not found", 404);
     }
 
     if (!tenant.slug) {
-      return NextResponse.json({ error: "Tenant has no slug" }, { status: 400 });
+      return errorResponse("Tenant has no slug", 400);
     }
 
-    // First, get the subdomain_redirect id by slug
-    const subdomainRecord = await queryOne<any>(
-      "SELECT id FROM subdomain_redirects WHERE subdomain = ?",
+    // Check if subdomain redirect exists for this tenant
+    const redirect = await queryOne<any>(
+      "SELECT id, subdomain FROM subdomain_redirects WHERE subdomain = ?",
       [tenant.slug]
     );
 
-    console.log("Debug - subdomain record:", { slug: tenant.slug, subdomainRecord });
-
-    if (!subdomainRecord) {
-      return NextResponse.json(
-        { error: "Subdomain not found for this tenant" },
-        { status: 404 }
-      );
+    if (!redirect) {
+      return errorResponse("Team subdomain not configured", 404);
     }
 
-    console.log("Debug - about to update password", { 
-      newPassword: newPassword.substring(0, 3) + "***",
-      slug: tenant.slug,
-      recordId: subdomainRecord.id
-    });
-
-    // Update subdomain_redirects with new password using id
-    const result = await execute(
-      `UPDATE subdomain_redirects 
-       SET team_password = ?, updated_at = NOW()
-       WHERE id = ?`,
-      [newPassword, subdomainRecord.id]
+    // Update using the same pattern as admin endpoint - update by id
+    await execute(
+      "UPDATE subdomain_redirects SET team_password = ?, updated_at = NOW() WHERE id = ?",
+      [newPassword, redirect.id]
     );
 
-    console.log("Debug - execute result:", result);
-
-    if (result.changes === 0) {
-      return NextResponse.json(
-        { error: "Failed to update subdomain password" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
+    return successResponse({
       success: true,
       message: "Team password updated successfully",
     });
   } catch (error) {
     console.error("Update team password error:", error);
-    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
-    return NextResponse.json(
-      {
-        error: "Failed to update team password",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
+    return errorResponse(
+      `Failed to update team password: ${error instanceof Error ? error.message : String(error)}`,
+      500
     );
   }
 }
