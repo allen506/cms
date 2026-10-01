@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 import { queryOne, execute, requirePlatformAdmin, errorResponse, successResponse } from "@/lib/route-helpers";
 
 /** Update team password for a tenant */
@@ -23,7 +22,7 @@ export async function PATCH(
 
     // Get the tenant to make sure it exists
     const tenant = await queryOne<any>(
-      "SELECT id, slug FROM tenants WHERE id = ?",
+      "SELECT id FROM tenants WHERE id = ?",
       [tenantId]
     );
 
@@ -31,43 +30,30 @@ export async function PATCH(
       return errorResponse("Tenant not found", 404);
     }
 
-    if (!tenant.slug) {
-      return errorResponse("Tenant has no slug configured", 400);
-    }
-
-    // Check if subdomain redirect already exists
-    let redirect = await queryOne<any>(
-      "SELECT id FROM subdomain_redirects WHERE tenant_id = ?",
-      [tenantId]
+    // Check if team_password setting already exists
+    const existing = await queryOne<any>(
+      "SELECT id FROM tenant_settings WHERE tenant_id = ? AND key = ?",
+      [tenantId, "team_password"]
     );
 
-    // If it doesn't exist, create it
-    if (!redirect) {
-      const redirectId = uuidv4();
-      const redirectUrl = `https://${tenant.slug}.cmssportswear.us`;
-      
+    if (existing) {
+      // Update existing password
       await execute(
-        `INSERT INTO subdomain_redirects (id, subdomain, redirect_url, is_team_portal, tenant_id, team_password, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [redirectId, tenant.slug, redirectUrl, 1, tenantId, newPassword]
+        "UPDATE tenant_settings SET value = ? WHERE tenant_id = ? AND key = ?",
+        [newPassword, tenantId, "team_password"]
       );
-
-      return successResponse({
-        success: true,
-        message: "Team portal password configured successfully",
-      });
     } else {
-      // Update existing record
+      // Create new password setting
       await execute(
-        "UPDATE subdomain_redirects SET team_password = ?, updated_at = NOW() WHERE tenant_id = ?",
-        [newPassword, tenantId]
+        "INSERT INTO tenant_settings (tenant_id, key, value) VALUES (?, ?, ?)",
+        [tenantId, "team_password", newPassword]
       );
-
-      return successResponse({
-        success: true,
-        message: "Team password updated successfully",
-      });
     }
+
+    return successResponse({
+      success: true,
+      message: "Team password updated successfully",
+    });
   } catch (error) {
     console.error("Update team password error:", error);
     return errorResponse(
