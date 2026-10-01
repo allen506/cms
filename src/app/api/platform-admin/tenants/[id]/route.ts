@@ -15,7 +15,7 @@ export async function GET(
     const { id: tenantId } = await params;
 
     const tenant = await queryOne<any>(
-      "SELECT id, name, slug, admin_email, status, created_at FROM tenants WHERE id = $1",
+      "SELECT id, name, slug, created_at FROM tenants WHERE id = $1",
       [tenantId]
     );
 
@@ -46,20 +46,12 @@ export async function PATCH(
 
     const { id: tenantId } = await params;
     const body = await request.json();
-    const { name, slug, admin_email, status } = body;
+    const { name, slug } = body;
 
     // Validate required fields
-    if (!name || !slug || !admin_email) {
+    if (!name || !slug) {
       return NextResponse.json(
-        { error: "Missing required fields: name, slug, admin_email" },
-        { status: 400 }
-      );
-    }
-
-    // Validate status
-    if (status && !["active", "suspended"].includes(status)) {
-      return NextResponse.json(
-        { error: "Invalid status. Must be 'active' or 'suspended'" },
+        { error: "Missing required fields: name, slug" },
         { status: 400 }
       );
     }
@@ -76,8 +68,8 @@ export async function PATCH(
 
     // Update tenant
     await execute(
-      "UPDATE tenants SET name = $1, slug = $2, admin_email = $3, status = $4 WHERE id = $5",
-      [name, slug, admin_email, status || "active", tenantId]
+      "UPDATE tenants SET name = $1, slug = $2 WHERE id = $3",
+      [name, slug, tenantId]
     );
 
     return NextResponse.json({ success: true, id: tenantId });

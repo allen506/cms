@@ -8,8 +8,6 @@ interface Tenant {
   id: string;
   name: string;
   slug: string;
-  admin_email: string;
-  status: 'active' | 'suspended';
   created_at: string;
 }
 
@@ -27,8 +25,6 @@ export default function TenantEditPage() {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    admin_email: '',
-    status: 'active' as 'active' | 'suspended',
   });
 
   useEffect(() => {
@@ -50,8 +46,6 @@ export default function TenantEditPage() {
       setFormData({
         name: data.name,
         slug: data.slug,
-        admin_email: data.admin_email,
-        status: data.status,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tenant');
@@ -209,35 +203,6 @@ export default function TenantEditPage() {
               <p className="text-xs text-gray-500 mt-2">URL-friendly name (lowercase, no spaces)</p>
             </div>
 
-            {/* Admin Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Email *</label>
-              <input
-                type="email"
-                required
-                value={formData.admin_email}
-                onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="admin@example.com"
-              />
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'suspended' })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="active">Active</option>
-                <option value="suspended">Suspended</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-2">
-                {formData.status === 'suspended' ? 'Team is suspended and cannot access their portal' : 'Team is active and can access their portal'}
-              </p>
-            </div>
-
             {/* Created Date (Read-only) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Created Date</label>
@@ -302,12 +267,8 @@ export default function TenantEditPage() {
               <dd className="text-blue-700 break-all">custom.cmssportswear.us/custom/{tenant.slug}/unlock</dd>
             </div>
             <div>
-              <dt className="font-medium text-blue-800">Admin Email</dt>
-              <dd className="text-blue-700">{tenant.admin_email}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-blue-800">Current Status</dt>
-              <dd className="text-blue-700">{tenant.status}</dd>
+              <dt className="font-medium text-blue-800">Created</dt>
+              <dd className="text-blue-700">{new Date(tenant.created_at).toLocaleDateString()}</dd>
             </div>
           </dl>
         </div>
