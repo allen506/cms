@@ -4,7 +4,7 @@ import { queryOne, execute, requirePlatformAdmin } from "@/lib/route-helpers";
 /** Get a specific tenant by ID */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authError = requirePlatformAdmin(request);
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json(authError, { status: 401 });
     }
 
-    const tenantId = params.id;
+    const { id: tenantId } = await params;
 
     const tenant = await queryOne<any>(
       "SELECT id, name, slug, admin_email, status, created_at FROM tenants WHERE id = $1",
@@ -36,7 +36,7 @@ export async function GET(
 /** Update a tenant */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authError = requirePlatformAdmin(request);
@@ -44,7 +44,7 @@ export async function PATCH(
       return NextResponse.json(authError, { status: 401 });
     }
 
-    const tenantId = params.id;
+    const { id: tenantId } = await params;
     const body = await request.json();
     const { name, slug, admin_email, status } = body;
 
@@ -93,7 +93,7 @@ export async function PATCH(
 /** Delete a tenant */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authError = requirePlatformAdmin(request);
@@ -101,7 +101,7 @@ export async function DELETE(
       return NextResponse.json(authError, { status: 401 });
     }
 
-    const tenantId = params.id;
+    const { id: tenantId } = await params;
 
     // Check if tenant exists
     const tenant = await queryOne<any>(
