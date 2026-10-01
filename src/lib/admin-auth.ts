@@ -4,7 +4,7 @@ import { queryOne } from "@/lib/db-async";
 /** Validates the admin session cookie. Returns true if authenticated. */
 export async function isAdminAuthenticated(request: NextRequest): Promise<boolean> {
   // Try to get token from cookie first
-  let token = request.cookies.get("admin-session")?.value;
+  let token: string | null = request.cookies.get("admin-session")?.value || null;
   
   // Fallback: check for token in X-Admin-Token header
   if (!token) {
