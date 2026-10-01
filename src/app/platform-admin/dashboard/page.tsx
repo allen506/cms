@@ -212,10 +212,7 @@ export default function PlatformAdminDashboard() {
 
         {activeTab === 'catalog' && (
           <div className="space-y-4">
-            <CatalogManager 
-              productsEndpoint="/api/platform-admin/products"
-              pricingTiersEndpoint="/api/platform-admin/pricing-tiers"
-            />
+            <CatalogManager />
           </div>
         )}
 

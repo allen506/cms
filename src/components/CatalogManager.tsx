@@ -5,15 +5,7 @@ import ProductManager from "./ProductManager";
 import DesignManager from "./DesignManager";
 import ProductDesignAssociations from "./ProductDesignAssociations";
 
-interface CatalogManagerProps {
-  productsEndpoint?: string;
-  pricingTiersEndpoint?: string;
-}
-
-export default function CatalogManager({
-  productsEndpoint = "/api/platform-admin/products",
-  pricingTiersEndpoint = "/api/platform-admin/pricing-tiers",
-}: CatalogManagerProps) {
+export default function CatalogManager() {
   const [activeTab, setActiveTab] = useState<"products" | "designs" | "associations">(
     "products"
   );
@@ -43,12 +35,7 @@ export default function CatalogManager({
         </div>
 
         <div className="p-6">
-          {activeTab === "products" && (
-            <ProductManager
-              endpoint={productsEndpoint}
-              pricingTiersEndpoint={pricingTiersEndpoint}
-            />
-          )}
+          {activeTab === "products" && <ProductManager />}
           {activeTab === "designs" && <DesignManager endpoint="/api/admin/designs" />}
           {activeTab === "associations" && (
             <ProductDesignAssociations endpoint="/api/admin/product-designs" />
