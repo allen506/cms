@@ -41,6 +41,9 @@ export default function OrdersManager({ selectedTenantId }: OrdersManagerProps) 
   const [membersLoading, setMembersLoading] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     tenantId: selectedTenantId || "",
@@ -111,6 +114,25 @@ export default function OrdersManager({ selectedTenantId }: OrdersManagerProps) 
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchOrderDetails = async (orderId: string) => {
+    try {
+      setDetailsLoading(true);
+      const res = await fetch(`/api/orders/${orderId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setOrderDetails(data);
+    } catch (error) {
+      console.error("Failed to fetch order details:", error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const handleViewOrder = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    fetchOrderDetails(orderId);
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -314,6 +336,7 @@ export default function OrdersManager({ selectedTenantId }: OrdersManagerProps) 
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Items</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -339,12 +362,87 @@ export default function OrdersManager({ selectedTenantId }: OrdersManagerProps) 
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {new Date(order.created_at).toLocaleDateString()}
                   </td>
+                  <td className="px-4 py-3 text-sm">
+                    <button
+                      onClick={() => handleViewOrder(order.id)}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      View
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrderId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div className="sticky top-0 bg-gray-50 border-b border-gray-200 p-4 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-900">Order Details</h2>
+              <button
+                onClick={() => {
+                  setSelectedOrderId(null);
+                  setOrderDetails(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {detailsLoading ? (
+              <div className="p-8 text-center text-gray-500">Loading...</div>
+            ) : orderDetails ? (
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase">Order #</p>
+                    <p className="text-sm font-medium text-gray-900">{orderDetails.order_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase">Status</p>
+                    <p className="text-sm font-medium text-gray-900">{orderDetails.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase">User</p>
+                    <p className="text-sm font-medium text-gray-900">{orderDetails.user_id}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase">Date</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {new Date(orderDetails.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                {orderDetails.order_items && orderDetails.order_items.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Items</p>
+                    <div className="space-y-2">
+                      {orderDetails.order_items.map((item: any, idx: number) => (
+                        <div key={idx} className="bg-gray-50 p-3 rounded text-sm">
+                          <p className="font-medium text-gray-900">
+                            {item.product_type_id} × {item.quantity}
+                          </p>
+                          <p className="text-gray-600 text-xs">
+                            ${item.price_usd} USD
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-gray-500">No details available</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
