@@ -55,6 +55,8 @@ https://custom.cmssportswear.us/custom/[teamname]/unlock
 https://custom.cmssportswear.us/custom/[teamname]/login
 ```
 - **Example:** `https://custom.cmssportswear.us/custom/thinkmtb/login`
+- **Demo User Email:** `demo@cmssportswear.us`
+- **Demo User Password:** `Demo123!`
 - User login after team password is verified
 
 #### Password Reset
@@ -456,8 +458,12 @@ curl https://custom.cmssportswear.us/api/cmsadmin/subdomain-redirects
 ### Test 6: Phase 1 - Design Request Submission
 **Purpose:** Test complete design request workflow
 
+**Prerequisites:**
+- First complete Test 2: Team Portal Access (unlock with password: `thinkmtb2024`)
+- Then complete Test 3: Team Login (use demo@cmssportswear.us / Demo123!)
+
 ```bash
-# Step 1: Login as team user
+# Step 1: Login as team user (after unlocking team portal in Test 2)
 https://custom.cmssportswear.us/custom/thinkmtb/login
 Email: demo@cmssportswear.us
 Password: Demo123!
