@@ -19,6 +19,8 @@ module.exports = {
         DATABASE_URL: "postgresql://thinkmtb:postgres123@localhost:5432/thinkmtb_order",
         DB_TYPE: "postgresql",
         ADMIN_PASSWORD: "Password123!",
+        PLATFORM_ADMIN_EMAIL: "admin@regusa.com",
+        PLATFORM_ADMIN_PASSWORD: "Password123!",
       },
     },
   ],
