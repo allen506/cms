@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
        LEFT JOIN tenants t ON o.tenant_id = t.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
        WHERE ${whereClause}
-       GROUP BY o.id, t.name, t.slug
+       GROUP BY o.id, o.tenant_id, o.user_name, o.user_email, o.order_number, o.status, o.created_at, t.id, t.name, t.slug
        ORDER BY o.created_at DESC
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       params
