@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Statistics
     const stats = await queryOne<any>(
       `SELECT 
-        COUNT(DISTINCT o.user_name) as total_people,
+        COUNT(DISTINCT o.user_id) as total_people,
         COUNT(o.id) as total_orders,
         COALESCE(SUM(oi.quantity), 0) as total_items
        FROM orders o
