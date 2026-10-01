@@ -29,9 +29,20 @@ export async function PATCH(
       [tenantId]
     );
 
+    console.log("Debug - tenant query result:", { tenantId, tenant });
+
     if (!tenant) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
+
+    if (!tenant.slug) {
+      return NextResponse.json({ error: "Tenant has no slug" }, { status: 400 });
+    }
+
+    console.log("Debug - about to update password", { 
+      newPassword: newPassword.substring(0, 3) + "***",
+      slug: tenant.slug
+    });
 
     // Update subdomain_redirects with new password
     const result = await execute(
@@ -40,6 +51,8 @@ export async function PATCH(
        WHERE subdomain = ?`,
       [newPassword, tenant.slug]
     );
+
+    console.log("Debug - execute result:", result);
 
     if (result.changes === 0) {
       return NextResponse.json(
@@ -54,6 +67,7 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("Update team password error:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
     return NextResponse.json(
       {
         error: "Failed to update team password",
