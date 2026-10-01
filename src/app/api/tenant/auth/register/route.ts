@@ -10,8 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
-    const { full_name, email, password, teamPassword } = await request.json();
-    const tenantSlug = request.headers.get('x-tenant-slug');
+    const { full_name, email, password, teamSlug, teamPassword } = await request.json();
+    const tenantSlug = teamSlug || request.headers.get('x-tenant-slug');
 
     if (!full_name || !email || !password || !tenantSlug) {
       return errorResponse('Missing required fields', 400);

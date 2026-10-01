@@ -69,6 +69,15 @@ https://custom.cmssportswear.us/custom/[teamname]/login
 - **Demo User Password:** `Demo123!`
 - User login after team password is verified
 
+#### Register New User
+```
+https://custom.cmssportswear.us/custom/[teamname]/register
+```
+- **Example:** `https://custom.cmssportswear.us/custom/thinkmtb/register`
+- Create new user accounts for the team portal
+- Requires team password verification first (redirects to unlock page if not verified)
+- Password minimum 8 characters
+
 #### Password Reset
 ```
 https://custom.cmssportswear.us/custom/[teamname]/forgot-password
