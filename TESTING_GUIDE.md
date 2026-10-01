@@ -48,7 +48,7 @@ https://custom.cmssportswear.us/
 https://custom.cmssportswear.us/custom/[teamname]/unlock
 ```
 - **Example:** `https://custom.cmssportswear.us/custom/thinkmtb/unlock`
-- **Team Password:** `thinkteam2024`
+- **Team Password:** ⚠️ Unknown - needs to be reset via Platform Admin Dashboard
 
 #### Team Login (After Password Verification)
 ```

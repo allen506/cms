@@ -27,6 +27,14 @@ export default function TenantEditPage() {
     slug: '',
   });
 
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
   useEffect(() => {
     fetchTenant();
   }, [tenantId]);
@@ -105,6 +113,52 @@ export default function TenantEditPage() {
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete tenant');
+      setSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `/api/platform-admin/tenants/${tenantId}/password`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            newPassword: passwordData.newPassword,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update password');
+      }
+
+      setPasswordSuccess('Team password updated successfully');
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+      setShowPasswordForm(false);
+    } catch (err) {
+      setPasswordError(
+        err instanceof Error ? err.message : 'Failed to update password'
+      );
+    } finally {
       setSaving(false);
     }
   };
@@ -271,6 +325,112 @@ export default function TenantEditPage() {
               <dd className="text-blue-700">{new Date(tenant.created_at).toLocaleDateString()}</dd>
             </div>
           </dl>
+        </div>
+
+        {/* Team Portal Password Management */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-yellow-900">Team Portal Password</h3>
+            {!showPasswordForm && (
+              <button
+                onClick={() => setShowPasswordForm(true)}
+                className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition"
+              >
+                Change Password
+              </button>
+            )}
+          </div>
+
+          {showPasswordForm && (
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              {passwordError && (
+                <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+                  <p className="text-red-800 text-sm">{passwordError}</p>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded p-3 mb-4">
+                  <p className="text-green-800 text-sm">{passwordSuccess}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-yellow-900 mb-2">
+                  New Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  placeholder="Enter new password (min. 6 characters)"
+                  minLength={6}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-yellow-900 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordData.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  placeholder="Confirm password"
+                  minLength={6}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-semibold disabled:opacity-50"
+                >
+                  {saving ? 'Updating...' : 'Update Password'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setPasswordData({ newPassword: '', confirmPassword: '' });
+                    setPasswordError('');
+                  }}
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <p className="text-xs text-yellow-700 mt-3">
+                💡 This password is used to unlock the team portal at{' '}
+                <code className="bg-yellow-100 px-1 py-0.5 rounded">
+                  custom.cmssportswear.us/custom/{tenant.slug}/unlock
+                </code>
+              </p>
+            </form>
+          )}
+
+          {!showPasswordForm && (
+            <p className="text-sm text-yellow-800">
+              Use this to manage the password team members use to unlock the team portal.
+            </p>
+          )}
         </div>
       </main>
     </div>
