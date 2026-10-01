@@ -9,7 +9,7 @@ interface BreakdownViewerProps {
 export default function BreakdownViewer({ selectedTenantId }: BreakdownViewerProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"product" | "design" | "size" | "fit" | "user">("product");
+  const [activeTab, setActiveTab] = useState<"product" | "status" | "user">("product");
 
   useEffect(() => {
     fetchBreakdown();
@@ -80,7 +80,7 @@ export default function BreakdownViewer({ selectedTenantId }: BreakdownViewerPro
       {/* Breakdown Tabs */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="border-b border-gray-200 p-4 flex gap-4 overflow-x-auto">
-          {(["product", "design", "size", "fit", "user"] as const).map((tab) => (
+          {(["product", "status", "user"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -92,12 +92,8 @@ export default function BreakdownViewer({ selectedTenantId }: BreakdownViewerPro
             >
               {tab === "product"
                 ? "By Product"
-                : tab === "design"
-                ? "By Design"
-                : tab === "size"
-                ? "By Size"
-                : tab === "fit"
-                ? "By Fit"
+                : tab === "status"
+                ? "By Status"
                 : "By User"}
             </button>
           ))}
@@ -106,17 +102,10 @@ export default function BreakdownViewer({ selectedTenantId }: BreakdownViewerPro
         <div className="p-4">
           {activeTab === "product" &&
             renderTable(data.byProduct, ["Name", "Order Count", "Total Qty"])}
-          {activeTab === "design" &&
-            renderTable(data.byDesign, ["Name", "Order Count", "Total Qty"])}
-          {activeTab === "size" && renderTable(data.bySize, ["Name", "Order Count", "Total Qty"])}
-          {activeTab === "fit" &&
-            renderTable(data.byFit.map((item: any) => ({ ...item, fit: item.fit || "unspecified" })), [
-              "Fit",
-              "Order Count",
-              "Total Qty",
-            ])}
+          {activeTab === "status" &&
+            renderTable(data.byStatus, ["Status", "Order Count", "Total Qty"])}
           {activeTab === "user" &&
-            renderTable(data.byUser, ["User Name", "Order Count", "Total Qty", "Completed Qty"])}
+            renderTable(data.byUser, ["User ID", "Order Count", "Total Qty"])}
         </div>
       </div>
     </div>
