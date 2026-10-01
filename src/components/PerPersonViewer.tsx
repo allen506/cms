@@ -38,8 +38,7 @@ export default function PerPersonViewer({ selectedTenantId }: PerPersonViewerPro
 
   const filteredPeople = data.personTotals.filter(
     (person: any) =>
-      person.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (person.user_email && person.user_email.toLowerCase().includes(searchTerm.toLowerCase()))
+      person.user_id.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -76,32 +75,24 @@ export default function PerPersonViewer({ selectedTenantId }: PerPersonViewerPro
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Team</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">User ID</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Orders</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Items</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Products</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Total Items</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {filteredPeople.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
                   No team members found
                 </td>
               </tr>
             ) : (
               filteredPeople.map((person: any, idx: number) => (
                 <tr key={idx} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{person.user_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{person.user_email || "-"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{person.tenant_name}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{person.user_id}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{person.order_count}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{person.total_items}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                    {person.products || "-"}
-                  </td>
                 </tr>
               ))
             )}
