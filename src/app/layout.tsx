@@ -35,12 +35,12 @@ export const metadata: Metadata = {
   description: "Place your ThinkMTB team jersey and vest orders from CMS Sportswear",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = headers();
+  const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
   const isCustomTeamRoute = pathname.startsWith("/custom/");
 
