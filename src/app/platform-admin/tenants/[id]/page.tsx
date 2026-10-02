@@ -35,6 +35,10 @@ export default function TenantEditPage() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [showCaptainsForm, setShowCaptainsForm] = useState(false);
+
   useEffect(() => {
     fetchTenant();
   }, [tenantId]);
@@ -113,6 +117,52 @@ export default function TenantEditPage() {
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete tenant');
+      setSaving(false);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    try {
+      setLoadingMembers(true);
+      const response = await fetch(
+        `/api/platform-admin/team-captains?tenant_id=${tenantId}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch team members');
+      }
+      const data = await response.json();
+      setTeamMembers(data.users || []);
+    } catch (err) {
+      console.error('Error fetching team members:', err);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleToggleCaptain = async (userId: string, email: string, currentStatus: boolean) => {
+    try {
+      setSaving(true);
+      const response = await fetch('/api/platform-admin/team-captains', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          tenantId,
+          isCaptain: !currentStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update captain status');
+      }
+
+      // Refresh the list
+      await fetchTeamMembers();
+      setSuccess(`Captain status updated for ${email}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update captain status');
+    } finally {
       setSaving(false);
     }
   };
@@ -325,6 +375,78 @@ export default function TenantEditPage() {
               <dd className="text-blue-700">{new Date(tenant.created_at).toLocaleDateString()}</dd>
             </div>
           </dl>
+        </div>
+
+        {/* Team Captains Management */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-blue-900">Team Captains</h3>
+            {!showCaptainsForm && (
+              <button
+                onClick={() => {
+                  fetchTeamMembers();
+                  setShowCaptainsForm(true);
+                }}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition"
+              >
+                Manage Captains
+              </button>
+            )}
+          </div>
+
+          {showCaptainsForm && (
+            <div className="space-y-4">
+              {loadingMembers ? (
+                <p className="text-blue-800">Loading team members...</p>
+              ) : teamMembers.length === 0 ? (
+                <p className="text-blue-800">No team members found</p>
+              ) : (
+                <div className="space-y-2">
+                  {teamMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between bg-white p-3 rounded border border-blue-200"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{member.email}</p>
+                        <p className="text-sm text-gray-500">
+                          {member.isCaptain ? '👑 Captain' : 'Team Member'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleToggleCaptain(member.id, member.email, member.isCaptain)}
+                        disabled={saving}
+                        className={`px-4 py-2 rounded text-white font-semibold text-sm transition ${
+                          member.isCaptain
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-green-600 hover:bg-green-700'
+                        } disabled:opacity-50`}
+                      >
+                        {member.isCaptain ? 'Remove Captain' : 'Make Captain'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCaptainsForm(false);
+                  setTeamMembers([]);
+                }}
+                disabled={saving}
+                className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold"
+              >
+                Done
+              </button>
+            </div>
+          )}
+
+          {!showCaptainsForm && (
+            <p className="text-sm text-blue-800">
+              Only team captains can submit design requests. Manage who has captain access for this team.
+            </p>
+          )}
         </div>
 
         {/* Team Portal Password Management */}
