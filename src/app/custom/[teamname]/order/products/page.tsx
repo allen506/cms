@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import ProductSelectionForm from "@/components/ProductSelectionForm";
-import { getDb } from "@/lib/db";
+import { queryOne } from "@/lib/route-helpers";
 
 export default async function ProductSelectionPage({
   params,
@@ -13,10 +13,10 @@ export default async function ProductSelectionPage({
   const { designRequestId } = await searchParams;
 
   // Verify team exists
-  const db = getDb();
-  const team = db
-    .prepare("SELECT id, name FROM teams WHERE slug = ?")
-    .get(teamname.toLowerCase()) as { id: string; name: string } | undefined;
+  const team = await queryOne<{ id: string; name: string }>(
+    "SELECT id, name FROM tenants WHERE slug = ?",
+    [teamname.toLowerCase()]
+  );
 
   if (!team) {
     redirect("/custom");
@@ -24,9 +24,10 @@ export default async function ProductSelectionPage({
 
   // If designRequestId provided, verify it's approved
   if (designRequestId) {
-    const designRequest = db
-      .prepare("SELECT status FROM design_requests WHERE id = ?")
-      .get(designRequestId) as { status: string } | undefined;
+    const designRequest = await queryOne<{ status: string }>(
+      "SELECT status FROM design_requests WHERE id = ?",
+      [designRequestId]
+    );
 
     if (!designRequest || designRequest.status !== "approved") {
       redirect(`/custom/${teamname}/order/design-requests`);
