@@ -146,9 +146,25 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
   };
 
   if (isCaptain === null) {
+    // Still loading - show disabled form
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">Loading...</div>
+      <div className="space-y-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800">Checking captain access...</p>
+        </div>
+        <form className="space-y-8 opacity-50 pointer-events-none">
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Request Title
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Team Jersey Design"
+              disabled
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+            />
+          </div>
+        </form>
       </div>
     );
   }
