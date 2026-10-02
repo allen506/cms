@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
-    return errorResponse('An error occurred', 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Login error:', errorMsg);
+    return errorResponse(`An error occurred: ${errorMsg}`, 500);
   }
 }
