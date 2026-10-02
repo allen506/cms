@@ -9,8 +9,8 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, teamPassword } = await request.json();
-    const tenantSlug = request.headers.get('x-tenant-slug');
+    const { email, password, teamSlug, teamPassword } = await request.json();
+    const tenantSlug = teamSlug || request.headers.get('x-tenant-slug');
 
     if (!email || !password || !tenantSlug) {
       return errorResponse('Missing required fields', 400);
