@@ -48,10 +48,11 @@ export default function TeamPortalNav() {
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
-          <Link href={`/custom/${teamname}/order/products`} className="flex items-center gap-2">
+          <Link href={`/custom/${teamname}`} className="flex items-center gap-2">
             <span className="text-lg font-bold text-gray-900 tracking-tight">CMS Sportswear</span>
           </Link>
           
+          {/* Desktop Menu */}
           <div className="hidden sm:flex items-center gap-1">
             {isLoggedIn && (
               <>
@@ -63,11 +64,23 @@ export default function TeamPortalNav() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="ml-2 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="ml-2 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
                 >
                   Sign out
                 </button>
               </>
+            )}
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="flex sm:hidden items-center gap-2">
+            {isLoggedIn && (
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+              >
+                Sign out
+              </button>
             )}
           </div>
         </div>
