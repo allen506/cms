@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
 
     console.log('📝 Creating user:', { userId, email, tenant_id: tenant.id });
     await execute(
-      `INSERT INTO user_accounts (id, tenant_id, email, password_hash, full_name, role, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [userId, tenant.id, email, passwordHash, full_name, 'user']
+      `INSERT INTO user_accounts (id, tenant_id, email, password_hash, full_name, created_at)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [userId, tenant.id, email, passwordHash, full_name]
     );
 
     console.log('✓ User created successfully:', userId);
