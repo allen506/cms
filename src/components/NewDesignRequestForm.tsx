@@ -38,12 +38,6 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
 
         const data = await response.json();
         setIsCaptain(data.user?.isCaptain || false);
-
-        if (!data.user?.isCaptain) {
-          setTimeout(() => {
-            router.push(`/custom/${teamname}/order/design-requests`);
-          }, 1000);
-        }
       } catch (err) {
         console.error('Error checking captain status:', err);
         router.push(`/custom/${teamname}/login`);
@@ -97,6 +91,12 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isCaptain) {
+      setError("You must be a team captain to submit design requests. Please contact your team administrator.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -146,7 +146,6 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
   };
 
   if (isCaptain === null) {
-    // Still loading - show disabled form
     return (
       <div className="space-y-8">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -169,27 +168,17 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
     );
   }
 
-  if (isCaptain === false) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-        <h1 className="text-2xl font-bold text-red-900 mb-2">
-          Access Denied
-        </h1>
-        <p className="text-red-800 mb-6">
-          Only team captains can submit design requests.
-        </p>
-        <Link
-          href={`/custom/${teamname}/order/design-requests`}
-          className="inline-flex items-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition"
-        >
-          Back to Requests
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Captain Status Message */}
+      {!isCaptain && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800 font-semibold">
+            ⚠️ Note: You need team captain status to submit design requests
+          </p>
+        </div>
+      )}
+
       {/* Success Message */}
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -339,10 +328,10 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
       <div className="flex gap-4 pt-6">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isCaptain}
           className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition"
         >
-          {loading ? "Submitting..." : "Submit Design Request"}
+          {loading ? "Submitting..." : !isCaptain ? "Requires Captain Status" : "Submit Design Request"}
         </button>
         <Link
           href={`/custom/${teamname}/order/design-requests`}
