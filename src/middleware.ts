@@ -13,20 +13,36 @@ import { NextRequest, NextResponse } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Add pathname header for root layout to check
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+
   // Skip admin routes (not tenant-specific)
   if (pathname.startsWith('/cmsadmin') || pathname.startsWith('/api/cmsadmin')) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   // Skip platform admin routes (not tenant-specific)
   if (pathname.startsWith('/platform-admin') || pathname.startsWith('/api/platform-admin')) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   // Skip public routes
   if (pathname === '/' || pathname.startsWith('/api/') || 
       pathname.startsWith('/_next') || pathname.startsWith('/public')) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   // Extract tenant from path-based routing
@@ -58,17 +74,14 @@ export function middleware(request: NextRequest) {
   // Add tenant to request headers for access in routes
   // Route handlers will verify tenant exists in database
   if (tenantSlug) {
-    const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-tenant-slug', tenantSlug);
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 /**

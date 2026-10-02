@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { headers } from "next/headers";
 import NavBar from "@/components/NavBar";
 import { initializeDatabase } from "@/lib/db";
 
@@ -39,13 +40,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = headers();
+  const pathname = headersList.get("x-pathname") || "";
+  const isCustomTeamRoute = pathname.startsWith("/custom/");
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
         style={{ background: "#f5f5f7" }}
       >
-        <NavBar />
+        {!isCustomTeamRoute && <NavBar />}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {children}
         </main>
