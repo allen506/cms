@@ -1,6 +1,26 @@
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
 import ProductSelectionForm from "@/components/ProductSelectionForm";
 import { queryOne } from "@/lib/route-helpers";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ teamname: string }>;
+}): Promise<Metadata> {
+  const { teamname } = await params;
+  
+  // Try to get team name from database
+  const team = await queryOne<{ name: string }>(
+    "SELECT name FROM tenants WHERE slug = ?",
+    [teamname.toLowerCase()]
+  );
+  
+  return {
+    title: "CMS Sportswear - Select Products",
+    description: `Place your order with ${team?.name || teamname} using CMS Sportswear`,
+  };
+}
 
 export default async function ProductSelectionPage({
   params,
