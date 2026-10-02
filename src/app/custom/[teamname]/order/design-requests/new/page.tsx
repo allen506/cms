@@ -1,4 +1,3 @@
-import TeamPortalNav from "@/components/TeamPortalNav";
 import NewDesignRequestForm from "@/components/NewDesignRequestForm";
 
 interface Props {
@@ -9,13 +8,10 @@ export default async function NewDesignRequestPage({ params }: Props) {
   const { teamname } = await params;
 
   return (
-    <>
-      <TeamPortalNav />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          <NewDesignRequestForm teamname={teamname} />
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        <NewDesignRequestForm teamname={teamname} />
       </div>
-    </>
+    </div>
   );
 }

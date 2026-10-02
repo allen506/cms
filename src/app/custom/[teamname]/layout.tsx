@@ -1,10 +1,14 @@
 import TeamPortalNav from "@/components/TeamPortalNav";
 
-export default function CustomTeamLayout({
-  children,
-}: {
+interface Props {
   children: React.ReactNode;
-}) {
+  params: Promise<{ teamname: string }>;
+}
+
+export default async function CustomTeamLayout({ children, params }: Props) {
+  // Await params to properly handle dynamic route
+  await params;
+  
   return (
     <>
       <TeamPortalNav />
