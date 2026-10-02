@@ -1,68 +1,18 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import TeamPortalNav from "@/components/TeamPortalNav";
 import DesignRequestsList from "@/components/DesignRequestsList";
+import DesignRequestsHeader from "@/components/DesignRequestsHeader";
 
-export default function DesignRequestsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const teamname = params.teamname as string;
-  
-  const [isCaptain, setIsCaptain] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [teamName, setTeamName] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
+interface Props {
+  params: Promise<{ teamname: string }>;
+}
 
-  useEffect(() => {
-    // Check if user is team captain from session
-    const checkCaptainStatus = async () => {
-      try {
-        // Get user ID from cookie
-        const userIdCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('tenant_user_id='));
-        
-        if (!userIdCookie) {
-          router.push(`/custom/${teamname}/login`);
-          return;
-        }
-
-        const id = userIdCookie.split('=')[1];
-        setUserId(id);
-
-        // Fetch user data to check captain status
-        const response = await fetch(`/api/tenant/user/profile`, {
-          headers: {
-            'x-tenant-slug': teamname,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user profile');
-        }
-
-        const data = await response.json();
-        setIsCaptain(data.user?.isCaptain || false);
-      } catch (error) {
-        console.error('Error checking captain status:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkCaptainStatus();
-  }, [teamname, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
+export default async function DesignRequestsPage({ params }: Props) {
+  const { teamname } = await params;
+  const cookieStore = await cookies();
+  const userIdCookie = cookieStore.get('tenant_user_id');
+  const userId = userIdCookie?.value || null;
 
   return (
     <>
@@ -78,39 +28,11 @@ export default function DesignRequestsPage() {
             <span className="text-gray-900 font-semibold">Design Requests</span>
           </div>
 
-          {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Design Requests
-              </h1>
-              <p className="text-gray-600">
-                View and manage all your custom design requests
-              </p>
-            </div>
-            {isCaptain && (
-              <Link
-                href={`/custom/${teamname}/order/design-requests/new`}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-              >
-                + New Request
-              </Link>
-            )}
-          </div>
-
-          {!isCaptain && (
-            <div className="mb-8 bg-amber-50 border border-amber-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-amber-900 mb-2">
-                ℹ️ Team Captain Access Required
-              </h3>
-              <p className="text-amber-800">
-                Only team captains can submit design requests. If you believe you should have captain access, please contact your team administrator.
-              </p>
-            </div>
-          )}
+          {/* Header with Captain Button */}
+          <DesignRequestsHeader teamname={teamname} />
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-8">
             <div className="lg:col-span-3">
               <DesignRequestsList teamName={teamname} userId={userId} />
             </div>
@@ -189,3 +111,4 @@ export default function DesignRequestsPage() {
     </>
   );
 }
+
