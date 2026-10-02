@@ -34,10 +34,12 @@ export default function DesignRequestsList({
           headers: {
             "x-tenant-slug": teamName.toLowerCase(),
           },
+          credentials: "include",
         });
 
         if (!response.ok) {
-          throw new Error("Failed to load design requests");
+          const data = await response.json();
+          throw new Error(data.error || "Failed to load design requests");
         }
 
         const data = await response.json();
@@ -93,6 +95,23 @@ export default function DesignRequestsList({
           </div>
           <p className="text-gray-600">Loading design requests...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error === "User ID required" || error === "Not authenticated") {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+        <p className="text-amber-800 font-semibold mb-2">Authentication Required</p>
+        <p className="text-amber-700 text-sm mb-4">
+          You need to be logged in to view design requests.
+        </p>
+        <Link
+          href={`/custom/${teamName}/login`}
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
+        >
+          Go to Login
+        </Link>
       </div>
     );
   }

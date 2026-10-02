@@ -30,6 +30,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           headers: {
             'x-tenant-slug': teamname,
           },
+          credentials: "include",
         });
 
         if (!response.ok) {
@@ -118,6 +119,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           "x-tenant-slug": teamname,
         },
         body: formDataToSend,
+        credentials: "include",
       });
 
       const data = await response.json();

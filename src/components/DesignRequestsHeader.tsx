@@ -18,6 +18,7 @@ export default function DesignRequestsHeader({ teamname }: DesignRequestsHeaderP
           headers: {
             'x-tenant-slug': teamname,
           },
+          credentials: "include",
         });
 
         if (response.ok) {
