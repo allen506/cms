@@ -72,8 +72,9 @@ export async function POST(request: NextRequest) {
       201
     );
   } catch (error) {
-    console.error('Register error:', error instanceof Error ? error.message : error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Register error:', errorMsg);
     console.error('Register error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    return errorResponse('An error occurred', 500);
+    return errorResponse(`An error occurred: ${errorMsg}`, 500);
   }
 }
