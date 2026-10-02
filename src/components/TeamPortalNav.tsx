@@ -49,7 +49,7 @@ export default function TeamPortalNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <Link href={`/custom/${teamname}/order/products`} className="flex items-center gap-2">
-            <span className="text-lg font-bold text-gray-900 tracking-tight">ThinkMTB</span>
+            <span className="text-lg font-bold text-gray-900 tracking-tight">CMS Sportswear</span>
           </Link>
           
           <div className="hidden sm:flex items-center gap-1">
