@@ -53,7 +53,7 @@ function CustomLoginContent() {
       }
 
       // Successfully logged in
-      router.push(`/custom/${teamSlug}/order/products`);
+      router.push(`/custom/${teamSlug}`);
     } catch (err) {
       setError('An error occurred. Please try again.');
     } finally {
