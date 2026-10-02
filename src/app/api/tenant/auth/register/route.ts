@@ -41,20 +41,32 @@ export async function POST(request: NextRequest) {
       return errorResponse('Email already in use', 400);
     }
 
+    // Check if this is the first user for the team
+    const userCount = await queryOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM user_accounts WHERE tenant_id = ?',
+      [tenant.id]
+    );
+
+    const isFirstUser = (userCount?.count ?? 0) === 0;
+
     // Create user account
     const userId = uuidv4();
     const passwordHash = hashPassword(password);
 
     await execute(
-      `INSERT INTO user_accounts (id, tenant_id, email, password_hash, created_at)
-       VALUES (?, ?, ?, ?, NOW())`,
-      [userId, tenant.id, email, passwordHash]
+      `INSERT INTO user_accounts (id, tenant_id, email, password_hash, is_team_captain, created_at)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [userId, tenant.id, email, passwordHash, isFirstUser ? 1 : 0]
     );
 
     return successResponse(
       {
         success: true,
-        user: { id: userId, email },
+        user: { 
+          id: userId, 
+          email,
+          isCaptain: isFirstUser,
+        },
       },
       201
     );

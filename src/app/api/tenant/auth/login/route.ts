@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Get user account by email
     const user = await queryOne<any>(
-      `SELECT id, email, password_hash, team_id 
+      `SELECT id, email, password_hash, team_id, is_team_captain 
        FROM user_accounts 
        WHERE tenant_id = ? AND email = ?`,
       [tenant.id, email]
@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         team_id: user.team_id,
+        isCaptain: user.is_team_captain === 1 || user.is_team_captain === true,
       },
     });
 
