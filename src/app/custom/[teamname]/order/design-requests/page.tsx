@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import DesignRequestsHeader from "@/components/DesignRequestsHeader";
 import DesignRequestsList from "@/components/DesignRequestsList";
 
@@ -9,9 +8,6 @@ interface Props {
 
 export default async function DesignRequestsPage({ params }: Props) {
   const { teamname } = await params;
-  const cookieStore = await cookies();
-  const userIdCookie = cookieStore.get('tenant_user_id');
-  const userId = userIdCookie?.value || null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -31,7 +27,7 @@ export default async function DesignRequestsPage({ params }: Props) {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-8">
           <div className="lg:col-span-3">
-            <DesignRequestsList teamName={teamname} userId={userId} />
+            <DesignRequestsList teamName={teamname} userId={null} />
           </div>
 
           {/* Sidebar */}
