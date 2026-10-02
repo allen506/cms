@@ -16,10 +16,12 @@ interface DesignRequest {
 
 interface DesignRequestsListProps {
   teamName: string;
+  userId: string | null;
 }
 
 export default function DesignRequestsList({
   teamName,
+  userId,
 }: DesignRequestsListProps) {
   const [requests, setRequests] = useState<DesignRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +33,7 @@ export default function DesignRequestsList({
         const response = await fetch("/api/designs/requests", {
           headers: {
             "x-tenant-slug": teamName.toLowerCase(),
+            "x-user-id": userId || "",
           },
         });
 
@@ -47,8 +50,10 @@ export default function DesignRequestsList({
       }
     };
 
-    fetchRequests();
-  }, [teamName]);
+    if (userId) {
+      fetchRequests();
+    }
+  }, [teamName, userId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

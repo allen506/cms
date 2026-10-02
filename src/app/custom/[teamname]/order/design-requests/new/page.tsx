@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import TeamPortalNav from "@/components/TeamPortalNav";
 
 export default function NewDesignRequestPage() {
   const params = useParams();
@@ -146,17 +147,19 @@ export default function NewDesignRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href={`/custom/${teamname}/order/design-requests`}
-            className="text-blue-600 hover:text-blue-700 font-semibold mb-4 inline-block"
-          >
-            ← Back to Design Requests
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <>
+      <TeamPortalNav />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <Link
+              href={`/custom/${teamname}/order/design-requests`}
+              className="text-blue-600 hover:text-blue-700 font-semibold mb-4 inline-block"
+            >
+              ← Back to Design Requests
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Submit New Design Request
           </h1>
           <p className="text-gray-600">
@@ -380,5 +383,6 @@ export default function NewDesignRequestPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
