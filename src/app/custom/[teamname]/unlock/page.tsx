@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,7 +11,42 @@ function TeamUnlockContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validatingTeam, setValidatingTeam] = useState(true);
+  const [teamExists, setTeamExists] = useState(false);
   const router = useRouter();
+
+  // Validate team exists on mount
+  useEffect(() => {
+    const validateTeam = async () => {
+      try {
+        const response = await fetch('/api/tenant/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            teamSlug,
+            teamPassword: '', // Empty password, just checking if team exists
+          }),
+        });
+
+        const data = await response.json();
+
+        // If we get "Team not found", the team doesn't exist
+        if (response.status === 404 && data.error === 'Team not found') {
+          setTeamExists(false);
+        } else {
+          // Any other response means team exists (either password required or wrong password)
+          setTeamExists(true);
+        }
+      } catch (err) {
+        // Assume team exists if we can't validate (network error, etc.)
+        setTeamExists(true);
+      } finally {
+        setValidatingTeam(false);
+      }
+    };
+
+    validateTeam();
+  }, [teamSlug]);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +84,64 @@ function TeamUnlockContent() {
       setLoading(false);
     }
   };
+
+  // Show loading state while validating team
+  if (validatingTeam) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: '#f5f5f7' }}
+      >
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-3xl p-8 md:p-10 shadow-lg border border-gray-200 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Validating team...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if team doesn't exist
+  if (!teamExists) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: '#f5f5f7' }}
+      >
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-3xl p-8 md:p-10 shadow-lg border border-red-200">
+            <div className="text-center mb-8">
+              <div className="text-5xl mb-4">❌</div>
+              <h1 className="text-2xl font-bold text-red-900 mb-2">Team Not Found</h1>
+              <p className="text-red-700">
+                The team "{teamSlug}" does not exist in our system.
+              </p>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-800 text-sm">
+                Please check the team name and try again, or contact your system administrator.
+              </p>
+            </div>
+
+            <Link
+              href="/custom"
+              className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 mb-4"
+            >
+              ← Back to Portal Entry
+            </Link>
+
+            <div className="text-center">
+              <p className="text-gray-600 text-sm">
+                Team name: <code className="bg-gray-100 px-2 py-1 rounded">{teamSlug}</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
