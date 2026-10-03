@@ -24,17 +24,18 @@ function TeamUnlockContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             teamSlug,
-            teamPassword: '', // Empty password, just checking if team exists
+            teamPassword: '__validation__', // Use a dummy password for team validation
           }),
         });
 
         const data = await response.json();
 
-        // If we get "Team not found", the team doesn't exist
-        if (response.status === 404 && data.error === 'Team not found') {
+        // If error is "Team not found", the team doesn't exist
+        if (data.error === 'Team not found') {
           setTeamExists(false);
         } else {
-          // Any other response means team exists (either password required or wrong password)
+          // Any other error means team exists (team password validation failed)
+          // Valid responses: "Invalid team password", "Team password not configured", etc.
           setTeamExists(true);
         }
       } catch (err) {
@@ -115,7 +116,7 @@ function TeamUnlockContent() {
               <div className="text-5xl mb-4">❌</div>
               <h1 className="text-2xl font-bold text-red-900 mb-2">Team Not Found</h1>
               <p className="text-red-700">
-                The team "{teamSlug}" does not exist in our system.
+                The team "<code className="bg-red-100 px-2 py-1 rounded font-mono">{teamSlug}</code>" does not exist in our system.
               </p>
             </div>
 
@@ -133,8 +134,8 @@ function TeamUnlockContent() {
             </Link>
 
             <div className="text-center">
-              <p className="text-gray-600 text-sm">
-                Team name: <code className="bg-gray-100 px-2 py-1 rounded">{teamSlug}</code>
+              <p className="text-gray-500 text-xs">
+                If you believe this is an error, please contact your team administrator.
               </p>
             </div>
           </div>
