@@ -54,7 +54,14 @@ export default function DesignerDashboard() {
           Design Requests Dashboard
         </h1>
         <p className="text-gray-600">
-          View and respond to design requests from teams
+          View and respond to design requests from teams. Click on any request to view details and submit your design proposal.
+        </p>
+      </div>
+
+      {/* Info Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-blue-900 text-sm">
+          <span className="font-semibold">💡 How to submit:</span> View a design request, scroll to the bottom, and upload your design files with any notes for the team.
         </p>
       </div>
 
@@ -68,9 +75,14 @@ export default function DesignerDashboard() {
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <div className="text-6xl mb-4">📋</div>
           <p className="text-gray-600 text-lg mb-4">No design requests yet</p>
-          <p className="text-gray-500">
-            When teams submit design requests, they will appear here
+          <p className="text-gray-500 mb-6">
+            When teams submit design requests, they will appear here. Click on a request to view details and submit your design proposal.
           </p>
+          <Link href="/designer/submissions" className="inline-block">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+              View My Submissions
+            </button>
+          </Link>
         </div>
       ) : (
         <div className="grid gap-6">
