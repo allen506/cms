@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, requirePlatformAdmin, successResponse, errorResponse } from "@/lib/route-helpers";
+import { query, requirePlatformAdmin } from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   const authError = requirePlatformAdmin(request);
@@ -14,10 +14,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      products: products || [],
-    });
+      products: products || []});
   } catch (error) {
     console.error("Error fetching products for platform admin:", error);
-    return errorResponse("Failed to fetch products", 500);
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
 }

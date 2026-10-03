@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/route-helpers";
+import { query } from "@/lib/db-async";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 
 export async function GET() {
@@ -28,8 +28,7 @@ export async function GET() {
 
     const pricingTiersWithLiveUSD = pricingTiers.map((tier: any) => ({
       ...tier,
-      price_usd: crcToUsd(tier.price_crc, rate),
-    }));
+      price_usd: crcToUsd(tier.price_crc, rate)}));
 
     return NextResponse.json({
       designs,
@@ -37,8 +36,7 @@ export async function GET() {
       sizes,
       pricingTiers: pricingTiersWithLiveUSD,
       productDesigns,
-      exchangeRate: rate,
-    });
+      exchangeRate: rate});
   } catch (error) {
     console.error("Error fetching catalog:", error);
     return NextResponse.json(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne, requirePlatformAdmin } from "@/lib/route-helpers";
+import { query, queryOne, requirePlatformAdmin } from "@/lib/db-async";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { getUnitPriceCRC } from "@/lib/pricing";
 
@@ -86,9 +86,7 @@ export async function GET(request: NextRequest) {
            JOIN orders o ON oi.order_id = o.id
            WHERE 1=1 ${tenantWhere}`,
           params
-        ),
-      },
-    });
+        )}});
   } catch (error) {
     console.error('Get breakdown error:', error);
     return NextResponse.json(

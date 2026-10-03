@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  verifyPassword,
-  createSessionToken,
-  hashPassword,
-} from "@/lib/route-helpers";
+  queryOne, execute, verifyPassword, createSessionToken, hashPassword} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: NextRequest) {
@@ -15,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { password } = await request.json();
     
     if (!password) {
-      return errorResponse("Password is required", 400);
+      return NextResponse.json({ error: "Password is required" }, { status: 400 });
     }
 
     // For now, check against hardcoded env var (TODO: use tenant_admins table)
@@ -23,7 +16,7 @@ export async function POST(request: NextRequest) {
     const hashedAdminPassword = hashPassword(adminPassword);
     
     if (!verifyPassword(password, hashedAdminPassword)) {
-      return errorResponse("Invalid password", 401);
+      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }
 
     // Create admin session token
@@ -63,6 +56,6 @@ export async function POST(request: NextRequest) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
     }
-    return errorResponse(`Verification failed: ${error instanceof Error ? error.message : String(error)}`, 500);
+    return NextResponse.json({ error: `Verification failed: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
   }
 }

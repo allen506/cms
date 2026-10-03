@@ -1,13 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   queryOne,
   query,
   execute,
-  errorResponse,
-  successResponse,
   extractContext,
-  requireAuth,
-} from "@/lib/route-helpers";
+  requireAuth} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -21,7 +18,7 @@ export async function POST(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -30,7 +27,7 @@ export async function POST(
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Verify request exists
@@ -40,14 +37,14 @@ export async function POST(
     );
 
     if (!designRequest) {
-      return errorResponse("Design request not found", 404);
+      return NextResponse.json({ error: "Design request not found" }, { status: 404 });
     }
 
     // Only requester can upload to their request
     if (designRequest.requester_id !== ctx.userId) {
-      return errorResponse(
-        "Only the requester can upload files",
-        403
+      return NextResponse.json(
+        { error: "Only the requester can upload files" },
+        { status: 403 }
       );
     }
 
@@ -55,7 +52,7 @@ export async function POST(
     const files = formData.getAll("files") as File[];
 
     if (!files || files.length === 0) {
-      return errorResponse("No files provided", 400);
+      return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
     const uploadedFiles = [];
@@ -79,25 +76,23 @@ export async function POST(
         fileId,
         fileName,
         fileType,
-        fileUrl,
-      });
+        fileUrl});
     }
 
     if (uploadedFiles.length === 0) {
-      return errorResponse("Failed to upload files", 500);
+      return NextResponse.json({ error: "Failed to upload files" }, { status: 500 });
     }
 
-    return successResponse(
+    return NextResponse.json(
       {
         success: true,
         uploadedFiles,
-        message: `${uploadedFiles.length} file(s) uploaded successfully`,
-      },
-      201
+        message: `${uploadedFiles.length} file(s) uploaded successfully`},
+      { status: 201 }
     );
   } catch (error) {
     console.error("Error uploading files:", error);
-    return errorResponse("Failed to upload files", 500);
+    return NextResponse.json({ error: "Failed to upload files" }, { status: 500 });
   }
 }
 
@@ -112,7 +107,7 @@ export async function GET(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -121,7 +116,7 @@ export async function GET(
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Get files
@@ -133,13 +128,12 @@ export async function GET(
       [id]
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       files,
-      count: files.length,
-    });
+      count: files.length});
   } catch (error) {
     console.error("Error fetching files:", error);
-    return errorResponse("Failed to fetch files", 500);
+    return NextResponse.json({ error: "Failed to fetch files" }, { status: 500 });
   }
 }

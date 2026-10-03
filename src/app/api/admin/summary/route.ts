@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne } from "@/lib/route-helpers";
+import { query, queryOne } from "@/lib/db-async";
 import { getUnitPriceCRC } from "@/lib/pricing";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { isAdminAuthenticated, unauthorized } from '@/lib/admin-auth';
@@ -41,8 +41,7 @@ export async function GET(request: NextRequest) {
         tierPriceCRC: priceCRC,
         tierPriceUSD: priceUSD,
         totalCRC: priceCRC * p.total_qty,
-        totalUSD: priceUSD * p.total_qty,
-      };
+        totalUSD: priceUSD * p.total_qty};
     });
 
     // All orders with basic info (design and size fields not available in current schema)
@@ -60,11 +59,9 @@ export async function GET(request: NextRequest) {
         byDesign: [],
         bySize: [],
         byFit: [],
-        fullBreakdown: [],
-      },
+        fullBreakdown: []},
       orders: orders,
-      exchangeRate,
-    });
+      exchangeRate});
   } catch (error) {
     console.error("Error fetching admin summary:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);

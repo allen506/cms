@@ -1,10 +1,10 @@
+import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { queryOne } from "@/lib/route-helpers";
+import { queryOne } from "@/lib/db-async";
 
 export default async function TeamHomePage({
-  params,
-}: {
+  params}: {
   params: Promise<{ teamname: string }>;
 }) {
   const { teamname } = await params;

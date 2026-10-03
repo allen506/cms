@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { queryOne, execute, requirePlatformAdmin, errorResponse, successResponse } from "@/lib/route-helpers";
+import { queryOne, execute, requirePlatformAdmin } from "@/lib/db-async";
 
 /** Update team password for a tenant */
 export async function PATCH(
@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const authError = requirePlatformAdmin(request);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     const { id: tenantId } = await params;
@@ -18,7 +18,7 @@ export async function PATCH(
     const { newPassword } = body;
 
     if (!newPassword || newPassword.trim() === "") {
-      return errorResponse("Password is required", 400);
+      return NextResponse.json({ error: "Password is required" }, { status: 400 });
     }
 
     // Get the tenant to make sure it exists
@@ -28,7 +28,7 @@ export async function PATCH(
     );
 
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Check if team_password setting already exists
@@ -52,15 +52,11 @@ export async function PATCH(
       );
     }
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
-      message: "Team password updated successfully",
-    });
+      message: "Team password updated successfully"});
   } catch (error) {
     console.error("Update team password error:", error);
-    return errorResponse(
-      `Failed to update team password: ${error instanceof Error ? error.message : String(error)}`,
-      500
-    );
+    return NextResponse.json({ error: `Failed to update team password: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
   }
 }

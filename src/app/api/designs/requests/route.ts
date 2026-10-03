@@ -4,11 +4,7 @@ import {
   queryOne,
   execute,
   extractContext,
-  requireAuth,
-  errorResponse,
-  successResponse,
-  withTransaction,
-} from "@/lib/route-helpers";
+  requireAuth} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(request: NextRequest) {
@@ -18,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID from slug
@@ -27,7 +23,7 @@ export async function GET(request: NextRequest) {
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     let sql = `
@@ -69,14 +65,13 @@ export async function GET(request: NextRequest) {
     const requests = await query<any>(sql, params);
     console.log("Design requests query succeeded, count:", requests.length);
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       requests,
-      count: requests.length,
-    });
+      count: requests.length});
   } catch (error) {
     console.error("Error fetching design requests:", error);
-    return errorResponse(`Failed to fetch design requests: ${error instanceof Error ? error.message : String(error)}`, 500);
+    return NextResponse.json({ error: `Failed to fetch design requests: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
   }
 }
 
@@ -87,7 +82,7 @@ export async function POST(request: NextRequest) {
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -96,7 +91,7 @@ export async function POST(request: NextRequest) {
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Verify user is team captain
@@ -109,13 +104,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!user || !user.is_team_captain) {
-      return errorResponse("Only team captains can request designs", 403);
+      return NextResponse.json({ error: "Only team captains can request designs" }, { status: 403 });
     }
 
     const { title, description } = await request.json();
 
     if (!title || !description) {
-      return errorResponse("Title and description are required", 400);
+      return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
     }
 
     const id = uuidv4();
@@ -130,19 +125,18 @@ export async function POST(request: NextRequest) {
     );
 
     if (result.changes === 0) {
-      return errorResponse("Failed to create design request", 500);
+      return NextResponse.json({ error: "Failed to create design request" }, { status: 500 });
     }
 
-    return successResponse(
+    return NextResponse.json(
       {
         success: true,
         requestId: id,
-        message: "Design request created successfully",
-      },
-      201
+        message: "Design request created successfully"},
+      { status: 201 }
     );
   } catch (error) {
     console.error("Error creating design request:", error);
-    return errorResponse("Failed to create design request", 500);
+    return NextResponse.json({ error: "Failed to create design request" }, { status: 500 });
   }
 }

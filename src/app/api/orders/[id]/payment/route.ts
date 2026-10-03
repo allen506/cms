@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne, execute, errorResponse, successResponse, extractContext, requireAuth } from "@/lib/route-helpers";
+import { query, queryOne, execute, extractContext, requireAuth } from "@/lib/db-async";
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +12,7 @@ export async function GET(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -22,7 +22,7 @@ export async function GET(
     );
 
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Get order with all details
@@ -47,12 +47,12 @@ export async function GET(
     );
 
     if (!order) {
-      return errorResponse("Order not found", 404);
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     // Access control: only user who created order or admin
     if (order.user_id !== ctx.userId && ctx.userRole !== "admin") {
-      return errorResponse("Access denied", 403);
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Get order items
@@ -98,17 +98,16 @@ export async function GET(
     const depositUsd = order.total_usd / 2;
     const depositCrc = order.total_crc / 2;
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       order,
       items,
       payment,
       depositUsd,
-      depositCrc,
-    });
+      depositCrc});
   } catch (error) {
     console.error("Error fetching order:", error);
-    return errorResponse("Failed to fetch order", 500);
+    return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
   }
 }
 
@@ -123,7 +122,7 @@ export async function POST(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -133,7 +132,7 @@ export async function POST(
     );
 
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Get order
@@ -143,12 +142,12 @@ export async function POST(
     );
 
     if (!order) {
-      return errorResponse("Order not found", 404);
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     // Access control
     if (order.user_id !== ctx.userId) {
-      return errorResponse("Only order creator can request payment", 403);
+      return NextResponse.json({ error: "Only order creator can request payment" }, { status: 403 });
     }
 
     // Check if payment request already exists
@@ -161,7 +160,7 @@ export async function POST(
     );
 
     if (existing) {
-      return errorResponse("Payment already requested or in progress", 400);
+      return NextResponse.json({ error: "Payment already requested or in progress" }, { status: 400 });
     }
 
     // Create payment record for 50% deposit
@@ -179,7 +178,7 @@ export async function POST(
     );
 
     if (result.changes === 0) {
-      return errorResponse("Failed to create payment request", 500);
+      return NextResponse.json({ error: "Failed to create payment request" }, { status: 500 });
     }
 
     // Update order status
@@ -188,20 +187,15 @@ export async function POST(
       orderId,
     ]);
 
-    return successResponse(
-      {
+    return NextResponse.json({
         success: true,
         paymentId,
         message: "Payment request created. Admin will send you a payment link shortly.",
         amount: {
           usd: depositUsd,
-          crc: depositCrc,
-        },
-      },
-      201
-    );
+          crc: depositCrc}}, { status: 201 });
   } catch (error) {
     console.error("Error creating payment request:", error);
-    return errorResponse("Failed to create payment request", 500);
+    return NextResponse.json({ error: "Failed to create payment request" }, { status: 500 });
   }
 }

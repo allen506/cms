@@ -1,14 +1,6 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
-  query,
-  queryOne,
-  execute,
-  withTransaction,
-  errorResponse,
-  successResponse,
-  requirePlatformAdmin,
-  hashPassword,
-} from '@/lib/route-helpers';
+  query, queryOne, execute, requirePlatformAdmin, hashPassword} from "@/lib/db-async";
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
@@ -16,7 +8,7 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const authError = requirePlatformAdmin(request);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     const tenants = await query<any>(
@@ -25,10 +17,10 @@ export async function GET(request: NextRequest) {
        ORDER BY created_at DESC`
     );
 
-    return successResponse(tenants);
+    return NextResponse.json(tenants);
   } catch (error) {
     console.error('Get tenants error:', error);
-    return errorResponse('An error occurred', 500);
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 });
   }
 }
 
@@ -37,13 +29,13 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const authError = requirePlatformAdmin(request);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     const { name, slug, admin_email, admin_password, admin_full_name } = await request.json();
 
     if (!name || !slug || !admin_email || !admin_password) {
-      return errorResponse('Missing required fields', 400);
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Check if slug already exists
@@ -52,7 +44,7 @@ export async function POST(request: NextRequest) {
       [slug]
     );
     if (existing) {
-      return errorResponse('Slug already exists', 400);
+      return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
     }
 
     return await withTransaction(async (client) => {
@@ -82,8 +74,7 @@ export async function POST(request: NextRequest) {
         'payment_paypal': '',
         'payment_cash': 'Pay in person at the event or contact an admin.',
         'archive_retention_days': '365',
-        'session_timeout_minutes': '15',
-      };
+        'session_timeout_minutes': '15'};
 
       for (const [key, value] of Object.entries(defaults)) {
         const settingId = uuidv4();
@@ -94,13 +85,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      return successResponse(
-        { success: true, tenant: { id: tenantId, name, slug, admin_email } },
-        201
-      );
+      return NextResponse.json({ success: true, tenant: { id: tenantId, name, slug, admin_email } }, { status: 201 });
     });
   } catch (error) {
     console.error('Create tenant error:', error);
-    return errorResponse('An error occurred', 500);
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 });
   }
 }

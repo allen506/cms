@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne,
-  successResponse,
-  errorResponse,
-  verifyPassword,
-  createSessionToken,
-  requirePlatformAdmin,
-} from '@/lib/route-helpers';
+  queryOne, verifyPassword, createSessionToken, requirePlatformAdmin} from "@/lib/db-async";
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return errorResponse('Email and password are required', 400);
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     // Try to get admin from database
@@ -25,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (admin && verifyPassword(password, admin.password_hash)) {
       // Valid credentials - create session
       const token = createSessionToken();
-      const response = successResponse({ success: true });
+      const response = NextResponse.json({ success: true });
       response.cookies.set('platform_admin_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -41,19 +35,18 @@ export async function POST(request: NextRequest) {
 
     if (email === ENV_ADMIN_EMAIL && password === ENV_ADMIN_PASSWORD) {
       const token = createSessionToken();
-      const response = successResponse({ success: true });
+      const response = NextResponse.json({ success: true });
       response.cookies.set('platform_admin_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24,
-      });
+        maxAge: 60 * 60 * 24});
       return response;
     }
 
-    return errorResponse('Invalid credentials', 401);
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   } catch (error) {
     console.error('Login error:', error);
-    return errorResponse('An error occurred', 500);
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 });
   }
 }

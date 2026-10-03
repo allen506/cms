@@ -33,8 +33,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Password updated successfully",
-      account: results[0],
-    });
+      account: results[0]});
   } catch (error) {
     console.error("Reset password error:", error);
     return NextResponse.json(

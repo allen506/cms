@@ -1,12 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-  withTransaction,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 import { writeFileSync, mkdirSync, unlinkSync } from "fs";
 import path from "path";
 
@@ -19,7 +13,7 @@ export async function GET(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -30,13 +24,13 @@ export async function GET(
     );
 
     if (!design) {
-      return errorResponse("Design not found", 404);
+      return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
-    return successResponse({ design });
+    return NextResponse.json({ design });
   } catch (error) {
     console.error("Error fetching design:", error);
-    return errorResponse("Failed to fetch design", 500);
+    return NextResponse.json({ error: "Failed to fetch design" }, { status: 500 });
   }
 }
 
@@ -46,7 +40,7 @@ export async function PATCH(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -77,7 +71,7 @@ export async function PATCH(
     );
 
     if (!existing) {
-      return errorResponse("Design not found", 404);
+      return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
     const updates = [];
@@ -108,14 +102,11 @@ export async function PATCH(
     if (file) {
       const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
       if (!validTypes.includes(file.type)) {
-        return errorResponse(
-          "Invalid file type. Only JPEG, PNG, WebP, GIF allowed.",
-          400
-        );
+        return NextResponse.json({ error: "Invalid file type. Only JPEG, PNG, WebP, GIF allowed." }, { status: 400 });
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        return errorResponse("File too large. Max 5MB.", 400);
+        return NextResponse.json({ error: "File too large. Max 5MB." }, { status: 400 });
       }
 
       // Delete old image if exists
@@ -146,7 +137,7 @@ export async function PATCH(
     }
 
     if (updates.length === 0) {
-      return errorResponse("No fields to update", 400);
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     updates.push("updated_at = NOW()");
@@ -154,10 +145,10 @@ export async function PATCH(
     const sql = `UPDATE designs SET ${updates.join(", ")} WHERE id = ?`;
     await execute(sql, values);
 
-    return successResponse({ message: "Design updated successfully" });
+    return NextResponse.json({ message: "Design updated successfully" });
   } catch (error) {
     console.error("Error updating design:", error);
-    return errorResponse("Failed to update design", 500);
+    return NextResponse.json({ error: "Failed to update design" }, { status: 500 });
   }
 }
 
@@ -167,7 +158,7 @@ export async function DELETE(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -180,10 +171,7 @@ export async function DELETE(
     );
 
     if (orders && orders.count > 0) {
-      return errorResponse(
-        `Cannot delete design with ${orders.count} existing orders`,
-        400
-      );
+      return NextResponse.json({ error: `Cannot delete design with ${orders.count} existing orders` }, { status: 400 });
     }
 
     // Get design to find image
@@ -193,7 +181,7 @@ export async function DELETE(
     );
 
     if (!design) {
-      return errorResponse("Design not found", 404);
+      return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
     // Delete in a transaction: child records first, then the design
@@ -212,9 +200,9 @@ export async function DELETE(
       }
     }
 
-    return successResponse({ message: "Design deleted successfully" });
+    return NextResponse.json({ message: "Design deleted successfully" });
   } catch (error) {
     console.error("Error deleting design:", error);
-    return errorResponse("Failed to delete design", 500);
+    return NextResponse.json({ error: "Failed to delete design" }, { status: 500 });
   }
 }

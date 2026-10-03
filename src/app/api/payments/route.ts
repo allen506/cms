@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-} from "@/lib/route-helpers";
+  query, queryOne, execute} from "@/lib/db-async";
 import { sendPaymentNotification, PaymentNotificationData } from "@/lib/email";
 import { v4 as uuidv4 } from "uuid";
 
@@ -36,10 +31,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return successResponse({ payments });
+    return NextResponse.json({ payments });
   } catch (error) {
     console.error("Error fetching payments:", error);
-    return errorResponse("Failed to fetch payments", 500);
+    return NextResponse.json({ error: "Failed to fetch payments" }, { status: 500 });
   }
 }
 
@@ -49,15 +44,12 @@ export async function POST(request: NextRequest) {
       await request.json();
 
     if (!orderId || !userName || !method) {
-      return errorResponse(
-        "orderId, userName, and method are required",
-        400
-      );
+      return NextResponse.json({ error: "orderId, userName, and method are required" }, { status: 400 });
     }
 
     const validMethods = ["zelle", "venmo", "paypal", "cash"];
     if (!validMethods.includes(method)) {
-      return errorResponse("Invalid payment method", 400);
+      return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
     }
 
     const paymentId = uuidv4();
@@ -105,8 +97,7 @@ export async function POST(request: NextRequest) {
           amountUsd,
           amountCrc,
           reference,
-          paymentId: paymentId as any,
-        };
+          paymentId: paymentId as any};
 
         // Send notification (non-blocking)
         sendPaymentNotification(notificationData).catch((err) => {
@@ -118,9 +109,9 @@ export async function POST(request: NextRequest) {
       // Don't fail the payment submission if email fails
     }
 
-    return successResponse({ id: paymentId, message: "Payment submitted" }, 201);
+    return NextResponse.json({ id: paymentId, message: "Payment submitted" }, { status: 201 });
   } catch (error) {
     console.error("Error creating payment:", error);
-    return errorResponse("Failed to create payment", 500);
+    return NextResponse.json({ error: "Failed to create payment" }, { status: 500 });
   }
 }

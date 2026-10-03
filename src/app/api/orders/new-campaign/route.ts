@@ -1,20 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-  withTransaction,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, requireAdminSession} from "@/lib/db-async";
 import { getUnitPriceCRC } from "@/lib/pricing";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
-  if (authError) return errorResponse(authError.error, 401);
+  if (authError) return NextResponse.json({ error: authError.error }, { status: 401 });
 
   try {
     // Get retention days setting (default 365 days = 1 year)
@@ -130,17 +123,16 @@ export async function POST(request: NextRequest) {
       );
     });
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       message: `${campaignName} archived successfully. Starting fresh campaign.`,
       campaignId: nextCampaignNumber,
       campaignName,
       ordersArchived: stats?.total_orders || 0,
       itemsArchived: stats?.total_items || 0,
-      archiveRetentionDays: retentionDays,
-    });
+      archiveRetentionDays: retentionDays});
   } catch (error) {
     console.error("Error starting new campaign:", error);
-    return errorResponse("Failed to start new campaign", 500);
+    return NextResponse.json({ error: "Failed to start new campaign" }, { status: 500 });
   }
 }

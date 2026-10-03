@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  extractContext,
-  errorResponse,
-  successResponse,
-} from "@/lib/route-helpers";
+  queryOne, extractContext} from "@/lib/db-async";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +8,7 @@ export async function POST(request: NextRequest) {
     const teamId = request.headers.get("x-team-id");
 
     if (!teamId) {
-      return errorResponse("Team ID required in headers", 400);
+      return NextResponse.json({ error: "Team ID required in headers" }, { status: 400 });
     }
 
     // Get tenant ID
@@ -22,13 +18,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     const { productId, quantity } = await request.json();
 
     if (!productId || !quantity || quantity < 1) {
-      return errorResponse("Product ID and quantity (>= 1) required", 400);
+      return NextResponse.json({ error: "Product ID and quantity (>= 1) required" }, { status: 400 });
     }
 
     // Check for active price override
@@ -44,7 +40,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (override) {
-      return successResponse({
+      return NextResponse.json({
         success: true,
         productId,
         quantity,
@@ -52,8 +48,7 @@ export async function POST(request: NextRequest) {
         priceUsd: override.price_usd,
         isOverride: true,
         totalCrc: override.price_crc * quantity,
-        totalUsd: override.price_usd * quantity,
-      });
+        totalUsd: override.price_usd * quantity});
     }
 
     // Get pricing tier for this quantity
@@ -70,10 +65,10 @@ export async function POST(request: NextRequest) {
     );
 
     if (!tier) {
-      return errorResponse("No pricing available for this quantity", 400);
+      return NextResponse.json({ error: "No pricing available for this quantity" }, { status: 400 });
     }
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       productId,
       quantity,
@@ -81,10 +76,9 @@ export async function POST(request: NextRequest) {
       priceUsd: tier.price_usd,
       isOverride: false,
       totalCrc: tier.price_crc * quantity,
-      totalUsd: tier.price_usd * quantity,
-    });
+      totalUsd: tier.price_usd * quantity});
   } catch (error) {
     console.error("Error calculating price:", error);
-    return errorResponse("Failed to calculate price", 500);
+    return NextResponse.json({ error: "Failed to calculate price" }, { status: 500 });
   }
 }

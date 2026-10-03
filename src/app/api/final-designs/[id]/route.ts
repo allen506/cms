@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne, execute, errorResponse, successResponse } from "@/lib/route-helpers";
+import { queryOne, execute } from "@/lib/db-async";
 import path from "path";
 import fs from "fs";
 
@@ -16,7 +16,7 @@ export async function PATCH(
     const description = (body.description ?? "").toString().trim();
 
     if (!name) {
-      return errorResponse("name is required", 400);
+      return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
 
     const existing = await queryOne<{ id: string }>(
@@ -24,7 +24,7 @@ export async function PATCH(
       [id]
     );
     if (!existing) {
-      return errorResponse("Not found", 404);
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     await execute(
@@ -39,7 +39,7 @@ export async function PATCH(
     return NextResponse.json(updated);
   } catch (err) {
     console.error("PATCH /api/final-designs/[id] error:", err);
-    return errorResponse("Update failed", 500);
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
 
@@ -55,7 +55,7 @@ export async function DELETE(
     );
 
     if (!row) {
-      return errorResponse("Not found", 404);
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     await execute("DELETE FROM final_designs WHERE id = ?", [id]);
@@ -70,6 +70,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("DELETE /api/final-designs/[id] error:", err);
-    return errorResponse("Delete failed", 500);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 }

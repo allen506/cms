@@ -43,9 +43,7 @@ export async function POST(request: NextRequest) {
       designer: {
         id: designer.id,
         email: designer.email,
-        name: designer.full_name,
-      },
-    });
+        name: designer.full_name}});
 
     // Set session cookies
     response.cookies.set("designer_session", token, {
@@ -53,15 +51,13 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
+      path: "/"});
 
     response.cookies.set("designer_id", designer.id, {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
+      path: "/"});
 
     return response;
   } catch (error) {

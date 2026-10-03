@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/route-helpers";
+import { query } from "@/lib/db-async";
 
 // Returns total quantities per product type across all non-cancelled team orders
 // Used to determine current pricing tier

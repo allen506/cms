@@ -15,8 +15,7 @@ export async function isAdminAuthenticated(request: NextRequest): Promise<boolea
   console.log("📋 Admin auth check", {
     hasCookie: !!request.cookies.get("admin-session")?.value,
     hasHeader: !!request.headers.get("x-admin-token"),
-    tokenFound: !!token,
-  });
+    tokenFound: !!token});
   
   if (!token) {
     console.warn("⚠️ No admin-session cookie or X-Admin-Token header found");

@@ -130,8 +130,7 @@ export async function POST(
         success: true,
         submissionId,
         versionNumber,
-        filesUploaded,
-      },
+        filesUploaded},
       { status: 201 }
     );
   } catch (error) {
@@ -141,8 +140,7 @@ export async function POST(
         error:
           error instanceof Error
             ? error.message
-            : "Failed to submit design",
-      },
+            : "Failed to submit design"},
       { status: 500 }
     );
   }

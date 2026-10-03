@@ -1,13 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   queryOne,
   execute,
   query,
-  errorResponse,
-  successResponse,
   extractContext,
-  requireAuth,
-} from "@/lib/route-helpers";
+  requireAuth} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -21,7 +18,7 @@ export async function POST(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -30,7 +27,7 @@ export async function POST(
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Verify request exists
@@ -40,7 +37,7 @@ export async function POST(
     );
 
     if (!designRequest) {
-      return errorResponse("Design request not found", 404);
+      return NextResponse.json({ error: "Design request not found" }, { status: 404 });
     }
 
     // Verify user has access (requester or team member)
@@ -54,13 +51,13 @@ export async function POST(
       designRequest.requester_id !== ctx.userId &&
       user?.team_id !== designRequest.team_id
     ) {
-      return errorResponse("Access denied to this design request", 403);
+      return NextResponse.json({ error: "Access denied to this design request" }, { status: 403 });
     }
 
     const { comment } = await request.json();
 
     if (!comment || comment.trim().length === 0) {
-      return errorResponse("Comment cannot be empty", 400);
+      return NextResponse.json({ error: "Comment cannot be empty" }, { status: 400 });
     }
 
     const commentId = uuidv4();
@@ -71,17 +68,16 @@ export async function POST(
       [commentId, id, ctx.userId, comment]
     );
 
-    return successResponse(
+    return NextResponse.json(
       {
         success: true,
         commentId,
-        message: "Comment added successfully",
-      },
-      201
+        message: "Comment added successfully"},
+      { status: 201 }
     );
   } catch (error) {
     console.error("Error adding comment:", error);
-    return errorResponse("Failed to add comment", 500);
+    return NextResponse.json({ error: "Failed to add comment" }, { status: 500 });
   }
 }
 
@@ -96,7 +92,7 @@ export async function GET(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -105,7 +101,7 @@ export async function GET(
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Get comments with access control
@@ -119,13 +115,12 @@ export async function GET(
       [id]
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       comments,
-      count: comments.length,
-    });
+      count: comments.length});
   } catch (error) {
     console.error("Error fetching comments:", error);
-    return errorResponse("Failed to fetch comments", 500);
+    return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
   }
 }

@@ -1,18 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const authError = await requireAdminSession(request);
-  if (authError) return errorResponse(authError.error, 401);
+  if (authError) return NextResponse.json({ error: authError.error }, { status: 401 });
 
   try {
     const { id } = await params;
@@ -20,14 +15,14 @@ export async function PATCH(
 
     const validStatuses = ["pending", "confirmed", "rejected"];
     if (status && !validStatuses.includes(status)) {
-      return errorResponse("Invalid status", 400);
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
     const payment = await queryOne<{ id: string; order_id: string }>(
       "SELECT id, order_id FROM payments WHERE id = ?",
       [id]
     );
-    if (!payment) return errorResponse("Payment not found", 404);
+    if (!payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
 
     const updates: string[] = ["updated_at = NOW()"];
     const values: any[] = [];
@@ -54,10 +49,10 @@ export async function PATCH(
       );
     }
 
-    return successResponse({ message: "Payment updated" });
+    return NextResponse.json({ message: "Payment updated" });
   } catch (error) {
     console.error("Error updating payment:", error);
-    return errorResponse("Failed to update payment", 500);
+    return NextResponse.json({ error: "Failed to update payment" }, { status: 500 });
   }
 }
 
@@ -68,9 +63,9 @@ export async function DELETE(
   try {
     const { id } = await params;
     await execute("DELETE FROM payments WHERE id = ?", [id]);
-    return successResponse({ message: "Payment deleted" });
+    return NextResponse.json({ message: "Payment deleted" });
   } catch (error) {
     console.error("Error deleting payment:", error);
-    return errorResponse("Failed to delete payment", 500);
+    return NextResponse.json({ error: "Failed to delete payment" }, { status: 500 });
   }
 }

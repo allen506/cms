@@ -1,11 +1,11 @@
+import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import ProductSelectionForm from "@/components/ProductSelectionForm";
-import { queryOne } from "@/lib/route-helpers";
+import { queryOne } from "@/lib/db-async";
 
 export async function generateMetadata({
-  params,
-}: {
+  params}: {
   params: Promise<{ teamname: string }>;
 }): Promise<Metadata> {
   const { teamname } = await params;
@@ -18,14 +18,12 @@ export async function generateMetadata({
   
   return {
     title: "CMS Sportswear - Select Products",
-    description: `Place your order with ${team?.name || teamname} using CMS Sportswear`,
-  };
+    description: `Place your order with ${team?.name || teamname} using CMS Sportswear`};
 }
 
 export default async function ProductSelectionPage({
   params,
-  searchParams,
-}: {
+  searchParams}: {
   params: Promise<{ teamname: string }>;
   searchParams: Promise<{ designRequestId?: string }>;
 }) {

@@ -1,17 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-} from "@/lib/route-helpers";
+  queryOne, execute} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/user/profile?pin=1234
 export async function GET(request: NextRequest) {
   const pin = request.nextUrl.searchParams.get("pin");
   if (!pin || !/^\d{4}$/.test(pin)) {
-    return errorResponse("Invalid PIN", 400);
+    return NextResponse.json({ error: "Invalid PIN" }, { status: 400 });
   }
 
   try {
@@ -21,13 +17,13 @@ export async function GET(request: NextRequest) {
     );
 
     if (!profile) {
-      return errorResponse("PIN not found", 404);
+      return NextResponse.json({ error: "PIN not found" }, { status: 404 });
     }
 
-    return successResponse({ pin: profile.pin, fullName: profile.full_name });
+    return NextResponse.json({ pin: profile.pin, fullName: profile.full_name });
   } catch (error) {
     console.error("Error fetching profile:", error);
-    return errorResponse("Failed to fetch profile", 500);
+    return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
   }
 }
 
@@ -38,10 +34,10 @@ export async function POST(request: NextRequest) {
     const { pin, fullName } = body;
 
     if (!pin || !/^\d{4}$/.test(pin)) {
-      return errorResponse("PIN must be exactly 4 digits", 400);
+      return NextResponse.json({ error: "PIN must be exactly 4 digits" }, { status: 400 });
     }
     if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
-      return errorResponse("Full name is required", 400);
+      return NextResponse.json({ error: "Full name is required" }, { status: 400 });
     }
 
     const existing = await queryOne<{ pin: string }>(
@@ -49,7 +45,7 @@ export async function POST(request: NextRequest) {
       [pin]
     );
     if (existing) {
-      return errorResponse("PIN already taken — choose a different one", 409);
+      return NextResponse.json({ error: "PIN already taken — choose a different one" }, { status: 409 });
     }
 
     await execute(
@@ -57,12 +53,9 @@ export async function POST(request: NextRequest) {
       [uuidv4(), pin, fullName.trim()]
     );
 
-    return successResponse(
-      { pin, fullName: fullName.trim() },
-      201
-    );
+    return NextResponse.json({ pin, fullName: fullName.trim() }, { status: 201 });
   } catch (error) {
     console.error("Error creating profile:", error);
-    return errorResponse("Failed to create profile", 500);
+    return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
   }
 }

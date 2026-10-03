@@ -1,16 +1,11 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, execute, requireAdminSession} from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -23,17 +18,17 @@ export async function GET(request: NextRequest) {
       settings[r.key] = r.value;
     }
     
-    return successResponse(settings);
+    return NextResponse.json(settings);
   } catch (error) {
     console.error("Error fetching payment settings:", error);
-    return errorResponse("Failed to fetch settings", 500);
+    return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -55,9 +50,9 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    return successResponse({ message: "Payment settings updated" });
+    return NextResponse.json({ message: "Payment settings updated" });
   } catch (error) {
     console.error("Error updating payment settings:", error);
-    return errorResponse("Failed to update settings", 500);
+    return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
   }
 }

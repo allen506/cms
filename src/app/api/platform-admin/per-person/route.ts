@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne, requirePlatformAdmin } from "@/lib/route-helpers";
+import { query, queryOne, requirePlatformAdmin } from "@/lib/db-async";
 
 /** Get per-person order totals for analysis */
 export async function GET(request: NextRequest) {
@@ -50,8 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       personTotals,
-      stats: stats || { total_people: 0, total_orders: 0, total_items: 0 },
-    });
+      stats: stats || { total_people: 0, total_orders: 0, total_items: 0 }});
   } catch (error) {
     console.error('Get per-person totals error:', error);
     return NextResponse.json(

@@ -1,18 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, execute, requireAdminSession} from "@/lib/db-async";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -40,20 +35,19 @@ export async function GET(request: NextRequest) {
     // Calculate USD in real-time for each tier
     const tiersWithUSD = tiers.map((tier) => ({
       ...tier,
-      price_usd: crcToUsd(tier.price_crc, rate),
-    }));
+      price_usd: crcToUsd(tier.price_crc, rate)}));
 
-    return successResponse({ tiers: tiersWithUSD, exchangeRate: rate });
+    return NextResponse.json({ tiers: tiersWithUSD, exchangeRate: rate });
   } catch (error) {
     console.error("Error fetching pricing tiers:", error);
-    return errorResponse("Failed to fetch pricing tiers", 500);
+    return NextResponse.json({ error: "Failed to fetch pricing tiers" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -61,10 +55,7 @@ export async function POST(request: NextRequest) {
     const { product_type_id, min_qty, max_qty, price_crc, tenant_id } = body;
 
     if (!product_type_id || min_qty === undefined || !price_crc) {
-      return errorResponse(
-        "product_type_id, min_qty, price_crc are required",
-        400
-      );
+      return NextResponse.json({ error: "product_type_id, min_qty, price_crc are required" }, { status: 400 });
     }
 
     const id = uuidv4();
@@ -76,12 +67,9 @@ export async function POST(request: NextRequest) {
       [id, product_type_id, tenantId, min_qty, max_qty || min_qty, price_crc]
     );
 
-    return successResponse(
-      { id, message: "Pricing tier created successfully" },
-      201
-    );
+    return NextResponse.json({ id, message: "Pricing tier created successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating pricing tier:", error);
-    return errorResponse("Failed to create pricing tier", 500);
+    return NextResponse.json({ error: "Failed to create pricing tier" }, { status: 500 });
   }
 }

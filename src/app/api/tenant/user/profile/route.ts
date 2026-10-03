@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server';
-import { queryOne, errorResponse, successResponse } from '@/lib/route-helpers';
+import { NextRequest, NextResponse } from 'next/server';
+import { queryOne } from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const userId = userIdMatch?.[1];
 
     if (!userId || !tenantSlug) {
-      return errorResponse('Not authenticated', 401);
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     // Get tenant
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse('Tenant not found', 404);
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Get user profile
@@ -33,21 +33,19 @@ export async function GET(request: NextRequest) {
     );
 
     if (!user) {
-      return errorResponse('User not found', 404);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return successResponse({
+    return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         isCaptain: user.is_team_captain === 1 || user.is_team_captain === true,
         teamId: user.team_id,
-        role: user.role,
-      },
-    });
+        role: user.role}});
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Profile error:', errorMsg);
-    return errorResponse(`An error occurred: ${errorMsg}`, 500);
+    return NextResponse.json({ error: `An error occurred: ${errorMsg}` }, { status: 500 });
   }
 }

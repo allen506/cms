@@ -1,13 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   query,
   queryOne,
   execute,
-  errorResponse,
-  successResponse,
   extractContext,
-  requireAuth,
-} from "@/lib/route-helpers";
+  requireAuth} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(
@@ -21,7 +18,7 @@ export async function GET(
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     // Get tenant ID
@@ -30,7 +27,7 @@ export async function GET(
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Get submissions with their files
@@ -55,18 +52,16 @@ export async function GET(
            WHERE submission_id = ?
            ORDER BY created_at DESC`,
           [submission.id]
-        ),
-      }))
+        )}))
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       submissions: submissionsWithFiles,
-      count: submissionsWithFiles.length,
-    });
+      count: submissionsWithFiles.length});
   } catch (error) {
     console.error("Error fetching submissions:", error);
-    return errorResponse("Failed to fetch submissions", 500);
+    return NextResponse.json({ error: "Failed to fetch submissions" }, { status: 500 });
   }
 }
 
@@ -81,11 +76,11 @@ export async function POST(
     // Require auth and check if designer
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 401);
+      return NextResponse.json({ error: authError.error }, { status: 401 });
     }
 
     if (ctx.userRole !== "designer") {
-      return errorResponse("Only designers can submit designs", 403);
+      return NextResponse.json({ error: "Only designers can submit designs" }, { status: 403 });
     }
 
     // Get tenant ID
@@ -94,7 +89,7 @@ export async function POST(
       [ctx.tenantSlug]
     );
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Verify request exists
@@ -104,7 +99,7 @@ export async function POST(
     );
 
     if (!designRequest) {
-      return errorResponse("Design request not found", 404);
+      return NextResponse.json({ error: "Design request not found" }, { status: 404 });
     }
 
     // Get next submission number
@@ -149,8 +144,7 @@ export async function POST(
           fileId,
           fileName,
           fileType,
-          fileUrl,
-        });
+          fileUrl});
       }
     }
 
@@ -162,18 +156,17 @@ export async function POST(
       );
     }
 
-    return successResponse(
+    return NextResponse.json(
       {
         success: true,
         submissionId,
         submissionNumber,
         uploadedFiles,
-        message: "Design submission created successfully",
-      },
-      201
+        message: "Design submission created successfully"},
+      { status: 201 }
     );
   } catch (error) {
     console.error("Error creating submission:", error);
-    return errorResponse("Failed to create submission", 500);
+    return NextResponse.json({ error: "Failed to create submission" }, { status: 500 });
   }
 }

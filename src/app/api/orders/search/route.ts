@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  errorResponse,
-  successResponse,
-  extractContext,
-} from "@/lib/route-helpers";
+  query, queryOne, extractContext} from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +8,7 @@ export async function GET(request: NextRequest) {
     const context = extractContext(request);
 
     if (!name) {
-      return errorResponse("Name is required", 400);
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     // Get tenant ID from slug
@@ -40,13 +35,12 @@ export async function GET(request: NextRequest) {
            WHERE oi.order_id = ?
            ORDER BY pt.sort_order, d.sort_order, s.sort_order`,
           [order.id]
-        ),
-      }))
+        )}))
     );
 
-    return successResponse({ orders: ordersWithItems });
+    return NextResponse.json({ orders: ordersWithItems });
   } catch (error) {
     console.error("Error searching orders:", error);
-    return errorResponse("Failed to search orders", 500);
+    return NextResponse.json({ error: "Failed to search orders" }, { status: 500 });
   }
 }

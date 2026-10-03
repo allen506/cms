@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne, execute, requirePlatformAdmin } from "@/lib/route-helpers";
+import { query, queryOne, execute, requirePlatformAdmin } from "@/lib/db-async";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { getUnitPriceCRC } from "@/lib/pricing";
 
@@ -61,8 +61,7 @@ export async function GET(request: NextRequest) {
       orders,
       total: total?.count || 0,
       limit,
-      offset,
-    });
+      offset});
   } catch (error) {
     console.error('Get orders error:', error);
     return NextResponse.json(
@@ -129,8 +128,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId,
-      orderNumber,
-    });
+      orderNumber});
   } catch (error) {
     console.error('Create order error:', error);
     return NextResponse.json(

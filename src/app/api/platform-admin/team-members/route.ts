@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, requirePlatformAdmin } from "@/lib/route-helpers";
+import { query, requirePlatformAdmin } from "@/lib/db-async";
 
 /** Get list of team members who have placed orders for a tenant */
 export async function GET(request: NextRequest) {

@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,7 +8,7 @@ export async function PATCH(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -27,7 +22,7 @@ export async function PATCH(
       [id]
     );
     if (!existing) {
-      return errorResponse("Pricing tier not found", 404);
+      return NextResponse.json({ error: "Pricing tier not found" }, { status: 404 });
     }
 
     // Build update query
@@ -48,17 +43,17 @@ export async function PATCH(
     }
 
     if (updates.length === 0) {
-      return errorResponse("No fields to update", 400);
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     values.push(id);
     const sql = `UPDATE pricing_tiers SET ${updates.join(", ")} WHERE id = ?`;
     await execute(sql, values);
 
-    return successResponse({ message: "Pricing tier updated successfully" });
+    return NextResponse.json({ message: "Pricing tier updated successfully" });
   } catch (error) {
     console.error("Error updating pricing tier:", error);
-    return errorResponse("Failed to update pricing tier", 500);
+    return NextResponse.json({ error: "Failed to update pricing tier" }, { status: 500 });
   }
 }
 
@@ -68,15 +63,15 @@ export async function DELETE(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
     const { id } = await params;
     await execute("DELETE FROM pricing_tiers WHERE id = ?", [id]);
-    return successResponse({ message: "Pricing tier deleted successfully" });
+    return NextResponse.json({ message: "Pricing tier deleted successfully" });
   } catch (error) {
     console.error("Error deleting pricing tier:", error);
-    return errorResponse("Failed to delete pricing tier", 500);
+    return NextResponse.json({ error: "Failed to delete pricing tier" }, { status: 500 });
   }
 }

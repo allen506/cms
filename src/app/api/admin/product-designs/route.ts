@@ -1,18 +1,12 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, requireAdminSession} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -38,17 +32,17 @@ export async function GET(request: NextRequest) {
         )
       : await query<any>(sql + " ORDER BY pd.product_type_id, pd.sort_order");
 
-    return successResponse({ associations });
+    return NextResponse.json({ associations });
   } catch (error) {
     console.error("Error fetching product-design associations:", error);
-    return errorResponse("Failed to fetch associations", 500);
+    return NextResponse.json({ error: "Failed to fetch associations" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -56,10 +50,7 @@ export async function POST(request: NextRequest) {
     const { product_type_id, design_id, tenant_id, sort_order } = body;
 
     if (!product_type_id || !design_id) {
-      return errorResponse(
-        "product_type_id and design_id are required",
-        400
-      );
+      return NextResponse.json({ error: "product_type_id and design_id are required" }, { status: 400 });
     }
 
     // Check if association already exists
@@ -69,7 +60,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (existing) {
-      return errorResponse("Association already exists", 409);
+      return NextResponse.json({ error: "Association already exists" }, { status: 409 });
     }
 
     const id = uuidv4();
@@ -81,12 +72,9 @@ export async function POST(request: NextRequest) {
       [id, product_type_id, design_id, tenantId, sort_order || 0]
     );
 
-    return successResponse(
-      { id, message: "Association created successfully" },
-      201
-    );
+    return NextResponse.json({ id, message: "Association created successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating product-design association:", error);
-    return errorResponse("Failed to create association", 500);
+    return NextResponse.json({ error: "Failed to create association" }, { status: 500 });
   }
 }

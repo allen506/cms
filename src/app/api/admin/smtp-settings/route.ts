@@ -1,17 +1,12 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 // GET SMTP settings
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -20,19 +15,18 @@ export async function GET(request: NextRequest) {
     );
 
     if (!settings) {
-      return successResponse({
+      return NextResponse.json({
         host: "",
         port: 587,
         secure: false,
         username: "",
-        from_email: "",
-      });
+        from_email: ""});
     }
 
-    return successResponse(settings);
+    return NextResponse.json(settings);
   } catch (error) {
     console.error("Error fetching SMTP settings:", error);
-    return errorResponse("Failed to fetch settings", 500);
+    return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
   }
 }
 
@@ -40,17 +34,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
     const { host, port, secure, username, password, from_email } = await request.json();
 
     if (!host || !port || !username || !password || !from_email) {
-      return errorResponse(
-        "All SMTP fields are required",
-        400
-      );
+      return NextResponse.json({ error: "All SMTP fields are required" }, { status: 400 });
     }
 
     const existing = await queryOne(
@@ -72,9 +63,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return successResponse({ message: "SMTP settings saved successfully" });
+    return NextResponse.json({ message: "SMTP settings saved successfully" });
   } catch (error) {
     console.error("Error saving SMTP settings:", error);
-    return errorResponse("Failed to save settings", 500);
+    return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
   }
 }

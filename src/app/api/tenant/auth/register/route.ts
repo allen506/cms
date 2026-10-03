@@ -1,11 +1,6 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  hashPassword,
-} from '@/lib/route-helpers';
+  queryOne, execute, hashPassword} from "@/lib/db-async";
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -14,11 +9,11 @@ export async function POST(request: NextRequest) {
     const tenantSlug = teamSlug || request.headers.get('x-tenant-slug');
 
     if (!full_name || !email || !password || !tenantSlug) {
-      return errorResponse('Missing required fields', 400);
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     if (password.length < 8) {
-      return errorResponse('Password must be at least 8 characters', 400);
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
     // Get tenant
@@ -28,7 +23,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse('Tenant not found', 404);
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Check if user already exists
@@ -38,7 +33,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (existing) {
-      return errorResponse('Email already in use', 400);
+      return NextResponse.json({ error: 'Email already in use' }, { status: 400 });
     }
 
     // Check if this is the first user for the team
@@ -59,20 +54,15 @@ export async function POST(request: NextRequest) {
       [userId, tenant.id, email, passwordHash, isFirstUser ? 1 : 0]
     );
 
-    return successResponse(
-      {
+    return NextResponse.json({
         success: true,
         user: { 
           id: userId, 
           email,
-          isCaptain: isFirstUser,
-        },
-      },
-      201
-    );
+          isCaptain: isFirstUser}}, { status: 201 });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Register error:', errorMsg);
-    return errorResponse(`An error occurred: ${errorMsg}`, 500);
+    return NextResponse.json({ error: `An error occurred: ${errorMsg}` }, { status: 500 });
   }
 }

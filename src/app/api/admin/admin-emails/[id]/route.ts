@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 // DELETE admin email
 export async function DELETE(
@@ -14,7 +9,7 @@ export async function DELETE(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -26,14 +21,14 @@ export async function DELETE(
     );
 
     if (!email) {
-      return errorResponse("Email not found", 404);
+      return NextResponse.json({ error: "Email not found" }, { status: 404 });
     }
 
     await execute("DELETE FROM admin_emails WHERE id = ?", [id]);
 
-    return successResponse({ message: "Email deleted successfully" });
+    return NextResponse.json({ message: "Email deleted successfully" });
   } catch (error) {
     console.error("Error deleting admin email:", error);
-    return errorResponse("Failed to delete email", 500);
+    return NextResponse.json({ error: "Failed to delete email" }, { status: 500 });
   }
 }

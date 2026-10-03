@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 export async function GET() {
   try {
@@ -15,23 +10,23 @@ export async function GET() {
     );
 
     const orderingActive = result ? result.value === "1" : true;
-    return successResponse({ orderingActive });
+    return NextResponse.json({ orderingActive });
   } catch (error) {
     console.error("Error fetching ordering status:", error);
-    return errorResponse("Failed to fetch ordering status", 500);
+    return NextResponse.json({ error: "Failed to fetch ordering status" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
-  if (authError) return errorResponse(authError.error, 401);
+  if (authError) return NextResponse.json({ error: authError.error }, { status: 401 });
 
   try {
     const body = await request.json();
     const { orderingActive } = body;
 
     if (typeof orderingActive !== "boolean") {
-      return errorResponse("orderingActive must be a boolean", 400);
+      return NextResponse.json({ error: "orderingActive must be a boolean" }, { status: 400 });
     }
 
     await execute(
@@ -39,9 +34,9 @@ export async function POST(request: NextRequest) {
       [orderingActive ? "1" : "0", "ordering_active"]
     );
 
-    return successResponse({ orderingActive, success: true });
+    return NextResponse.json({ orderingActive, success: true });
   } catch (error) {
     console.error("Error updating ordering status:", error);
-    return errorResponse("Failed to update ordering status", 500);
+    return NextResponse.json({ error: "Failed to update ordering status" }, { status: 500 });
   }
 }

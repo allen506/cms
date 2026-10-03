@@ -1,14 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, requireAdminSession} from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
-  if (authError) return errorResponse(authError.error, 401);
+  if (authError) return NextResponse.json({ error: authError.error }, { status: 401 });
 
   try {
     const archives = await query<any>(
@@ -27,13 +23,12 @@ export async function GET(request: NextRequest) {
       []
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       archives,
-      count: archives.length,
-    });
+      count: archives.length});
   } catch (error) {
     console.error("Error fetching archived campaigns:", error);
-    return errorResponse("Failed to fetch archived campaigns", 500);
+    return NextResponse.json({ error: "Failed to fetch archived campaigns" }, { status: 500 });
   }
 }

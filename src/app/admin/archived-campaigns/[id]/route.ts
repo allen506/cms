@@ -53,15 +53,13 @@ export async function GET(
     const result = {
       ...archive,
       orders: JSON.parse(archive.orders_snapshot || "[]"),
-      summary: JSON.parse(archive.summary_snapshot || "{}"),
-    };
+      summary: JSON.parse(archive.summary_snapshot || "{}")};
     delete (result as any).orders_snapshot;
     delete (result as any).summary_snapshot;
 
     return NextResponse.json({
       success: true,
-      archive: result,
-    });
+      archive: result});
   } catch (error) {
     console.error("Error fetching archived campaign:", error);
     return NextResponse.json(

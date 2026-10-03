@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/route-helpers";
+import { query } from "@/lib/db-async";
 import { getUnitPriceCRC } from "@/lib/pricing";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 
@@ -26,8 +26,7 @@ export async function GET() {
       if (priceCRC !== null) {
         tierPrices[pt.product_type_id] = {
           priceCRC,
-          priceUSD: crcToUsd(priceCRC, exchangeRate),
-        };
+          priceUSD: crcToUsd(priceCRC, exchangeRate)};
       }
     }
 
@@ -86,8 +85,7 @@ export async function GET() {
         userMap.set(userKey, {
           userName: order.user_name,
           items: [],
-          grandTotalUSD: 0,
-        });
+          grandTotalUSD: 0});
       }
       const user = userMap.get(userKey)!;
 
@@ -101,8 +99,7 @@ export async function GET() {
           fit: item.fit,
           quantity: item.quantity,
           unitPriceUSD: unitPrice,
-          totalUSD,
-        });
+          totalUSD});
         user.grandTotalUSD += totalUSD;
       }
     }
@@ -123,8 +120,7 @@ export async function GET() {
       teamTotalUSD,
       teamTotalItems,
       tierPrices,
-      exchangeRate,
-    });
+      exchangeRate});
   } catch (error) {
     console.error("Error fetching user totals:", error);
     return NextResponse.json(

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  extractContext,
-  errorResponse,
-  successResponse,
-} from "@/lib/route-helpers";
+  query, queryOne, extractContext} from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +8,7 @@ export async function GET(request: NextRequest) {
     const teamId = request.headers.get("x-team-id");
 
     if (!teamId) {
-      return errorResponse("Team ID required in headers", 400);
+      return NextResponse.json({ error: "Team ID required in headers" }, { status: 400 });
     }
 
     // Get tenant ID
@@ -23,7 +18,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Get products available for this team
@@ -66,8 +61,7 @@ export async function GET(request: NextRequest) {
             overridePrice: {
               priceCrc: override.price_crc,
               priceUsd: override.price_usd,
-              expiresAt: override.expires_at,
-            },
+              expiresAt: override.expires_at},
             pricing: [], // No tier pricing when override exists
           };
         }
@@ -86,18 +80,16 @@ export async function GET(request: NextRequest) {
         return {
           ...product,
           hasOverride: false,
-          pricing: tiers,
-        };
+          pricing: tiers};
       })
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       products: productsWithPricing,
-      count: productsWithPricing.length,
-    });
+      count: productsWithPricing.length});
   } catch (error) {
     console.error("Error fetching team products:", error);
-    return errorResponse("Failed to fetch products", 500);
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
 }

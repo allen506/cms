@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  query,
-  execute,
-  errorResponse,
-  successResponse,
-} from "@/lib/route-helpers";
+  queryOne, query, execute} from "@/lib/db-async";
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +15,7 @@ export async function GET(
     );
 
     if (!order) {
-      return errorResponse("Order not found", 404);
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     const items = await query<any>(
@@ -33,10 +28,10 @@ export async function GET(
       [id]
     );
 
-    return successResponse({ order: { ...order, items } });
+    return NextResponse.json({ order: { ...order, items } });
   } catch (error) {
     console.error("Error fetching order:", error);
-    return errorResponse("Failed to fetch order", 500);
+    return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
   }
 }
 
@@ -62,10 +57,10 @@ export async function PATCH(
       );
     }
 
-    return successResponse({ message: "Order updated successfully" });
+    return NextResponse.json({ message: "Order updated successfully" });
   } catch (error) {
     console.error("Error updating order:", error);
-    return errorResponse("Failed to update order", 500);
+    return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
   }
 }
 
@@ -76,9 +71,9 @@ export async function DELETE(
   try {
     const { id } = await params;
     await execute("DELETE FROM orders WHERE id = ?", [id]);
-    return successResponse({ message: "Order deleted successfully" });
+    return NextResponse.json({ message: "Order deleted successfully" });
   } catch (error) {
     console.error("Error deleting order:", error);
-    return errorResponse("Failed to delete order", 500);
+    return NextResponse.json({ error: "Failed to delete order" }, { status: 500 });
   }
 }

@@ -1,17 +1,12 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, execute, requireAdminSession} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -28,17 +23,17 @@ export async function GET(request: NextRequest) {
       ORDER BY sort_order ASC`
     );
 
-    return successResponse({ products });
+    return NextResponse.json({ products });
   } catch (error) {
     console.error("Error fetching products:", error);
-    return errorResponse("Failed to fetch products", 500);
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -49,11 +44,10 @@ export async function POST(request: NextRequest) {
       description,
       example_url,
       sort_order,
-      tenant_id,
-    } = body;
+      tenant_id} = body;
 
     if (!name || !category) {
-      return errorResponse("Name and category are required", 400);
+      return NextResponse.json({ error: "Name and category are required" }, { status: 400 });
     }
 
     const id = uuidv4();
@@ -65,12 +59,9 @@ export async function POST(request: NextRequest) {
       [id, tenantId, name, category, description || null, example_url || null, sort_order || 999]
     );
 
-    return successResponse(
-      { id, message: "Product created successfully" },
-      201
-    );
+    return NextResponse.json({ id, message: "Product created successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
-    return errorResponse("Failed to create product", 500);
+    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }
 }

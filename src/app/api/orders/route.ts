@@ -1,14 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  extractContext,
-  requireAuth,
-  withTransaction,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, extractContext, requireAuth} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 import { OrderFormData } from "@/lib/types";
 
@@ -43,14 +35,13 @@ export async function GET(request: NextRequest) {
            JOIN sizes s ON oi.size_id = s.id
            WHERE oi.order_id = ?`,
           [order.id]
-        ),
-      }))
+        )}))
     );
 
-    return successResponse({ orders: result });
+    return NextResponse.json({ orders: result });
   } catch (error) {
     console.error("Error fetching orders:", error);
-    return errorResponse("Failed to fetch orders", 500);
+    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
   }
 }
 
@@ -68,20 +59,17 @@ export async function POST(request: NextRequest) {
 
     // Validate
     if (!body.userName) {
-      return errorResponse("Name is required", 400);
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     if (!body.items || body.items.length === 0) {
-      return errorResponse("At least one item is required", 400);
+      return NextResponse.json({ error: "At least one item is required" }, { status: 400 });
     }
 
     // Validate each item
     for (const item of body.items) {
       if (!item.productTypeId || !item.designId || !item.sizeId || !item.quantity || item.quantity < 1) {
-        return errorResponse(
-          "Each item must have a product type, design, size, and quantity >= 1",
-          400
-        );
+        return NextResponse.json({ error: "Each item must have a product type, design, size, and quantity >= 1" }, { status: 400 });
       }
     }
 
@@ -146,12 +134,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return successResponse(
-      { orderId, orderNumber, message: "Order updated successfully" },
-      201
-    );
+    return NextResponse.json({ orderId, orderNumber, message: "Order updated successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating order:", error);
-    return errorResponse("Failed to create order", 500);
+    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 }

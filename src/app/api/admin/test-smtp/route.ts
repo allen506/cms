@@ -1,10 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, requireAdminSession} from "@/lib/db-async";
 import nodemailer from "nodemailer";
 
 interface SMTPSettings {
@@ -19,7 +15,7 @@ interface SMTPSettings {
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -28,13 +24,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!settings) {
-      return errorResponse("SMTP settings not configured", 400);
+      return NextResponse.json({ error: "SMTP settings not configured" }, { status: 400 });
     }
 
     // Get the test email address from the request
     const { testEmail } = await request.json();
     if (!testEmail) {
-      return errorResponse("Test email address required", 400);
+      return NextResponse.json({ error: "Test email address required" }, { status: 400 });
     }
 
     // Create transporter
@@ -44,9 +40,7 @@ export async function POST(request: NextRequest) {
       secure: settings.secure === 1,
       auth: {
         user: settings.username,
-        pass: settings.password,
-      },
-    });
+        pass: settings.password}});
 
     // Send test email
     await transporter.sendMail({
@@ -72,15 +66,11 @@ export async function POST(request: NextRequest) {
             You can now configure admin emails to receive payment notifications.
           </p>
         </div>
-      `,
-    });
+      `});
 
-    return successResponse({ success: true, message: "Test email sent successfully!" });
+    return NextResponse.json({ success: true, message: "Test email sent successfully!" });
   } catch (error: any) {
     console.error("SMTP test error:", error);
-    return errorResponse(
-      error.message || "Failed to send test email",
-      500
-    );
+    return NextResponse.json({ error: error.message || "Failed to send test email" }, { status: 500 });
   }
 }

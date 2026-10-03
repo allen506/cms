@@ -75,9 +75,7 @@ export async function GET(
         headers: {
           "Content-Type": file.mime_type || "application/octet-stream",
           "Content-Disposition": `attachment; filename="${file.filename}"`,
-          "Content-Length": fileBuffer.length.toString(),
-        },
-      });
+          "Content-Length": fileBuffer.length.toString()}});
     } catch (readError) {
       console.error(`File not found on disk: ${filePath}`, readError);
       return NextResponse.json(
@@ -90,8 +88,7 @@ export async function GET(
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Failed to download file",
-      },
+          error instanceof Error ? error.message : "Failed to download file"},
       { status: 500 }
     );
   }

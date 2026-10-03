@@ -1,11 +1,6 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne,
-  errorResponse,
-  successResponse,
-  createSessionToken,
-  verifyPassword,
-} from '@/lib/route-helpers';
+  queryOne, createSessionToken, verifyPassword} from "@/lib/db-async";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +8,7 @@ export async function POST(request: NextRequest) {
     const tenantSlug = teamSlug || request.headers.get('x-tenant-slug');
 
     if (!email || !password || !tenantSlug) {
-      return errorResponse('Missing required fields', 400);
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Get tenant by slug
@@ -23,7 +18,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse('Tenant not found', 404);
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Get user account by email
@@ -35,45 +30,41 @@ export async function POST(request: NextRequest) {
     );
 
     if (!user) {
-      return errorResponse('Invalid email or password', 401);
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     // Verify password
     if (!verifyPassword(password, user.password_hash)) {
-      return errorResponse('Invalid email or password', 401);
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     // Create session token
     const token = createSessionToken();
-    const response = successResponse({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
         team_id: user.team_id,
-        isCaptain: user.is_team_captain === 1 || user.is_team_captain === true,
-      },
-    });
+        isCaptain: user.is_team_captain === 1 || user.is_team_captain === true}});
 
     response.cookies.set('tenant_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
+      path: '/'});
 
     response.cookies.set('tenant_user_id', user.id, {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+      path: '/'});
 
     return response;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Login error:', errorMsg);
-    return errorResponse(`An error occurred: ${errorMsg}`, 500);
+    return NextResponse.json({ error: `An error occurred: ${errorMsg}` }, { status: 500 });
   }
 }

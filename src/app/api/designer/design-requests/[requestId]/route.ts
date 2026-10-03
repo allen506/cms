@@ -93,9 +93,7 @@ export async function GET(
           ...f,
           download_url: f.file_path ? `/api/designer/design-requests/${requestId}/download/${f.id}` : null
         })),
-        submissions,
-      },
-    });
+        submissions}});
   } catch (error) {
     console.error("Get request error:", error);
     return NextResponse.json(

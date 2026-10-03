@@ -94,8 +94,7 @@ export async function GET(
         );
         return {
           ...submission,
-          files: submissionFiles,
-        };
+          files: submissionFiles};
       })
     );
     console.log("[designs/requests/[id]] Submission files fetched successfully");
@@ -119,8 +118,7 @@ export async function GET(
       request: designRequest,
       files,
       submissions: submissionsWithFiles,
-      comments,
-    });
+      comments});
   } catch (error) {
     console.error("[designs/requests/[id]] ❌ Error fetching design request:", error);
     if (error instanceof Error) {
@@ -196,8 +194,7 @@ export async function DELETE(
     console.log("[designs/requests/[id] DELETE] Design archived successfully");
     return NextResponse.json({
       success: true,
-      message: "Design archived successfully",
-    });
+      message: "Design archived successfully"});
   } catch (error) {
     console.error("[designs/requests/[id] DELETE] Error archiving design:", error);
     const errorDetails = error instanceof Error ? error.message : String(error);

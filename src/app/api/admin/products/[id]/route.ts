@@ -1,12 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +8,7 @@ export async function GET(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -25,13 +19,13 @@ export async function GET(
     );
 
     if (!product) {
-      return errorResponse("Product not found", 404);
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return successResponse({ product });
+    return NextResponse.json({ product });
   } catch (error) {
     console.error("Error fetching product:", error);
-    return errorResponse("Failed to fetch product", 500);
+    return NextResponse.json({ error: "Failed to fetch product" }, { status: 500 });
   }
 }
 
@@ -41,7 +35,7 @@ export async function PATCH(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -56,7 +50,7 @@ export async function PATCH(
       [id]
     );
     if (!existing) {
-      return errorResponse("Product not found", 404);
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     // Build update query dynamically
@@ -93,17 +87,17 @@ export async function PATCH(
     }
 
     if (updates.length === 0) {
-      return errorResponse("No fields to update", 400);
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     values.push(id);
     const sql = `UPDATE product_types SET ${updates.join(", ")} WHERE id = ?`;
     await execute(sql, values);
 
-    return successResponse({ message: "Product updated successfully" });
+    return NextResponse.json({ message: "Product updated successfully" });
   } catch (error) {
     console.error("Error updating product:", error);
-    return errorResponse("Failed to update product", 500);
+    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 }
 
@@ -113,7 +107,7 @@ export async function DELETE(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -126,19 +120,16 @@ export async function DELETE(
     );
 
     if (orders && orders.count > 0) {
-      return errorResponse(
-        `Cannot delete product with ${orders.count} existing orders`,
-        400
-      );
+      return NextResponse.json({ error: `Cannot delete product with ${orders.count} existing orders` }, { status: 400 });
     }
 
     // Delete pricing tiers and product
     await execute("DELETE FROM pricing_tiers WHERE product_type_id = ?", [id]);
     await execute("DELETE FROM product_types WHERE id = ?", [id]);
 
-    return successResponse({ message: "Product deleted successfully" });
+    return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
-    return errorResponse("Failed to delete product", 500);
+    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
   }
 }

@@ -1,12 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, requireAdminSession} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -19,26 +13,23 @@ import { v4 as uuidv4 } from "uuid";
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
     const redirects = await query<any>(
       "SELECT * FROM subdomain_redirects ORDER BY subdomain ASC"
     );
-    return successResponse({ success: true, redirects });
+    return NextResponse.json({ success: true, redirects });
   } catch (error) {
-    return errorResponse(
-      `Failed to fetch redirects: ${String(error)}`,
-      500
-    );
+    return NextResponse.json({ error: `Failed to fetch redirects: ${String(error)}` }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -46,28 +37,22 @@ export async function POST(request: NextRequest) {
     const { subdomain, redirect_url, is_team_portal, tenant_id, team_password } = body;
 
     if (!subdomain || !redirect_url) {
-      return errorResponse(
-        "Missing required fields: subdomain, redirect_url",
-        400
-      );
+      return NextResponse.json({ error: "Missing required fields: subdomain, redirect_url" }, { status: 400 });
     }
 
     // Validate subdomain format
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(subdomain)) {
-      return errorResponse(
-        "Invalid subdomain format. Use lowercase letters, numbers, and hyphens only.",
-        400
-      );
+      return NextResponse.json({ error: "Invalid subdomain format. Use lowercase letters, numbers, and hyphens only." }, { status: 400 });
     }
 
     // Don't allow reserved subdomains
     if (["www", "mail", "ftp", "ns", "admin", "cmsadmin"].includes(subdomain)) {
-      return errorResponse("Reserved subdomain. Please choose a different name.", 400);
+      return NextResponse.json({ error: "Reserved subdomain. Please choose a different name." }, { status: 400 });
     }
 
     // If it's a team portal, make sure it has the required fields
     if (is_team_portal && !tenant_id) {
-      return errorResponse("Team portals must have a tenant_id", 400);
+      return NextResponse.json({ error: "Team portals must have a tenant_id" }, { status: 400 });
     }
 
     // Check if subdomain already exists
@@ -111,26 +96,19 @@ export async function POST(request: NextRequest) {
       [id]
     );
 
-    return successResponse(
-      {
+    return NextResponse.json({
         success: true,
         message: `Subdomain '${subdomain}' configured successfully`,
-        redirect,
-      },
-      201
-    );
+        redirect}, { status: 201 });
   } catch (error) {
-    return errorResponse(
-      `Failed to create redirect: ${String(error)}`,
-      500
-    );
+    return NextResponse.json({ error: `Failed to create redirect: ${String(error)}` }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -138,7 +116,7 @@ export async function DELETE(request: NextRequest) {
     const { subdomain } = body;
 
     if (!subdomain) {
-      return errorResponse("Subdomain is required", 400);
+      return NextResponse.json({ error: "Subdomain is required" }, { status: 400 });
     }
 
     const redirect = await queryOne(
@@ -147,7 +125,7 @@ export async function DELETE(request: NextRequest) {
     );
 
     if (!redirect) {
-      return errorResponse(`Subdomain '${subdomain}' not found`, 404);
+      return NextResponse.json({ error: `Subdomain '${subdomain}' not found` }, { status: 404 });
     }
 
     await execute(
@@ -155,14 +133,10 @@ export async function DELETE(request: NextRequest) {
       [subdomain]
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
-      message: `Subdomain '${subdomain}' deleted successfully`,
-    });
+      message: `Subdomain '${subdomain}' deleted successfully`});
   } catch (error) {
-    return errorResponse(
-      `Failed to delete redirect: ${String(error)}`,
-      500
-    );
+    return NextResponse.json({ error: `Failed to delete redirect: ${String(error)}` }, { status: 500 });
   }
 }

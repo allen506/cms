@@ -1,11 +1,6 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  hashPassword,
-} from '@/lib/route-helpers';
+  queryOne, execute, hashPassword} from "@/lib/db-async";
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -18,7 +13,7 @@ export async function POST(request: NextRequest) {
     const { teamSlug, email } = await request.json();
 
     if (!teamSlug || !email) {
-      return errorResponse('Team slug and email are required', 400);
+      return NextResponse.json({ error: 'Team slug and email are required' }, { status: 400 });
     }
 
     // Verify team exists
@@ -28,7 +23,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!redirect) {
-      return errorResponse('Team not found', 404);
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
 
     // Check if user exists
@@ -39,10 +34,9 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       // For security, still return success (don't reveal if email exists)
-      return successResponse({
+      return NextResponse.json({
         success: true,
-        message: 'If an account with this email exists, a reset link has been sent',
-      });
+        message: 'If an account with this email exists, a reset link has been sent'});
     }
 
     // Generate reset token
@@ -75,12 +69,11 @@ export async function POST(request: NextRequest) {
       `[DEV] Password reset link for ${email}: /custom/${teamSlug}/reset-password?token=${resetToken}`
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
-      message: 'If an account with this email exists, a reset link has been sent',
-    });
+      message: 'If an account with this email exists, a reset link has been sent'});
   } catch (error) {
     console.error('Password reset request error:', error);
-    return errorResponse('An error occurred', 500);
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 });
   }
 }

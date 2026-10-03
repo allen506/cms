@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  requirePlatformAdmin,
-  successResponse,
-  errorResponse,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, requirePlatformAdmin} from "@/lib/db-async";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 
 export async function GET(request: NextRequest) {
@@ -48,17 +42,15 @@ export async function GET(request: NextRequest) {
     // Calculate USD in real-time for each tier
     const tiersWithUSD = tiers.map((tier) => ({
       ...tier,
-      price_usd: tier.price_usd || crcToUsd(tier.price_crc, rate),
-    }));
+      price_usd: tier.price_usd || crcToUsd(tier.price_crc, rate)}));
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       tiers: tiersWithUSD,
-      exchangeRate: rate,
-    });
+      exchangeRate: rate});
   } catch (error) {
     console.error("Error fetching pricing tiers for platform admin:", error);
-    return errorResponse("Failed to fetch pricing tiers", 500);
+    return NextResponse.json({ error: "Failed to fetch pricing tiers" }, { status: 500 });
   }
 }
 
@@ -73,7 +65,7 @@ export async function POST(request: NextRequest) {
     const { product_type_id, min_qty, max_qty, price_crc, price_usd } = body;
 
     if (!product_type_id || !min_qty || !max_qty || !price_crc) {
-      return errorResponse("Missing required fields", 400);
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const exchangeRate = await getExchangeRate();
@@ -88,13 +80,12 @@ export async function POST(request: NextRequest) {
       [product_type_id, min_qty, max_qty, price_crc, calculatedUsd]
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       id: result,
-      message: "Pricing tier created successfully",
-    });
+      message: "Pricing tier created successfully"});
   } catch (error) {
     console.error("Error creating pricing tier for platform admin:", error);
-    return errorResponse("Failed to create pricing tier", 500);
+    return NextResponse.json({ error: "Failed to create pricing tier" }, { status: 500 });
   }
 }

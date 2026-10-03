@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, execute, requireAdminSession} from "@/lib/db-async";
 import { writeFileSync, mkdirSync } from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -18,7 +13,7 @@ mkdirSync(UPLOAD_DIR, { recursive: true });
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -36,17 +31,17 @@ export async function GET(request: NextRequest) {
       ORDER BY sort_order ASC`
     );
 
-    return successResponse({ designs });
+    return NextResponse.json({ designs });
   } catch (error) {
     console.error("Error fetching designs:", error);
-    return errorResponse("Failed to fetch designs", 500);
+    return NextResponse.json({ error: "Failed to fetch designs" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -59,7 +54,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File | null;
 
     if (!name) {
-      return errorResponse("Name is required", 400);
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     let image_url = "";
@@ -69,15 +64,12 @@ export async function POST(request: NextRequest) {
       // Validate file type
       const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
       if (!validTypes.includes(file.type)) {
-        return errorResponse(
-          "Invalid file type. Only JPEG, PNG, WebP, GIF allowed.",
-          400
-        );
+        return NextResponse.json({ error: "Invalid file type. Only JPEG, PNG, WebP, GIF allowed." }, { status: 400 });
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        return errorResponse("File too large. Max 5MB.", 400);
+        return NextResponse.json({ error: "File too large. Max 5MB." }, { status: 400 });
       }
 
       const buffer = await file.arrayBuffer();
@@ -108,12 +100,9 @@ export async function POST(request: NextRequest) {
       ]
     );
 
-    return successResponse(
-      { id, image_url, message: "Design created successfully" },
-      201
-    );
+    return NextResponse.json({ id, image_url, message: "Design created successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating design:", error);
-    return errorResponse("Failed to create design", 500);
+    return NextResponse.json({ error: "Failed to create design" }, { status: 500 });
   }
 }

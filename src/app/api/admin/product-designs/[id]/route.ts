@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  queryOne, execute, requireAdminSession} from "@/lib/db-async";
 
 export async function DELETE(
   request: NextRequest,
@@ -13,7 +8,7 @@ export async function DELETE(
 ) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
@@ -26,14 +21,14 @@ export async function DELETE(
     );
 
     if (!existing) {
-      return errorResponse("Association not found", 404);
+      return NextResponse.json({ error: "Association not found" }, { status: 404 });
     }
 
     await execute("DELETE FROM product_designs WHERE id = ?", [id]);
 
-    return successResponse({ message: "Association deleted successfully" });
+    return NextResponse.json({ message: "Association deleted successfully" });
   } catch (error) {
     console.error("Error deleting product-design association:", error);
-    return errorResponse("Failed to delete association", 500);
+    return NextResponse.json({ error: "Failed to delete association" }, { status: 500 });
   }
 }

@@ -31,9 +31,7 @@ export async function GET(request: NextRequest) {
       designer: {
         id: designer.id,
         email: designer.email,
-        name: designer.full_name,
-      },
-    });
+        name: designer.full_name}});
   } catch (error) {
     console.error("Verify error:", error);
     return NextResponse.json(

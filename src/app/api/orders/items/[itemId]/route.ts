@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
-import { queryOne, execute, errorResponse, successResponse } from "@/lib/route-helpers";
+import { NextRequest, NextResponse } from "next/server";
+import { queryOne, execute } from "@/lib/db-async";
 
 // PATCH - update an order item's fields
 export async function PATCH(
@@ -16,7 +16,7 @@ export async function PATCH(
     );
 
     if (!item) {
-      return errorResponse("Item not found", 404);
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
     const updates: string[] = [];
@@ -48,17 +48,17 @@ export async function PATCH(
     }
 
     if (updates.length === 0) {
-      return errorResponse("No fields to update", 400);
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     updates.push("updated_at = NOW()");
     values.push(itemId);
 
     await execute(`UPDATE order_items SET ${updates.join(", ")} WHERE id = ?`, values);
-    return successResponse({ message: "Item updated" });
+    return NextResponse.json({ message: "Item updated" });
   } catch (error) {
     console.error("Error updating order item:", error);
-    return errorResponse("Failed to update item", 500);
+    return NextResponse.json({ error: "Failed to update item" }, { status: 500 });
   }
 }
 
@@ -78,7 +78,7 @@ export async function DELETE(
     );
 
     if (!item) {
-      return errorResponse("Item not found", 404);
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
     const orderId = item.order_id;
@@ -97,10 +97,10 @@ export async function DELETE(
       await execute("DELETE FROM orders WHERE id = ?", [orderId]);
     }
 
-    return successResponse({ message: "Item deleted" });
+    return NextResponse.json({ message: "Item deleted" });
   } catch (error) {
     console.error("Error deleting order item:", error);
-    return errorResponse("Failed to delete item", 500);
+    return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
   }
 }
 
@@ -117,12 +117,12 @@ export async function GET(
     );
 
     if (!item) {
-      return errorResponse("Item not found", 404);
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    return successResponse({ item });
+    return NextResponse.json({ item });
   } catch (error) {
     console.error("Error fetching order item:", error);
-    return errorResponse("Failed to fetch item", 500);
+    return NextResponse.json({ error: "Failed to fetch item" }, { status: 500 });
   }
 }

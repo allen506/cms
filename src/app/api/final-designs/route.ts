@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, execute, errorResponse, successResponse } from "@/lib/route-helpers";
+import { query, execute } from "@/lib/db-async";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
@@ -22,7 +22,7 @@ export async function GET() {
     return NextResponse.json(rows);
   } catch (err) {
     console.error("GET /api/final-designs error:", err);
-    return errorResponse("Failed to load designs", 500);
+    return NextResponse.json({ error: "Failed to load designs" }, { status: 500 });
   }
 }
 
@@ -34,13 +34,13 @@ export async function POST(req: NextRequest) {
     const description = (formData.get("description") as string | null)?.trim() ?? "";
 
     if (!file || !name) {
-      return errorResponse("name and file are required", 400);
+      return NextResponse.json({ error: "name and file are required" }, { status: 400 });
     }
     if (!ALLOWED_MIME.has(file.type)) {
-      return errorResponse("Only JPEG, PNG, WebP, or GIF images are allowed", 400);
+      return NextResponse.json({ error: "Only JPEG, PNG, WebP, or GIF images are allowed" }, { status: 400 });
     }
     if (file.size > MAX_FILE_SIZE) {
-      return errorResponse("File must be under 10 MB", 400);
+      return NextResponse.json({ error: "File must be under 10 MB" }, { status: 400 });
     }
 
     // Ensure upload dir exists
@@ -72,6 +72,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(inserted[0], { status: 201 });
   } catch (err) {
     console.error("POST /api/final-designs error:", err);
-    return errorResponse("Upload failed", 500);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

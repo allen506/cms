@@ -77,8 +77,7 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      message: `Design submission ${status} successfully`,
-    });
+      message: `Design submission ${status} successfully`});
   } catch (error) {
     console.error("Error updating submission:", error);
     const errorDetails = error instanceof Error ? error.message : String(error);

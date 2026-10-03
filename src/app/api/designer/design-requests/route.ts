@@ -50,8 +50,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       requests,
-      count: requests.length,
-    });
+      count: requests.length});
   } catch (error) {
     console.error("Get design requests error:", error);
     return NextResponse.json(

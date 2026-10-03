@@ -1,11 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  withTransaction,
-} from "@/lib/route-helpers";
+  queryOne, execute} from "@/lib/db-async";
 
 // PATCH — reset a user's PIN by providing their full name
 export async function PATCH(request: NextRequest) {
@@ -13,10 +8,10 @@ export async function PATCH(request: NextRequest) {
     const { name, newPin } = await request.json();
 
     if (!name || typeof name !== "string" || !name.trim()) {
-      return errorResponse("Full name is required", 400);
+      return NextResponse.json({ error: "Full name is required" }, { status: 400 });
     }
     if (!newPin || !/^\d{4}$/.test(newPin)) {
-      return errorResponse("PIN must be exactly 4 digits", 400);
+      return NextResponse.json({ error: "PIN must be exactly 4 digits" }, { status: 400 });
     }
 
     const profile = await queryOne<{ pin: string; full_name: string }>(
@@ -25,7 +20,7 @@ export async function PATCH(request: NextRequest) {
     );
 
     if (!profile) {
-      return errorResponse("No account found with that name", 404);
+      return NextResponse.json({ error: "No account found with that name" }, { status: 404 });
     }
 
     // Check PIN isn't already taken by someone else
@@ -34,10 +29,7 @@ export async function PATCH(request: NextRequest) {
       [newPin, name.trim()]
     );
     if (taken) {
-      return errorResponse(
-        "That PIN is already in use — choose a different one",
-        409
-      );
+      return NextResponse.json({ error: "That PIN is already in use — choose a different one" }, { status: 409 });
     }
 
     await withTransaction(async () => {
@@ -50,9 +42,9 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
-    return successResponse({ pin: newPin, fullName: profile.full_name });
+    return NextResponse.json({ pin: newPin, fullName: profile.full_name });
   } catch (error) {
     console.error("Error resetting PIN:", error);
-    return errorResponse("Failed to reset PIN", 500);
+    return NextResponse.json({ error: "Failed to reset PIN" }, { status: 500 });
   }
 }

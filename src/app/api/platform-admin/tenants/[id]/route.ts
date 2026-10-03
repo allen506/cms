@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne, execute, requirePlatformAdmin } from "@/lib/route-helpers";
+import { queryOne, execute, requirePlatformAdmin } from "@/lib/db-async";
 
 /** Get a specific tenant by ID */
 export async function GET(

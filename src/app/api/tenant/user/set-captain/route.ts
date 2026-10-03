@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server';
-import { queryOne, errorResponse, successResponse } from '@/lib/route-helpers';
+import { NextRequest, NextResponse } from 'next/server';
+import { queryOne } from "@/lib/db-async";
 import { getDb } from '@/lib/db';
 
 export async function PATCH(request: NextRequest) {
@@ -7,7 +7,7 @@ export async function PATCH(request: NextRequest) {
     const { email, teamSlug, isCaptain } = await request.json();
     
     if (!email || !teamSlug) {
-      return errorResponse('Email and teamSlug are required', 400);
+      return NextResponse.json({ error: 'Email and teamSlug are required' }, { status: 400 });
     }
 
     // Get tenant
@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse('Tenant not found', 404);
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Update user captain status
@@ -37,20 +37,18 @@ export async function PATCH(request: NextRequest) {
     );
 
     if (!user) {
-      return errorResponse('User not found', 404);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return successResponse({
+    return NextResponse.json({
       message: `User ${email} is now ${isCaptain ? 'a team captain' : 'not a team captain'}`,
       user: {
         id: user.id,
         email: user.email,
-        isCaptain: user.is_team_captain === 1 || user.is_team_captain === true,
-      },
-    });
+        isCaptain: user.is_team_captain === 1 || user.is_team_captain === true}});
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Set captain error:', errorMsg);
-    return errorResponse(`An error occurred: ${errorMsg}`, 500);
+    return NextResponse.json({ error: `An error occurred: ${errorMsg}` }, { status: 500 });
   }
 }

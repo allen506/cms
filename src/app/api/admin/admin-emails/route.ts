@@ -1,29 +1,23 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  requireAdminSession,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, requireAdminSession} from "@/lib/db-async";
 import { v4 as uuidv4 } from "uuid";
 
 // GET all admin emails
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
     const emails = await query<any>(
       "SELECT id, email, created_at FROM admin_emails ORDER BY created_at ASC"
     );
-    return successResponse({ emails });
+    return NextResponse.json({ emails });
   } catch (error) {
     console.error("Error fetching admin emails:", error);
-    return errorResponse("Failed to fetch emails", 500);
+    return NextResponse.json({ error: "Failed to fetch emails" }, { status: 500 });
   }
 }
 
@@ -31,14 +25,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) {
-    return errorResponse(authError.error, 401);
+    return NextResponse.json({ error: authError.error }, { status: 401 });
   }
 
   try {
     const { email } = await request.json();
 
     if (!email || !email.includes("@")) {
-      return errorResponse("Invalid email address", 400);
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
     // Check if email already exists
@@ -48,7 +42,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (existing) {
-      return errorResponse("This email is already added", 409);
+      return NextResponse.json({ error: "This email is already added" }, { status: 409 });
     }
 
     const id = uuidv4();
@@ -57,12 +51,9 @@ export async function POST(request: NextRequest) {
       [id, email]
     );
 
-    return successResponse(
-      { id, email, message: "Email added successfully" },
-      201
-    );
+    return NextResponse.json({ id, email, message: "Email added successfully" }, { status: 201 });
   } catch (error: any) {
     console.error("Error adding admin email:", error);
-    return errorResponse("Failed to add email", 500);
+    return NextResponse.json({ error: "Failed to add email" }, { status: 500 });
   }
 }

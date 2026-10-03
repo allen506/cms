@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  query,
-  queryOne,
-  execute,
-  withTransaction,
-  extractContext,
-  requireAuth,
-  errorResponse,
-  successResponse,
-} from "@/lib/route-helpers";
+  query, queryOne, execute, extractContext, requireAuth} from "@/lib/db-async";
 
 interface OrderItem {
   productId: string;
@@ -26,11 +18,11 @@ export async function POST(request: NextRequest) {
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
-      return errorResponse(authError.error, 400);
+      return NextResponse.json({ error: authError.error }, { status: 400 });
     }
 
     if (!teamId) {
-      return errorResponse("Team ID required in headers", 400);
+      return NextResponse.json({ error: "Team ID required in headers" }, { status: 400 });
     }
 
     // Get tenant ID
@@ -40,13 +32,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     const { items, designRequestId, notes } = await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return errorResponse("At least one product item is required", 400);
+      return NextResponse.json({ error: "At least one product item is required" }, { status: 400 });
     }
 
     // Verify design request exists and is approved
@@ -57,14 +49,11 @@ export async function POST(request: NextRequest) {
       );
 
       if (!designRequest) {
-        return errorResponse("Design request not found", 404);
+        return NextResponse.json({ error: "Design request not found" }, { status: 404 });
       }
 
       if (designRequest.status !== "approved") {
-        return errorResponse(
-          "Design must be approved before placing order",
-          400
-        );
+        return NextResponse.json({ error: "Design must be approved before placing order" }, { status: 400 });
       }
     }
 
@@ -126,8 +115,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      return successResponse(
-        {
+      return NextResponse.json({
           success: true,
           orderId,
           orderNumber: `thnk-${Date.now()}`,
@@ -135,15 +123,11 @@ export async function POST(request: NextRequest) {
           items: items.length,
           totals: {
             usd: totalUsd,
-            crc: totalCrc,
-          },
-        },
-        201
-      );
+            crc: totalCrc}}, { status: 201 });
     });
   } catch (error) {
     console.error("Error creating order:", error);
-    return errorResponse("Failed to create order", 500);
+    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 }
 
