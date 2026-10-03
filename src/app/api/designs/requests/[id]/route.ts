@@ -60,7 +60,7 @@ export async function GET(
 
     // Get attached files
     const files = await query(
-      `SELECT id, file_name, file_path as file_url, file_type, uploaded_by, created_at
+      `SELECT id, filename as file_name, file_path as file_url, mime_type as file_type, uploaded_by, created_at
        FROM design_request_files
        WHERE design_request_id = $1
        ORDER BY created_at DESC`,
@@ -71,12 +71,12 @@ export async function GET(
     // Get design submissions with files
     console.log("[designs/requests/[id]] Querying design_submissions...");
     const submissions = await query(
-      `SELECT ds.id, ds.design_request_id as request_id, ds.designer_id, ds.submission_number,
-              ds.status, ds.created_at, ds.updated_at, ua.email as designer_email
+      `SELECT ds.id, ds.design_request_id as request_id, ds.designer_id, ds.version_number as submission_number,
+              ds.status, ds.submitted_at as created_at, ds.updated_at, ua.email as designer_email
        FROM design_submissions ds
        LEFT JOIN user_accounts ua ON ua.id = ds.designer_id
        WHERE ds.design_request_id = $1
-       ORDER BY ds.submission_number DESC`,
+       ORDER BY ds.version_number DESC`,
       [id]
     );
     console.log("[designs/requests/[id]] Submissions query result:", submissions.length);
@@ -86,9 +86,9 @@ export async function GET(
     const submissionsWithFiles = await Promise.all(
       submissions.map(async (submission) => {
         const submissionFiles = await query(
-          `SELECT id, file_name, file_path as file_url, file_type
+          `SELECT id, filename as file_name, file_path as file_url, mime_type as file_type
            FROM design_submission_files
-           WHERE submission_id = $1
+           WHERE design_submission_id = $1
            ORDER BY created_at DESC`,
           [submission.id]
         );
@@ -103,10 +103,10 @@ export async function GET(
     // Get comments
     console.log("[designs/requests/[id]] Querying design_comments...");
     const comments = await query(
-      `SELECT dc.id, dc.design_request_id as request_id, dc.user_id, dc.comment,
+      `SELECT dc.id, dc.design_request_id as request_id, dc.commenter_id as user_id, dc.comment_text as comment,
               dc.created_at, ua.email as user_email
        FROM design_comments dc
-       LEFT JOIN user_accounts ua ON ua.id = dc.user_id
+       LEFT JOIN user_accounts ua ON ua.id = dc.commenter_id
        WHERE dc.design_request_id = $1
        ORDER BY dc.created_at ASC`,
       [id]
