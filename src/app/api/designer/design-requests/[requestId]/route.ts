@@ -3,9 +3,10 @@ import { query } from "@/lib/db-async";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { requestId: string } }
+  { params }: { params: Promise<{ requestId: string }> }
 ) {
   try {
+    const { requestId } = await params;
     const designerId = request.cookies.get("designer_id")?.value;
 
     if (!designerId) {
@@ -45,7 +46,7 @@ export async function GET(
        LEFT JOIN user_accounts u ON dr.requester_id = u.id
        LEFT JOIN teams t ON dr.team_id = t.id
        WHERE dr.id = $1 AND dr.tenant_id = $2`,
-      [params.requestId, tenantId]
+      [requestId, tenantId]
     );
 
     if (requests.length === 0) {
@@ -62,7 +63,7 @@ export async function GET(
       `SELECT id, filename, file_size FROM design_request_files 
        WHERE design_request_id = $1
        ORDER BY created_at DESC`,
-      [params.requestId]
+      [requestId]
     );
 
     // Get submissions
@@ -71,7 +72,7 @@ export async function GET(
        FROM design_submissions 
        WHERE design_request_id = $1
        ORDER BY version_number DESC`,
-      [params.requestId]
+      [requestId]
     );
 
     return NextResponse.json({

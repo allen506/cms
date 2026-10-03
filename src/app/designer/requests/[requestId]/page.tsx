@@ -30,22 +30,24 @@ interface DesignRequest {
 export default function RequestDetailPage({
   params,
 }: {
-  params: { requestId: string };
+  params: Promise<{ requestId: string }>;
 }) {
   const [request, setRequest] = useState<DesignRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [requestId, setRequestId] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    fetchRequest();
-  }, [params.requestId]);
+    params.then(({ requestId }) => {
+      setRequestId(requestId);
+      fetchRequest(requestId);
+    });
+  }, []);
 
-  const fetchRequest = async () => {
+  const fetchRequest = async (id: string) => {
     try {
-      const response = await fetch(
-        `/api/designer/design-requests/${params.requestId}`
-      );
+      const response = await fetch(`/api/designer/design-requests/${id}`);
       if (response.status === 404) {
         setError("Request not found");
         return;
