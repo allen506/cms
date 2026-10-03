@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
         COUNT(DISTINCT ds.id) as submission_count,
         ua.email as requester_email
       FROM design_requests dr
-      LEFT JOIN design_request_files drf ON drf.request_id = dr.id
-      LEFT JOIN design_submissions ds ON ds.request_id = dr.id
+      LEFT JOIN design_request_files drf ON drf.design_request_id = dr.id
+      LEFT JOIN design_submissions ds ON ds.design_request_id = dr.id
       LEFT JOIN user_accounts ua ON ua.id = dr.requester_id
       WHERE dr.tenant_id = ?
     `;
