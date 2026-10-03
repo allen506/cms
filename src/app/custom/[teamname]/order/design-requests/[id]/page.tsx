@@ -6,6 +6,8 @@ export default async function DesignRequestDetailPage({
   params: Promise<{ teamname: string; id: string }>;
 }) {
   const { teamname, id } = await params;
+  
+  console.log("[design-request-detail-page] Rendering for teamname:", teamname, "id:", id);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
