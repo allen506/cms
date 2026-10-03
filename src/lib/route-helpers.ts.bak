@@ -14,28 +14,13 @@ export interface RouteContext {
 }
 
 /**
- * Extract context from request headers and cookies
+ * Extract context from request headers
  */
 export function extractContext(request: NextRequest): RouteContext {
-  // Get tenant slug from header or default
-  const tenantSlug = request.headers.get("x-tenant-slug") || "default";
-  
-  // Try to get userId from headers first, then from cookies
-  let userId = request.headers.get("x-user-id");
-  if (!userId) {
-    userId = request.cookies.get("tenant_user_id")?.value || null;
-  }
-  
-  // Try to get userRole from headers first, then from cookies  
-  let userRole = request.headers.get("x-user-role");
-  if (!userRole) {
-    userRole = request.cookies.get("user_role")?.value || null;
-  }
-  
   return {
-    tenantSlug,
-    userId,
-    userRole,
+    tenantSlug: request.headers.get("x-tenant-slug") || "default",
+    userId: request.headers.get("x-user-id"),
+    userRole: request.headers.get("x-user-role"),
     request,
   };
 }
