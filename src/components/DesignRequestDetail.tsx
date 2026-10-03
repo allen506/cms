@@ -321,7 +321,7 @@ export default function DesignRequestDetail({
                   </div>
                 )}
 
-                {submission.status === "pending_review" && (
+                {submission.status === "pending" && (
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleApproveSubmission(submission.id)}
