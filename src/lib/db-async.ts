@@ -56,10 +56,10 @@ async function runMigrations(client: any): Promise<void> {
     `CREATE TABLE IF NOT EXISTS design_request_files (
       id TEXT PRIMARY KEY,
       design_request_id TEXT NOT NULL REFERENCES design_requests(id),
-      filename TEXT NOT NULL,
+      file_name TEXT NOT NULL,
       file_path TEXT,
+      file_type TEXT,
       file_size INTEGER,
-      mime_type TEXT,
       uploaded_by TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -68,29 +68,27 @@ async function runMigrations(client: any): Promise<void> {
       id TEXT PRIMARY KEY,
       design_request_id TEXT NOT NULL REFERENCES design_requests(id),
       designer_id TEXT NOT NULL,
-      version_number INTEGER DEFAULT 1,
+      submission_number INTEGER DEFAULT 1,
       status TEXT DEFAULT 'pending',
-      submission_notes TEXT,
-      submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      reviewed_at TIMESTAMP,
-      reviewed_by TEXT
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
     `CREATE TABLE IF NOT EXISTS design_submission_files (
       id TEXT PRIMARY KEY,
-      design_submission_id TEXT NOT NULL REFERENCES design_submissions(id),
-      filename TEXT NOT NULL,
+      submission_id TEXT NOT NULL REFERENCES design_submissions(id),
+      file_name TEXT NOT NULL,
       file_path TEXT,
-      file_size INTEGER,
-      mime_type TEXT,
+      file_type TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
     `CREATE TABLE IF NOT EXISTS design_comments (
       id TEXT PRIMARY KEY,
       design_request_id TEXT NOT NULL REFERENCES design_requests(id),
-      commenter_id TEXT NOT NULL,
-      comment_text TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      comment TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
