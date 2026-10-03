@@ -88,12 +88,12 @@ export default function DesignRequestsList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-8 sm:py-12">
         <div className="text-center">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <div className="w-8 h-8 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
           </div>
-          <p className="text-gray-600">Loading design requests...</p>
+          <p className="text-gray-600 text-sm">Loading design requests...</p>
         </div>
       </div>
     );
@@ -101,14 +101,14 @@ export default function DesignRequestsList({
 
   if (error === "User ID required" || error === "Not authenticated") {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-        <p className="text-amber-800 font-semibold mb-2">Authentication Required</p>
-        <p className="text-amber-700 text-sm mb-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
+        <p className="text-amber-800 font-semibold mb-2 text-sm sm:text-base">Authentication Required</p>
+        <p className="text-amber-700 text-xs sm:text-sm mb-4">
           You need to be logged in to view design requests.
         </p>
         <Link
           href={`/custom/${teamName}/login`}
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm"
         >
           Go to Login
         </Link>
@@ -118,23 +118,23 @@ export default function DesignRequestsList({
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <p className="text-red-800">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
+        <p className="text-red-800 text-sm sm:text-base">{error}</p>
       </div>
     );
   }
 
   if (requests.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-12 text-center">
-        <div className="text-gray-400 text-5xl mb-4">📋</div>
-        <p className="text-gray-600 text-lg mb-4">No design requests yet</p>
-        <p className="text-gray-500 mb-6">
+      <div className="bg-white rounded-lg shadow p-6 sm:p-12 text-center">
+        <div className="text-gray-400 text-3xl sm:text-5xl mb-4">📋</div>
+        <p className="text-gray-600 font-semibold mb-2 sm:text-lg text-sm">No design requests yet</p>
+        <p className="text-gray-500 text-xs sm:text-base mb-4 sm:mb-6">
           Start by submitting your first design request
         </p>
         <Link
           href={`/custom/${teamName}/order/design`}
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition-colors text-sm sm:text-base"
         >
           Create Design Request
         </Link>
@@ -144,14 +144,15 @@ export default function DesignRequestsList({
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
         <h3 className="text-lg font-bold text-gray-900">Design Requests</h3>
         <p className="text-sm text-gray-600 mt-1">
           Track all your design requests and submissions
         </p>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop Table - Hidden on mobile */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -218,14 +219,58 @@ export default function DesignRequestsList({
         </table>
       </div>
 
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+      {/* Mobile Card View - Shown only on mobile */}
+      <div className="md:hidden divide-y divide-gray-200">
+        {requests.map((request) => (
+          <div key={request.id} className="px-4 py-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 text-sm">
+                  {request.title}
+                </h4>
+                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                  {request.description}
+                </p>
+              </div>
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap flex-shrink-0 ${getStatusColor(
+                  request.status
+                )}`}
+              >
+                {getStatusLabel(request.status)}
+              </span>
+            </div>
+            <div className="flex gap-4 text-xs text-gray-600">
+              <div>
+                <span className="font-semibold">Submissions:</span> {request.submission_count}
+              </div>
+              <div>
+                <span className="font-semibold">Files:</span> {request.file_count}
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <span className="text-xs text-gray-500">
+                {formatDate(request.created_at)}
+              </span>
+              <Link
+                href={`/custom/${teamName}/order/design-requests/${request.id}`}
+                className="text-blue-600 hover:text-blue-900 font-semibold text-sm"
+              >
+                View
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-sm text-gray-600">
           Total: <span className="font-semibold">{requests.length}</span>{" "}
           request(s)
         </p>
         <Link
           href={`/custom/${teamName}/order/design`}
-          className="text-blue-600 hover:text-blue-900 font-semibold text-sm"
+          className="text-center sm:text-left text-blue-600 hover:text-blue-900 font-semibold text-sm"
         >
           + New Request
         </Link>

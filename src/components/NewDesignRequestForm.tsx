@@ -171,10 +171,10 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {/* Captain Status Message */}
       {!isCaptain && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 text-sm">
           <p className="text-yellow-800 font-semibold">
             ⚠️ Note: You need team captain status to submit design requests
           </p>
@@ -183,7 +183,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
 
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 text-sm">
           <p className="text-green-800 font-semibold">
             ✓ Design request submitted successfully! Redirecting...
           </p>
@@ -192,7 +192,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 text-sm">
           <p className="text-red-800">{error}</p>
         </div>
       )}
@@ -210,7 +210,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           onChange={handleChange}
           placeholder="e.g., Team Jersey Design"
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none text-base"
         />
       </div>
 
@@ -225,9 +225,9 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           value={formData.description}
           onChange={handleChange}
           placeholder="Describe your design concept, style preferences, etc."
-          rows={4}
+          rows={3}
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none text-base"
         />
       </div>
 
@@ -243,7 +243,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           onChange={handleChange}
           placeholder="List preferred colors"
           rows={2}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none text-base"
         />
       </div>
 
@@ -259,7 +259,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           onChange={handleChange}
           placeholder="Any specific requirements or constraints"
           rows={2}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent outline-none text-base"
         />
       </div>
 
@@ -272,15 +272,15 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition"
+          className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-blue-500 transition"
         >
           <div className="flex flex-col items-center">
-            <div className="text-4xl mb-3">📁</div>
-            <p className="text-gray-700 font-semibold mb-1">
+            <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">📁</div>
+            <p className="text-gray-700 font-semibold mb-1 text-sm sm:text-base">
               Click to upload or drag and drop
             </p>
-            <p className="text-gray-600 text-sm">
-              PNG, JPG, PDF, PSD, AI, Figma, etc. (Multiple files supported)
+            <p className="text-gray-600 text-xs sm:text-sm">
+              PNG, JPG, PDF, PSD, AI, Figma, etc.
             </p>
           </div>
           <input
@@ -293,7 +293,7 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
           />
           <label
             htmlFor="fileInput"
-            className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg cursor-pointer transition"
+            className="mt-3 sm:mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg cursor-pointer transition text-sm sm:text-base"
           >
             Select Files
           </label>
@@ -301,22 +301,22 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
 
         {/* File List */}
         {files.length > 0 && (
-          <div className="mt-4 space-y-2">
+          <div className="mt-3 sm:mt-4 space-y-2">
             <p className="text-sm font-semibold text-gray-900">
               Selected Files ({files.length}):
             </p>
             {files.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-2"
               >
-                <span className="text-sm text-gray-700">
+                <span className="text-xs sm:text-sm text-gray-700 truncate">
                   {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
                 <button
                   type="button"
                   onClick={() => handleRemoveFile(index)}
-                  className="text-red-600 hover:text-red-700 font-semibold"
+                  className="text-red-600 hover:text-red-700 font-semibold text-xs sm:text-sm flex-shrink-0"
                 >
                   Remove
                 </button>
@@ -327,17 +327,17 @@ export default function NewDesignRequestForm({ teamname }: NewDesignRequestFormP
       </div>
 
       {/* Submit Button */}
-      <div className="flex gap-4 pt-6">
+      <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6">
         <button
           type="submit"
           disabled={loading || !isCaptain}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition text-sm sm:text-base"
         >
           {loading ? "Submitting..." : !isCaptain ? "Requires Captain Status" : "Submit Design Request"}
         </button>
         <Link
           href={`/custom/${teamname}/order/design-requests`}
-          className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-3 rounded-lg text-center transition"
+          className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-3 rounded-lg text-center transition text-sm sm:text-base"
         >
           Cancel
         </Link>
