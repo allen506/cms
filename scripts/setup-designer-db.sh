@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Extract credentials from DATABASE_URL
-DATABASE_URL="postgresql://thinkmtb:ThinkMTB@2026!Secure@localhost:5432/thinkmtb_order"
+# Source the environment file to get DATABASE_URL
+cd /opt/thinkmtb-order
+source .env.production.local
 
-# Create the table and insert test account
+# Create the table and insert test account using DATABASE_URL
 psql "$DATABASE_URL" << 'SQL'
 CREATE TABLE IF NOT EXISTS designer_accounts (
   id TEXT PRIMARY KEY,
