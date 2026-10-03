@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne, execute, verifyPassword, createSessionToken, hashPassword} from "@/lib/db-async";
+  queryOne, execute, verifyPassword, createSessionToken, hashPassword} from "@/lib/route-helpers";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: NextRequest) {
@@ -11,11 +11,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Password is required" }, { status: 400 });
     }
 
-    // For now, check against hardcoded env var (TODO: use tenant_admins table)
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
-    const hashedAdminPassword = hashPassword(adminPassword);
-    
-    if (!verifyPassword(password, hashedAdminPassword)) {
+    // Get admin password from environment (required, no fallback)
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+      console.error("ADMIN_PASSWORD not configured");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    }
+
+    // Verify the provided password against the admin password
+    if (!(await verifyPassword(password, adminPassword))) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }
 
@@ -51,11 +55,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Error verifying admin password:", error);
-    console.error("Full error object:", JSON.stringify(error, null, 2));
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
-    return NextResponse.json({ error: `Verification failed: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
+    return NextResponse.json({ error: "Verification failed" }, { status: 500 });
   }
 }

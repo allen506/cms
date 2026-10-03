@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne, execute, requireAdminSession, hashPassword, verifyPassword} from "@/lib/db-async";
+  queryOne, execute, requireAdminSession, hashPassword, verifyPassword} from "@/lib/route-helpers";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
@@ -19,13 +19,16 @@ export async function POST(request: NextRequest) {
     }
 
     // For now, check against env var (TODO: use tenant_admins table)
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    }
 
-    if (!verifyPassword(currentPassword, adminPassword)) {
+    if (!(await verifyPassword(currentPassword, adminPassword))) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 401 });
     }
 
-    const hashedPassword = hashPassword(newPassword);
+    const hashedPassword = await hashPassword(newPassword);
     // TODO: Update tenant_admins table with new password
     // await execute("UPDATE tenant_admins SET password_hash = ? WHERE role = 'platform_admin'", [hashedPassword]);
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne, execute, hashPassword} from "@/lib/db-async";
+  queryOne, execute, hashPassword} from "@/lib/route-helpers";
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Generate reset token
     const resetToken = uuidv4();
-    const resetTokenHash = hashPassword(resetToken);
+    const resetTokenHash = await hashPassword(resetToken);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Store reset token in database

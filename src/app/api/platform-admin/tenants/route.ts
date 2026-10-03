@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  query, queryOne, execute, requirePlatformAdmin, hashPassword} from "@/lib/db-async";
+  query, queryOne, execute, requirePlatformAdmin, hashPassword} from "@/lib/route-helpers";
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
       // Create tenant admin
       const adminId = uuidv4();
-      const passwordHash = hashPassword(admin_password);
+      const passwordHash = await hashPassword(admin_password);
       await execute(
         `INSERT INTO tenant_admins (id, tenant_id, email, password_hash, full_name, role, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,

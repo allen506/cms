@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne, execute, hashPassword} from "@/lib/db-async";
+  queryOne, execute, hashPassword} from "@/lib/route-helpers";
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Create user account
     const userId = uuidv4();
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
 
     await execute(
       `INSERT INTO user_accounts (id, tenant_id, email, password_hash, is_team_captain, created_at)
@@ -61,8 +61,7 @@ export async function POST(request: NextRequest) {
           email,
           isCaptain: isFirstUser}}, { status: 201 });
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Register error:', errorMsg);
-    return NextResponse.json({ error: `An error occurred: ${errorMsg}` }, { status: 500 });
+    console.error('Register error:', error);
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 });
   }
 }

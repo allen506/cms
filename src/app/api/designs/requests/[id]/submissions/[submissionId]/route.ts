@@ -80,9 +80,8 @@ export async function PATCH(
       message: `Design submission ${status} successfully`});
   } catch (error) {
     console.error("Error updating submission:", error);
-    const errorDetails = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to update submission", details: errorDetails },
+      { error: "Failed to update submission" },
       { status: 500 }
     );
   }

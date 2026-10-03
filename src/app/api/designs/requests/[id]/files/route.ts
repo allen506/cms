@@ -4,7 +4,7 @@ import {
   query,
   execute,
   extractContext,
-  requireAuth} from "@/lib/db-async";
+  requireAuth} from "@/lib/route-helpers";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -56,26 +56,51 @@ export async function POST(
     }
 
     const uploadedFiles = [];
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'image/gif', 'image/webp'];
 
     for (const file of files) {
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `File ${file.name} exceeds 50MB limit` },
+          { status: 400 }
+        );
+      }
+
+      // Validate file type
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: `File type ${file.type} not allowed. Allowed types: images and PDF` },
+          { status: 400 }
+        );
+      }
+
+      // Sanitize filename
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      if (!sanitizedName || sanitizedName.length === 0) {
+        return NextResponse.json(
+          { error: "Invalid filename" },
+          { status: 400 }
+        );
+      }
+
       // In production, upload to cloud storage (S3, etc)
       // For now, store file metadata only
       const fileId = uuidv4();
-      const fileName = file.name;
-      const fileType = file.type;
-      const fileUrl = `/uploads/design-requests/${id}/${fileName}`;
+      const fileUrl = `/uploads/design-requests/${id}/${sanitizedName}`;
 
       await execute(
         `INSERT INTO design_request_files
           (id, request_id, file_url, file_name, file_type, uploaded_by, created_at)
          VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-        [fileId, id, fileUrl, fileName, fileType, ctx.userId]
+        [fileId, id, fileUrl, sanitizedName, file.type, ctx.userId]
       );
 
       uploadedFiles.push({
         fileId,
-        fileName,
-        fileType,
+        fileName: sanitizedName,
+        fileType: file.type,
         fileUrl});
     }
 
@@ -119,7 +144,16 @@ export async function GET(
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
-    // Get files
+    // Get files - verify request belongs to tenant
+    const designRequest = await queryOne<any>(
+      "SELECT id FROM design_requests WHERE id = ? AND tenant_id = ?",
+      [id, tenant.id]
+    );
+    
+    if (!designRequest) {
+      return NextResponse.json({ error: "Design request not found" }, { status: 404 });
+    }
+
     const files = await query<any>(
       `SELECT id, file_url, file_name, file_type, uploaded_by, created_at
        FROM design_request_files

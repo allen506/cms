@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne, createSessionToken, verifyPassword} from "@/lib/db-async";
+  queryOne, createSessionToken, verifyPassword} from "@/lib/route-helpers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
-    if (!verifyPassword(password, user.password_hash)) {
+    if (!(await verifyPassword(password, user.password_hash))) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       path: '/'});
 
     response.cookies.set('tenant_user_id', user.id, {
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
@@ -63,8 +64,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Login error:', errorMsg);
-    return NextResponse.json({ error: `An error occurred: ${errorMsg}` }, { status: 500 });
+    console.error('Login error:', error);
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 });
   }
 }

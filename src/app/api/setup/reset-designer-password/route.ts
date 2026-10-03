@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
 
     const results = await query(
       `UPDATE designer_accounts 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Reset password error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to reset password" },
+      { error: "Failed to reset password" },
       { status: 500 }
     );
   }

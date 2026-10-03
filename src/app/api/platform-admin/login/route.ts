@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  queryOne, verifyPassword, createSessionToken, requirePlatformAdmin} from "@/lib/db-async";
+  queryOne, verifyPassword, createSessionToken, requirePlatformAdmin} from "@/lib/route-helpers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       [email]
     );
 
-    if (admin && verifyPassword(password, admin.password_hash)) {
+    if (admin && (await verifyPassword(password, admin.password_hash))) {
       // Valid credentials - create session
       const token = createSessionToken();
       const response = NextResponse.json({ success: true });
@@ -29,9 +29,14 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Fall back to environment variable credentials (for first login / emergency)
-    const ENV_ADMIN_EMAIL = process.env.PLATFORM_ADMIN_EMAIL || 'admin@platform.local';
-    const ENV_ADMIN_PASSWORD = process.env.PLATFORM_ADMIN_PASSWORD || 'ChangeMe123!';
+    // Only use environment variable credentials if no database admin exists
+    const ENV_ADMIN_EMAIL = process.env.PLATFORM_ADMIN_EMAIL;
+    const ENV_ADMIN_PASSWORD = process.env.PLATFORM_ADMIN_PASSWORD;
+
+    if (!ENV_ADMIN_EMAIL || !ENV_ADMIN_PASSWORD) {
+      // No credentials configured - authentication disabled
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
 
     if (email === ENV_ADMIN_EMAIL && password === ENV_ADMIN_PASSWORD) {
       const token = createSessionToken();

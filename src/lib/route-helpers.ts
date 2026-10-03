@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute, withTransaction, TransactionClient } from "./db-async";
+import bcryptjs from "bcryptjs";
 
 export interface RouteContext {
   tenantSlug: string;
@@ -120,18 +121,18 @@ export function requirePlatformAdmin(request: NextRequest): { error: string } | 
 }
 
 /**
- * Hash password for storage
+ * Hash password for storage (using bcryptjs)
  */
-export function hashPassword(password: string): string {
-  const crypto = require("crypto");
-  return crypto.createHash("sha256").update(password).digest("hex");
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcryptjs.genSalt(12);
+  return bcryptjs.hash(password, salt);
 }
 
 /**
  * Verify password against hash
  */
-export function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcryptjs.compare(password, hash);
 }
 
 /**
