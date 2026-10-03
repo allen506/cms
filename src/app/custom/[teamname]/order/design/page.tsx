@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import DesignRequestForm from "@/components/DesignRequestForm";
-import { getDb } from "@/lib/db";
+import { queryOne } from "@/lib/db-async";
 
 export default async function DesignRequestPage({
   params,
@@ -9,13 +9,13 @@ export default async function DesignRequestPage({
 }) {
   const { teamname } = await params;
 
-  // Verify team exists
-  const db = getDb();
-  const team = db
-    .prepare("SELECT id, name FROM teams WHERE slug = ?")
-    .get(teamname.toLowerCase()) as { id: string; name: string } | undefined;
+  // Verify tenant exists
+  const tenant = await queryOne<{ id: string; name: string }>(
+    "SELECT id, name FROM tenants WHERE slug = ?",
+    [teamname.toLowerCase()]
+  );
 
-  if (!team) {
+  if (!tenant) {
     redirect("/custom");
   }
 
@@ -25,7 +25,7 @@ export default async function DesignRequestPage({
         {/* Breadcrumb */}
         <div className="mb-8 text-sm text-gray-600">
           <a href={`/custom/${teamname}`} className="hover:text-gray-900">
-            {team.name}
+            {tenant.name}
           </a>
           {" / "}
           <a href={`/custom/${teamname}/order`} className="hover:text-gray-900">
