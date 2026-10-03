@@ -359,12 +359,18 @@ async function runMigrations(client: any): Promise<void> {
 async function initPostgres(): Promise<Pool> {
   if (pgPool) return pgPool;
 
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable not set");
+  const dbUrl = process.env.DATABASE_URL;
+  console.log("[db-async] DATABASE_URL set:", !!dbUrl);
+  
+  if (!dbUrl) {
+    const errorMsg = "DATABASE_URL environment variable not set. Cannot connect to PostgreSQL. Make sure DATABASE_URL is set in your environment.";
+    console.error("[db-async] ❌ " + errorMsg);
+    throw new Error(errorMsg);
   }
 
+  console.log("[db-async] Initializing PostgreSQL pool...");
   pgPool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: dbUrl,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
@@ -372,16 +378,17 @@ async function initPostgres(): Promise<Pool> {
 
   // Test connection and run migrations
   try {
+    console.log("[db-async] Testing connection...");
     const testClient = await pgPool.connect();
     await testClient.query("SELECT 1");
-    console.log("✅ Connected to PostgreSQL");
+    console.log("[db-async] ✅ Connected to PostgreSQL successfully");
     
     // Run migrations once
     await runMigrations(testClient);
     
     testClient.release();
   } catch (error) {
-    console.error("❌ Failed to initialize PostgreSQL:", error);
+    console.error("[db-async] ❌ Failed to initialize PostgreSQL:", error);
     throw error;
   }
 
