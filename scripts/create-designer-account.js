@@ -3,7 +3,11 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://thinkmtb:ThinkMTB@2026\\!Secure@localhost:5432/thinkmtb_order'
+  host: 'localhost',
+  port: 5432,
+  database: 'thinkmtb_order',
+  user: 'thinkmtb',
+  password: 'ThinkMTB@2026!Secure'
 });
 
 async function createDesignerAccount() {
