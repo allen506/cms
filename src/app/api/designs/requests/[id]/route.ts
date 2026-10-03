@@ -127,8 +127,15 @@ export async function GET(
       console.error("[designs/requests/[id]] Error message:", error.message);
       console.error("[designs/requests/[id]] Error stack:", error.stack);
     }
+    
+    const errorDetails = error instanceof Error ? error.message : String(error);
+    
     return NextResponse.json(
-      { error: "Failed to fetch design request", details: error instanceof Error ? error.message : String(error) },
+      { 
+        error: "Failed to fetch design request",
+        details: errorDetails,
+        env: process.env.NODE_ENV
+      },
       { status: 500 }
     );
   }
