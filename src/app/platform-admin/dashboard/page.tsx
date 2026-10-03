@@ -20,7 +20,7 @@ interface Tenant {
   created_at: string;
 }
 
-type DashboardTab = 'tenants' | 'catalog' | 'orders' | 'breakdown' | 'per-person' | 'payments' | 'pricing';
+type DashboardTab = 'tenants' | 'catalog' | 'orders' | 'breakdown' | 'per-person' | 'payments' | 'pricing' | 'designers';
 
 export default function PlatformAdminDashboard() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -97,7 +97,7 @@ export default function PlatformAdminDashboard() {
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-8 flex gap-4 overflow-x-auto">
-          {(['tenants', 'catalog', 'orders', 'breakdown', 'per-person', 'payments', 'pricing'] as const).map((tab) => (
+          {(['tenants', 'catalog', 'orders', 'breakdown', 'per-person', 'payments', 'pricing', 'designers'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -119,7 +119,9 @@ export default function PlatformAdminDashboard() {
                 ? '👤 Per-Person'
                 : tab === 'payments'
                 ? '💳 Payments'
-                : '💰 Pricing'}
+                : tab === 'pricing'
+                ? '💰 Pricing'
+                : '🎨 Designers'}
             </button>
           ))}
         </div>
@@ -253,6 +255,68 @@ export default function PlatformAdminDashboard() {
               productsEndpoint="/api/platform-admin/products"
               pricingTiersEndpoint="/api/platform-admin/pricing-tiers"
             />
+          </div>
+        )}
+
+        {activeTab === 'designers' && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">🎨 Designer Module</h3>
+              <p className="text-blue-800 mb-4">
+                Manage design requests and submissions from your teams
+              </p>
+              <div className="space-y-3">
+                <Link href="/designer/login">
+                  <button className="block w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-center">
+                    Access Designer Portal
+                  </button>
+                </Link>
+                <p className="text-sm text-blue-700">
+                  Login as a designer to view pending requests and submit proposals
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-lg shadow p-6">
+                <h4 className="font-semibold text-gray-900 mb-4">Designer Panel Features</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-start">
+                    <span className="text-blue-600 font-bold mr-2">•</span>
+                    View all pending design requests
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-600 font-bold mr-2">•</span>
+                    Submit design proposals with files
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-600 font-bold mr-2">•</span>
+                    Track submission status
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-600 font-bold mr-2">•</span>
+                    Receive team feedback
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <h4 className="font-semibold text-gray-900 mb-4">Test Designer Account</h4>
+                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 space-y-2">
+                  <div>
+                    <p className="font-semibold">Email:</p>
+                    <p className="font-mono text-gray-600">designer@test.com</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Password:</p>
+                    <p className="font-mono text-gray-600">TestDesigner123!</p>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4">
+                    Use these credentials to test the designer workflow
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
