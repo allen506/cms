@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  query, queryOne, execute, requirePlatformAdmin, hashPassword} from "@/lib/route-helpers";
+import { query, queryOne, execute, withTransaction } from "@/lib/db-async";
+import { requirePlatformAdmin, hashPassword } from "@/lib/route-helpers";
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
