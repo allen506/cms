@@ -177,10 +177,10 @@ export default function PasswordGate({
               Ordering Has Finished
             </h2>
             <p className="text-orange-800 mb-6">
-              Thank you for your interest in ThinkMTB team orders! The ordering period has now closed.
+              Thank you for your interest in CMS Sportswear team orders! The ordering period has now closed.
             </p>
             <p className="text-orange-700 font-semibold mb-4">
-              To discuss additional orders or special requests, please contact the ThinkMTB admins.
+              To discuss additional orders or special requests, please contact the CMS Sportswear admins.
             </p>
             <p className="text-sm text-orange-600">
               We appreciate your support and look forward to seeing you in our gear!
