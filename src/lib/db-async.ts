@@ -319,6 +319,23 @@ async function runMigrations(client: any): Promise<void> {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
+
+    // Designer accounts and authentication
+    `CREATE TABLE IF NOT EXISTS designer_accounts (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL REFERENCES tenants(id),
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      company_name TEXT,
+      permissions JSONB NOT NULL DEFAULT '["view_requests","submit_designs","view_approvals"]'::jsonb,
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      CONSTRAINT unique_tenant_email UNIQUE (tenant_id, email)
+    )`,
+
+    `CREATE INDEX IF NOT EXISTS idx_designer_accounts_tenant ON designer_accounts(tenant_id)`,
   ];
 
   for (const migration of migrations) {
