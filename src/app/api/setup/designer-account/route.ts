@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { query } from "@/lib/db-async";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       ["designer@test.com"]
     );
 
-    if (existing.rows.length > 0) {
+    if (existing.length > 0) {
       return NextResponse.json(
         { success: true, message: "Designer account already exists" },
         { status: 200 }
