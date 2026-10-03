@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  queryOne, execute} , withTransaction from "@/lib/db-async";
+  queryOne, execute, withTransaction } from "@/lib/db-async";
 
 // PATCH — reset a user's PIN by providing their full name
 export async function PATCH(request: NextRequest) {
