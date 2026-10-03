@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import DesignRequestDetail from "@/components/DesignRequestDetail";
-import { getDb } from "@/lib/db";
+import { query } from "@/lib/db-async";
 
 export default async function DesignRequestDetailPage({
   params,
@@ -10,14 +10,16 @@ export default async function DesignRequestDetailPage({
   const { teamname, id } = await params;
 
   // Verify team exists
-  const db = getDb();
-  const team = db
-    .prepare("SELECT id, name FROM teams WHERE slug = ?")
-    .get(teamname.toLowerCase()) as { id: string; name: string } | undefined;
+  const teams = await query(
+    "SELECT id, name FROM teams WHERE slug = $1",
+    [teamname.toLowerCase()]
+  );
 
-  if (!team) {
+  if (teams.length === 0) {
     redirect("/custom");
   }
+
+  const team = teams[0];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
