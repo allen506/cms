@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne } from "@/lib/db-async";
+import { query } from "@/lib/db-async";
 import { createSessionToken, verifyPassword } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
@@ -14,17 +14,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Get designer account
-    const designer = await queryOne<any>(
-      "SELECT id, email, password_hash, name FROM designer_accounts WHERE email = ?",
+    const results = await query(
+      "SELECT id, email, password_hash, full_name FROM designer_accounts WHERE email = $1",
       [email]
     );
 
-    if (!designer) {
+    if (results.length === 0) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
       );
     }
+
+    const designer = results[0];
 
     // Verify password
     if (!verifyPassword(password, designer.password_hash)) {
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
       designer: {
         id: designer.id,
         email: designer.email,
-        name: designer.name,
+        name: designer.full_name,
       },
     });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne } from "@/lib/db-async";
+import { query } from "@/lib/db-async";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,21 +13,26 @@ export async function GET(request: NextRequest) {
     }
 
     // Get designer info
-    const designer = await queryOne<any>(
-      "SELECT id, email, name FROM designer_accounts WHERE id = ?",
+    const results = await query(
+      "SELECT id, email, full_name FROM designer_accounts WHERE id = $1",
       [designerId]
     );
 
-    if (!designer) {
+    if (results.length === 0) {
       return NextResponse.json(
         { error: "Designer not found" },
         { status: 404 }
       );
     }
 
+    const designer = results[0];
     return NextResponse.json({
       success: true,
-      designer,
+      designer: {
+        id: designer.id,
+        email: designer.email,
+        name: designer.full_name,
+      },
     });
   } catch (error) {
     console.error("Verify error:", error);
