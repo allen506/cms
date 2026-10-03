@@ -32,7 +32,6 @@ interface DesignRequest {
   created_at: string;
   updated_at: string;
   requester_email: string;
-  requester_name: string;
   team_name: string;
   files: DesignFile[];
   submissions: Submission[];
@@ -114,9 +113,9 @@ export default function RequestDetailPage({
             <p className="text-gray-600 mt-2 text-sm sm:text-base">
               From: <span className="font-medium">{request.team_name || "Unknown Team"}</span>
             </p>
-            {request.requester_name && (
+            {request.requester_email && (
               <p className="text-gray-600 text-xs sm:text-sm mt-1">
-                Requested by: {request.requester_name} ({request.requester_email})
+                Requested by: {request.requester_email}
               </p>
             )}
           </div>

@@ -41,7 +41,6 @@ export async function GET(
         dr.created_at,
         dr.updated_at,
         u.email as requester_email,
-        u.full_name as requester_name,
         t.name as team_name
        FROM design_requests dr
        LEFT JOIN user_accounts u ON dr.requester_id = u.id
