@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Source the environment file to get DATABASE_URL
-cd /opt/thinkmtb-order
-source .env.production.local
+# Parse DATABASE_URL to extract components
+# FORMAT: postgresql://user:password@host:port/database
+# Replace \! with !  in password
+export PGPASSWORD='ThinkMTB@2026!Secure'
 
-# Create the table and insert test account using DATABASE_URL
-psql "$DATABASE_URL" << 'SQL'
+psql -h localhost -p 5432 -U thinkmtb -d thinkmtb_order << 'SQL'
 CREATE TABLE IF NOT EXISTS designer_accounts (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL,
