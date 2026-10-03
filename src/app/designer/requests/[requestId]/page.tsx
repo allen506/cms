@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import DesignSubmissionForm from "@/components/DesignSubmissionForm";
 
 interface DesignFile {
   id: string;
@@ -245,15 +246,10 @@ export default function RequestDetailPage({
 
       {/* Submit Design Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
           📤 Submit Your Proposal
         </h2>
-        <p className="text-gray-700 text-sm sm:text-base mb-4">
-          Ready to submit your design? Upload your files and notes below.
-        </p>
-        <button className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-sm sm:text-base">
-          Upload Design Files
-        </button>
+        <DesignSubmissionForm requestId={request.id} requestTitle={request.title} />
       </div>
     </div>
   );
