@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
 import DesignRequestForm from "@/components/DesignRequestForm";
-import { queryOne } from "@/lib/db-async";
 
 export default async function DesignRequestPage({
   params,
@@ -9,15 +7,7 @@ export default async function DesignRequestPage({
 }) {
   const { teamname } = await params;
 
-  // Verify tenant exists
-  const tenant = await queryOne<{ id: string; name: string }>(
-    "SELECT id, name FROM tenants WHERE slug = ?",
-    [teamname.toLowerCase()]
-  );
-
-  if (!tenant) {
-    redirect("/custom");
-  }
+  console.log("[design-request-page] Rendering for teamname:", teamname);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -25,7 +15,7 @@ export default async function DesignRequestPage({
         {/* Breadcrumb */}
         <div className="mb-8 text-sm text-gray-600">
           <a href={`/custom/${teamname}`} className="hover:text-gray-900">
-            {tenant.name}
+            {teamname.toUpperCase()}
           </a>
           {" / "}
           <a href={`/custom/${teamname}/order`} className="hover:text-gray-900">
