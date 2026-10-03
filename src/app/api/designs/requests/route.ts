@@ -65,7 +65,9 @@ export async function GET(request: NextRequest) {
 
     sql += ` GROUP BY dr.id, dr.title, dr.description, dr.status, dr.requester_id, dr.team_id, dr.created_at, dr.updated_at, ua.email ORDER BY dr.created_at DESC`;
 
+    console.log("Executing design requests query:", { tenantSlug: ctx.tenantSlug, userId: ctx.userId, userRole: ctx.userRole });
     const requests = await query<any>(sql, params);
+    console.log("Design requests query succeeded, count:", requests.length);
 
     return successResponse({
       success: true,
@@ -74,7 +76,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching design requests:", error);
-    return errorResponse("Failed to fetch design requests", 500);
+    return errorResponse(`Failed to fetch design requests: ${error instanceof Error ? error.message : String(error)}`, 500);
   }
 }
 
