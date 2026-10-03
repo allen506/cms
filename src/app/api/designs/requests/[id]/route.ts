@@ -1,192 +1,115 @@
-import { NextRequest } from "next/server";
-import {
-  query,
-  queryOne,
-  execute,
-  errorResponse,
-  successResponse,
-  extractContext,
-  requireAuth,
-} from "@/lib/route-helpers";
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db-async";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const ctx = extractContext(request);
     const { id } = await params;
+    const tenantSlug = request.headers.get("x-tenant-slug");
 
-    // Require auth
-    const authError = requireAuth(ctx);
-    if (authError) {
-      return errorResponse(authError.error, 401);
+    if (!tenantSlug) {
+      return NextResponse.json(
+        { error: "Tenant slug required" },
+        { status: 400 }
+      );
     }
 
     // Get tenant ID
-    const tenant = await queryOne<{ id: string }>(
-      "SELECT id FROM tenants WHERE slug = ?",
-      [ctx.tenantSlug]
+    const tenants = await query(
+      "SELECT id FROM tenants WHERE slug = $1",
+      [tenantSlug]
     );
-    if (!tenant) {
-      return errorResponse("Tenant not found", 404);
+
+    if (tenants.length === 0) {
+      return NextResponse.json(
+        { error: "Tenant not found" },
+        { status: 404 }
+      );
     }
 
-    // Get design request with access control
-    const designRequest = await queryOne<any>(
+    const tenantId = tenants[0].id;
+
+    // Get design request
+    const designRequests = await query(
       `SELECT dr.*, ua.email as requester_email, t.name as team_name
        FROM design_requests dr
        LEFT JOIN user_accounts ua ON ua.id = dr.requester_id
        LEFT JOIN teams t ON t.id = dr.team_id
-       WHERE dr.id = ? AND dr.tenant_id = ?`,
-      [id, tenant.id]
+       WHERE dr.id = $1 AND dr.tenant_id = $2`,
+      [id, tenantId]
     );
 
-    if (!designRequest) {
-      return errorResponse("Design request not found", 404);
+    if (designRequests.length === 0) {
+      return NextResponse.json(
+        { error: "Design request not found" },
+        { status: 404 }
+      );
     }
 
-    // Check access: requester, team member, or admin
-    const user = await queryOne<{ user_role: string; team_id: string }>(
-      "SELECT user_role, team_id FROM user_accounts WHERE id = ?",
-      [ctx.userId]
-    );
-
-    if (
-      user?.user_role !== "admin" &&
-      designRequest.requester_id !== ctx.userId &&
-      user?.team_id !== designRequest.team_id
-    ) {
-      return errorResponse("Access denied to this design request", 403);
-    }
+    const designRequest = designRequests[0];
 
     // Get attached files
-    const files = await query<any>(
-      `SELECT id, file_url, file_name, file_type, uploaded_by, created_at
+    const files = await query(
+      `SELECT id, filename as file_name, file_path as file_url, mime_type as file_type, uploaded_by, created_at
        FROM design_request_files
-       WHERE request_id = ?
+       WHERE design_request_id = $1
        ORDER BY created_at DESC`,
       [id]
     );
 
-    // Get design submissions
-    const submissions = await query<any>(
-      `SELECT ds.id, ds.request_id, ds.designer_id, ds.submission_number, ds.status,
-        ds.created_at, ds.updated_at, ua.email as designer_email,
-        COUNT(DISTINCT dsf.id) as file_count
+    // Get design submissions with files
+    const submissions = await query(
+      `SELECT ds.id, ds.design_request_id as request_id, ds.designer_id, ds.version_number as submission_number,
+              ds.status, ds.submitted_at as created_at, ds.updated_at, da.full_name as designer_email
        FROM design_submissions ds
-       LEFT JOIN user_accounts ua ON ua.id = ds.designer_id
-       LEFT JOIN design_submission_files dsf ON dsf.submission_id = ds.id
-       WHERE ds.request_id = ?
-       GROUP BY ds.id
-       ORDER BY ds.submission_number DESC`,
+       LEFT JOIN designer_accounts da ON da.id = ds.designer_id
+       WHERE ds.design_request_id = $1
+       ORDER BY ds.version_number DESC`,
       [id]
     );
 
-    // Get comments thread
-    const comments = await query<any>(
-      `SELECT dc.id, dc.request_id, dc.user_id, dc.comment, dc.created_at,
-        ua.email as user_email
+    // Get submission files for each submission
+    const submissionsWithFiles = await Promise.all(
+      submissions.map(async (submission) => {
+        const submissionFiles = await query(
+          `SELECT id, filename as file_name, file_path as file_url, mime_type as file_type
+           FROM design_submission_files
+           WHERE design_submission_id = $1
+           ORDER BY created_at DESC`,
+          [submission.id]
+        );
+        return {
+          ...submission,
+          files: submissionFiles,
+        };
+      })
+    );
+
+    // Get comments
+    const comments = await query(
+      `SELECT dc.id, dc.design_request_id as request_id, dc.commenter_id as user_id, dc.comment_text as comment,
+              dc.created_at, ua.email as user_email
        FROM design_comments dc
-       LEFT JOIN user_accounts ua ON ua.id = dc.user_id
-       WHERE dc.request_id = ?
+       LEFT JOIN user_accounts ua ON ua.id = dc.commenter_id
+       WHERE dc.design_request_id = $1
        ORDER BY dc.created_at ASC`,
       [id]
     );
 
-    return successResponse({
+    return NextResponse.json({
       success: true,
       request: designRequest,
       files,
-      submissions,
+      submissions: submissionsWithFiles,
       comments,
     });
   } catch (error) {
     console.error("Error fetching design request:", error);
-    return errorResponse("Failed to fetch design request", 500);
-  }
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const ctx = extractContext(request);
-    const { id } = await params;
-
-    // Require auth
-    const authError = requireAuth(ctx);
-    if (authError) {
-      return errorResponse(authError.error, 401);
-    }
-
-    // Get tenant ID
-    const tenant = await queryOne<{ id: string }>(
-      "SELECT id FROM tenants WHERE slug = ?",
-      [ctx.tenantSlug]
+    return NextResponse.json(
+      { error: "Failed to fetch design request" },
+      { status: 500 }
     );
-    if (!tenant) {
-      return errorResponse("Tenant not found", 404);
-    }
-
-    // Verify request exists and belongs to tenant
-    const designRequest = await queryOne<any>(
-      "SELECT * FROM design_requests WHERE id = ? AND tenant_id = ?",
-      [id, tenant.id]
-    );
-
-    if (!designRequest) {
-      return errorResponse("Design request not found", 404);
-    }
-
-    // Only requester or admin can update
-    if (ctx.userRole !== "admin" && designRequest.requester_id !== ctx.userId) {
-      return errorResponse(
-        "Only the requester or admin can update this request",
-        403
-      );
-    }
-
-    const body = await request.json();
-    const { title, description, status } = body;
-
-    const updates: string[] = [];
-    const values: any[] = [];
-
-    if (title !== undefined) {
-      updates.push("title = ?");
-      values.push(title);
-    }
-    if (description !== undefined) {
-      updates.push("description = ?");
-      values.push(description);
-    }
-    if (status !== undefined && ctx.userRole === "admin") {
-      // Only admin can change status
-      updates.push("status = ?");
-      values.push(status);
-    }
-
-    if (updates.length === 0) {
-      return errorResponse("No fields to update", 400);
-    }
-
-    updates.push("updated_at = NOW()");
-    values.push(id);
-    values.push(tenant.id);
-
-    await execute(
-      `UPDATE design_requests SET ${updates.join(", ")} WHERE id = ? AND tenant_id = ?`,
-      values
-    );
-
-    return successResponse({
-      success: true,
-      message: "Design request updated successfully",
-    });
-  } catch (error) {
-    console.error("Error updating design request:", error);
-    return errorResponse("Failed to update design request", 500);
   }
 }
