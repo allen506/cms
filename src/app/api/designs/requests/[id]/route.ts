@@ -9,6 +9,8 @@ export async function GET(
     const { id } = await params;
     const tenantSlug = request.headers.get("x-tenant-slug");
 
+    console.log("[designs/requests/[id]] Fetching request:", { id, tenantSlug });
+
     if (!tenantSlug) {
       return NextResponse.json(
         { error: "Tenant slug required" },
@@ -17,10 +19,12 @@ export async function GET(
     }
 
     // Get tenant ID
+    console.log("[designs/requests/[id]] Querying tenants table...");
     const tenants = await query(
       "SELECT id FROM tenants WHERE slug = $1",
       [tenantSlug]
     );
+    console.log("[designs/requests/[id]] Tenants query result:", tenants.length);
 
     if (tenants.length === 0) {
       return NextResponse.json(
@@ -30,8 +34,10 @@ export async function GET(
     }
 
     const tenantId = tenants[0].id;
+    console.log("[designs/requests/[id]] Using tenant ID:", tenantId);
 
     // Get design request
+    console.log("[designs/requests/[id]] Querying design_requests table...");
     const designRequests = await query(
       `SELECT dr.*, ua.email as requester_email, t.name as team_name
        FROM design_requests dr
@@ -40,6 +46,7 @@ export async function GET(
        WHERE dr.id = $1 AND dr.tenant_id = $2`,
       [id, tenantId]
     );
+    console.log("[designs/requests/[id]] Design requests query result:", designRequests.length);
 
     if (designRequests.length === 0) {
       return NextResponse.json(
@@ -49,6 +56,7 @@ export async function GET(
     }
 
     const designRequest = designRequests[0];
+    console.log("[designs/requests/[id]] Got design request, fetching files...");
 
     // Get attached files
     const files = await query(
@@ -58,8 +66,10 @@ export async function GET(
        ORDER BY created_at DESC`,
       [id]
     );
+    console.log("[designs/requests/[id]] Files query result:", files.length);
 
     // Get design submissions with files
+    console.log("[designs/requests/[id]] Querying design_submissions...");
     const submissions = await query(
       `SELECT ds.id, ds.design_request_id as request_id, ds.designer_id, ds.version_number as submission_number,
               ds.status, ds.submitted_at as created_at, ds.updated_at, da.full_name as designer_email
@@ -69,8 +79,10 @@ export async function GET(
        ORDER BY ds.version_number DESC`,
       [id]
     );
+    console.log("[designs/requests/[id]] Submissions query result:", submissions.length);
 
     // Get submission files for each submission
+    console.log("[designs/requests/[id]] Fetching files for", submissions.length, 'submissions...');
     const submissionsWithFiles = await Promise.all(
       submissions.map(async (submission) => {
         const submissionFiles = await query(
@@ -86,8 +98,10 @@ export async function GET(
         };
       })
     );
+    console.log("[designs/requests/[id]] Submission files fetched successfully");
 
     // Get comments
+    console.log("[designs/requests/[id]] Querying design_comments...");
     const comments = await query(
       `SELECT dc.id, dc.design_request_id as request_id, dc.commenter_id as user_id, dc.comment_text as comment,
               dc.created_at, ua.email as user_email
@@ -97,7 +111,9 @@ export async function GET(
        ORDER BY dc.created_at ASC`,
       [id]
     );
+    console.log("[designs/requests/[id]] Comments query result:", comments.length);
 
+    console.log("[designs/requests/[id]] All queries successful, returning response");
     return NextResponse.json({
       success: true,
       request: designRequest,
@@ -106,9 +122,13 @@ export async function GET(
       comments,
     });
   } catch (error) {
-    console.error("Error fetching design request:", error);
+    console.error("[designs/requests/[id]] ❌ Error fetching design request:", error);
+    if (error instanceof Error) {
+      console.error("[designs/requests/[id]] Error message:", error.message);
+      console.error("[designs/requests/[id]] Error stack:", error.stack);
+    }
     return NextResponse.json(
-      { error: "Failed to fetch design request" },
+      { error: "Failed to fetch design request", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
