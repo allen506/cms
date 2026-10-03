@@ -72,7 +72,7 @@ export async function GET(
     console.log("[designs/requests/[id]] Querying design_submissions...");
     const submissions = await query(
       `SELECT ds.id, ds.design_request_id as request_id, ds.designer_id, ds.version_number as submission_number,
-              ds.status, ds.submitted_at as created_at, ds.updated_at, ua.email as designer_email
+              ds.status, ds.submitted_at as created_at, ua.email as designer_email
        FROM design_submissions ds
        LEFT JOIN user_accounts ua ON ua.id = ds.designer_id
        WHERE ds.design_request_id = $1
