@@ -140,3 +140,70 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const tenantSlug = request.headers.get("x-tenant-slug");
+
+    console.log("[designs/requests/[id] DELETE] Archiving design:", { id, tenantSlug });
+
+    if (!tenantSlug) {
+      return NextResponse.json(
+        { error: "Tenant slug required" },
+        { status: 400 }
+      );
+    }
+
+    // Get tenant ID
+    const tenants = await query(
+      "SELECT id FROM tenants WHERE slug = $1",
+      [tenantSlug]
+    );
+
+    if (tenants.length === 0) {
+      return NextResponse.json(
+        { error: "Tenant not found" },
+        { status: 404 }
+      );
+    }
+
+    const tenantId = tenants[0].id;
+
+    // Get design request
+    const designRequests = await query(
+      "SELECT * FROM design_requests WHERE id = $1 AND tenant_id = $2",
+      [id, tenantId]
+    );
+
+    if (designRequests.length === 0) {
+      return NextResponse.json(
+        { error: "Design request not found" },
+        { status: 404 }
+      );
+    }
+
+    // Archive the design request by setting archived_at and status to archived
+    console.log("[designs/requests/[id] DELETE] Archiving design with id:", id);
+    await query(
+      `UPDATE design_requests SET status = $1, archived_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      ["archived", id]
+    );
+
+    console.log("[designs/requests/[id] DELETE] Design archived successfully");
+    return NextResponse.json({
+      success: true,
+      message: "Design archived successfully",
+    });
+  } catch (error) {
+    console.error("[designs/requests/[id] DELETE] Error archiving design:", error);
+    const errorDetails = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { error: "Failed to archive design", details: errorDetails },
+      { status: 500 }
+    );
+  }
+}

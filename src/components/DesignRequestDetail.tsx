@@ -177,6 +177,32 @@ export default function DesignRequestDetail({
     }
   };
 
+  const handleDeleteDesign = async () => {
+    const confirmMsg = "Archive this design? You can restore it within 3 months.\n\nClick OK to continue.";
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const response = await fetch(
+        `/api/designs/requests/${requestId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-tenant-slug": teamName.toLowerCase(),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to archive design");
+      }
+
+      // Redirect back to design requests list
+      window.location.href = `/custom/${teamName.toLowerCase()}/order/design-requests`;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error archiving design");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -242,8 +268,16 @@ export default function DesignRequestDetail({
             {request.status.toUpperCase()}
           </span>
         </div>
-        <div className="text-sm text-gray-500">
-          Created: {formatDate(request.created_at)}
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Created: {formatDate(request.created_at)}
+          </div>
+          <button
+            onClick={handleDeleteDesign}
+            className="text-sm px-3 py-1 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700 rounded transition-colors"
+          >
+            🗑️ Archive
+          </button>
         </div>
       </div>
 

@@ -50,7 +50,8 @@ async function runMigrations(client: any): Promise<void> {
       description TEXT,
       status TEXT DEFAULT 'pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      archived_at TIMESTAMP
     )`,
 
     `CREATE TABLE IF NOT EXISTS design_request_files (

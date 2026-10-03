@@ -31,6 +31,17 @@ export function migrateDesignWorkflow(db: Database.Database) {
       console.log('✅ Added is_team_captain column to user_accounts');
     }
 
+    // Add archived_at column to design_requests if not exists
+    try {
+      const designCols = (db.prepare(`PRAGMA table_info(design_requests)`).all() as { name: string }[]).map(c => c.name);
+      if (!designCols.includes('archived_at')) {
+        db.prepare(`ALTER TABLE design_requests ADD COLUMN archived_at TEXT`).run();
+        console.log('✅ Added archived_at column to design_requests');
+      }
+    } catch (e) {
+      // Table doesn't exist yet, will be created below
+    }
+
     // 2. Design requests table
     db.exec(`
       CREATE TABLE IF NOT EXISTS design_requests (
@@ -43,6 +54,7 @@ export function migrateDesignWorkflow(db: Database.Database) {
         status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'in_design', 'approved', 'rejected', 'archived')),
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        archived_at TEXT,
         FOREIGN KEY (tenant_id) REFERENCES tenants(id),
         FOREIGN KEY (requester_id) REFERENCES user_accounts(id)
       );
