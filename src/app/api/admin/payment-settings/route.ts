@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  query, execute, requireAdminSession} from "@/lib/db-async";
+import { execute, query } from "@/lib/db-async";
+import { requireAdminSession } from "@/lib/route-helpers";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);

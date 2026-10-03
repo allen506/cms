@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  query, queryOne, execute, extractContext, requireAuth} from "@/lib/db-async";
+import { execute, query, queryOne } from "@/lib/db-async";
+import { extractContext, requireAuth } from "@/lib/route-helpers";
 
 interface OrderItem {
   productId: string;

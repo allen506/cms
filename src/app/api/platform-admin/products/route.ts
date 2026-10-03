@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, requirePlatformAdmin } from "@/lib/db-async";
+import { query } from "@/lib/db-async";
+import { requirePlatformAdmin } from "@/lib/route-helpers";
 
 export async function GET(request: NextRequest) {
   const authError = requirePlatformAdmin(request);

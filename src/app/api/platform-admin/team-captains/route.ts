@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, requirePlatformAdmin } from "@/lib/db-async";
+import { query } from "@/lib/db-async";
+import { requirePlatformAdmin } from "@/lib/route-helpers";
 
 interface CaptainRequest {
   email: string;
@@ -54,13 +55,15 @@ export async function PATCH(request: NextRequest) {
       user: {
         id: user[0].id,
         email: user[0].email,
-        isCaptain: user[0].is_team_captain === 1 || user[0].is_team_captain === true}});
+        isCaptain: user[0].is_team_captain === 1 || user[0].is_team_captain === true
+      }
+    });
   } catch (error) {
     console.error("Update team captain error:", error);
     return NextResponse.json(
       {
-        error: "Failed to update team captain status",
-        ,
+        error: "Failed to update team captain status"
+      },
       { status: 500 }
     );
   }
@@ -98,13 +101,14 @@ export async function GET(request: NextRequest) {
         id: u.id,
         email: u.email,
         isCaptain: u.is_team_captain === 1 || u.is_team_captain === true,
-        createdAt: u.created_at}))});
+        createdAt: u.created_at
+      }))
+    });
   } catch (error) {
-    console.error("Get team members error:", error);
     return NextResponse.json(
       {
-        error: "Failed to fetch team members",
-        ,
+        error: "Failed to fetch team members"
+      },
       { status: 500 }
     );
   }

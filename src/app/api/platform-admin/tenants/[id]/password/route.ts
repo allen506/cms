@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { queryOne, execute, requirePlatformAdmin } from "@/lib/db-async";
+import { execute, queryOne } from "@/lib/db-async";
+import { requirePlatformAdmin } from "@/lib/route-helpers";
 
 /** Update team password for a tenant */
 export async function PATCH(

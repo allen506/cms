@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  query, execute, requireAdminSession} from "@/lib/db-async";
+import { execute, query } from "@/lib/db-async";
+import { requireAdminSession } from "@/lib/route-helpers";
 import { writeFileSync, mkdirSync } from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  queryOne, execute, requireAdminSession} from "@/lib/db-async";
+import { execute, queryOne } from "@/lib/db-async";
+import { requireAdminSession } from "@/lib/route-helpers";
 
 // DELETE admin email
 export async function DELETE(

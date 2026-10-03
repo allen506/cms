@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne, execute, requirePlatformAdmin } from "@/lib/db-async";
+import { execute, query, queryOne } from "@/lib/db-async";
+import { requirePlatformAdmin } from "@/lib/route-helpers";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { getUnitPriceCRC } from "@/lib/pricing";
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  queryOne, requireAdminSession} from "@/lib/db-async";
+import { queryOne } from "@/lib/db-async";
+import { requireAdminSession } from "@/lib/route-helpers";
 import nodemailer from "nodemailer";
 
 interface SMTPSettings {

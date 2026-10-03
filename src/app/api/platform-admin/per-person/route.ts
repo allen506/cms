@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, queryOne, requirePlatformAdmin } from "@/lib/db-async";
+import { query, queryOne } from "@/lib/db-async";
+import { requirePlatformAdmin } from "@/lib/route-helpers";
 
 /** Get per-person order totals for analysis */
 export async function GET(request: NextRequest) {

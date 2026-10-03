@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  queryOne, extractContext} from "@/lib/db-async";
+import { queryOne } from "@/lib/db-async";
+import { extractContext } from "@/lib/route-helpers";
 
 export async function POST(request: NextRequest) {
   try {
