@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execute, queryOne } from "@/lib/db-async";
+import { execute, queryOne, withTransaction } from "@/lib/db-async";
 import { requireAdminSession } from "@/lib/route-helpers";
 import { writeFileSync, mkdirSync, unlinkSync } from "fs";
 import path from "path";
