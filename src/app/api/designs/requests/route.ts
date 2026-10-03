@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       params.push(ctx.userId, ctx.userId);
     }
 
-    sql += ` GROUP BY dr.id ORDER BY dr.created_at DESC`;
+    sql += ` GROUP BY dr.id, dr.title, dr.description, dr.status, dr.requester_id, dr.team_id, dr.created_at, dr.updated_at, ua.email ORDER BY dr.created_at DESC`;
 
     const requests = await query<any>(sql, params);
 
