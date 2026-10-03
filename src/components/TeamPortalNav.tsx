@@ -13,14 +13,28 @@ export default function TeamPortalNav() {
   const teamname = params.teamname as string;
 
   useEffect(() => {
-    // Check if tenant session cookie exists
-    const hasTenantSession = document.cookie
-      .split('; ')
-      .some(row => row.startsWith('tenant_session='));
-    
-    setIsLoggedIn(hasTenantSession);
-    setMounted(true);
-  }, []);
+    const checkLoginStatus = async () => {
+      try {
+        // Check if user is logged in by calling profile endpoint
+        const response = await fetch(`/api/tenant/user/profile`, {
+          headers: {
+            'x-tenant-slug': teamname,
+          },
+          credentials: "include",
+        });
+        
+        // If we get a 200, user is logged in
+        setIsLoggedIn(response.ok);
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        setIsLoggedIn(false);
+      } finally {
+        setMounted(true);
+      }
+    };
+
+    checkLoginStatus();
+  }, [teamname]);
 
   const handleLogout = async () => {
     try {
