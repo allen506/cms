@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/db-async";
+import { query, execute } from "@/lib/db-async";
 
 export async function GET(
   request: NextRequest,
@@ -98,6 +98,75 @@ export async function GET(
     console.error("Get request error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch request" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> }
+) {
+  try {
+    const { requestId } = await params;
+    const designerId = request.cookies.get("designer_id")?.value;
+
+    if (!designerId) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { action } = body;
+
+    if (action !== "archive") {
+      return NextResponse.json(
+        { error: "Invalid action" },
+        { status: 400 }
+      );
+    }
+
+    const designers = await query(
+      "SELECT tenant_id FROM designer_accounts WHERE id = $1",
+      [designerId]
+    );
+
+    if (designers.length === 0) {
+      return NextResponse.json(
+        { error: "Designer not found" },
+        { status: 404 }
+      );
+    }
+
+    const tenantId = designers[0].tenant_id;
+
+    const requests = await query(
+      "SELECT id FROM design_requests WHERE id = $1 AND tenant_id = $2",
+      [requestId, tenantId]
+    );
+
+    if (requests.length === 0) {
+      return NextResponse.json(
+        { error: "Request not found" },
+        { status: 404 }
+      );
+    }
+
+    await execute(
+      "UPDATE design_requests SET status = $1, updated_at = NOW() WHERE id = $2",
+      ["archived", requestId]
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Request archived successfully"
+    });
+  } catch (error) {
+    console.error("Archive request error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to archive request" },
       { status: 500 }
     );
   }

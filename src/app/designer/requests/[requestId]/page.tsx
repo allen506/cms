@@ -74,6 +74,30 @@ export default function RequestDetailPage({
     }
   };
 
+  const handleArchive = async () => {
+    if (!request) return;
+    if (!confirm("Are you sure you want to archive this request?")) return;
+
+    try {
+      const response = await fetch(
+        `/api/designer/design-requests/${request.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "archive" }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to archive request");
+      }
+
+      router.push("/designer");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error archiving request");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -119,17 +143,29 @@ export default function RequestDetailPage({
               </p>
             )}
           </div>
-          <span
-            className={`px-3 sm:px-4 py-2 rounded-full font-medium text-sm sm:text-base whitespace-nowrap ${
-              request.status === "pending"
-                ? "bg-yellow-100 text-yellow-800"
-                : request.status === "completed"
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {request.status}
-          </span>
+          <div className="flex flex-col gap-2 items-start sm:items-end">
+            <span
+              className={`px-3 sm:px-4 py-2 rounded-full font-medium text-sm sm:text-base whitespace-nowrap ${
+                request.status === "pending"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : request.status === "completed"
+                  ? "bg-green-100 text-green-800"
+                  : request.status === "archived"
+                  ? "bg-gray-100 text-gray-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {request.status}
+            </span>
+            {request.status !== "archived" && (
+              <button
+                onClick={handleArchive}
+                className="text-sm px-3 py-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 font-medium transition-colors"
+              >
+                Archive
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="bg-gray-50 rounded p-4 my-4">

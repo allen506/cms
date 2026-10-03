@@ -82,7 +82,7 @@ export default function DesignerLayout({
           <div className="flex items-center justify-between h-14">
             <Link href="/designer" className="flex items-center gap-2">
               <span className="text-lg font-bold text-gray-900 tracking-tight">
-                Design Studio
+                CMS Sportswear
               </span>
             </Link>
 
