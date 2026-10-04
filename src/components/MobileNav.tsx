@@ -89,6 +89,13 @@ export default function MobileNav({ role }: MobileNavProps) {
                   Archives
                 </Link>
                 <Link
+                  href="/admin/pricing"
+                  onClick={() => setOpen(false)}
+                  className="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-gray-700 transition-colors"
+                >
+                  Pricing
+                </Link>
+                <Link
                   href="/admin/settings"
                   onClick={() => setOpen(false)}
                   className="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-gray-700 transition-colors"
