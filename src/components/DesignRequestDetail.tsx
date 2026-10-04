@@ -42,6 +42,23 @@ interface DesignRequestDetailProps {
   teamName: string;
 }
 
+/** Map a stored "/uploads/..." path to the file-serving API, encoding segments. */
+function fileSrc(fileUrl: string): string {
+  if (!fileUrl) return fileUrl;
+  if (fileUrl.startsWith("/uploads/")) {
+    const rest = fileUrl.slice("/uploads/".length);
+    const encoded = rest.split("/").map(encodeURIComponent).join("/");
+    return `/api/uploads/${encoded}`;
+  }
+  return fileUrl;
+}
+
+/** Decide whether a file can be previewed as an image. */
+function isImageFile(file: { file_type?: string; file_name?: string }): boolean {
+  if (file.file_type && file.file_type.startsWith("image/")) return true;
+  return /\.(png|jpe?g|gif|webp|svg)$/i.test(file.file_name || "");
+}
+
 export default function DesignRequestDetail({
   requestId,
   teamName,
@@ -333,23 +350,59 @@ export default function DesignRequestDetail({
                     <h4 className="font-semibold text-gray-900 mb-2">
                       Design Files
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {submission.files.map((file) => (
-                        <a
+                        <div
                           key={file.id}
-                          href={file.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-4 border border-gray-200 rounded-lg text-center hover:bg-gray-50 transition-colors"
+                          className="border border-gray-200 rounded-lg overflow-hidden bg-white"
                         >
-                          <div className="text-2xl mb-2">📄</div>
-                          <p className="text-xs font-medium text-gray-900 truncate">
-                            {file.file_name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {file.file_type}
-                          </p>
-                        </a>
+                          {isImageFile(file) ? (
+                            <a
+                              href={fileSrc(file.file_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Click to open full size"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={fileSrc(file.file_url)}
+                                alt={file.file_name}
+                                className="w-full h-40 object-contain bg-gray-50"
+                              />
+                            </a>
+                          ) : (
+                            <a
+                              href={fileSrc(file.file_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center h-40 bg-gray-50 hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="text-center">
+                                <div className="text-4xl mb-2">📄</div>
+                                <p className="text-xs text-gray-500">
+                                  Click to open
+                                </p>
+                              </div>
+                            </a>
+                          )}
+                          <div className="p-3 border-t border-gray-100">
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {file.file_name}
+                            </p>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-xs text-gray-500">
+                                {file.file_type}
+                              </span>
+                              <a
+                                href={fileSrc(file.file_url)}
+                                download={file.file_name}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                              >
+                                Download
+                              </a>
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
