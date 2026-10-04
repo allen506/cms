@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from "@/lib/db-async";
+import { getUnlockedCategories } from "@/lib/unlock";
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest) {
         email: user.email,
         isCaptain: user.is_team_captain === 1 || user.is_team_captain === true,
         teamId: user.team_id,
-        role: user.role}});
+        role: user.role},
+      hasApprovedDesign: (await getUnlockedCategories(user.team_id)).size > 0});
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Profile error:', errorMsg);

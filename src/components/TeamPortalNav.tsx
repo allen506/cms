@@ -8,6 +8,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export default function TeamPortalNav() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasApprovedDesign, setHasApprovedDesign] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const params = useParams();
@@ -28,6 +29,10 @@ export default function TeamPortalNav() {
         
         // If we get a 200, user is logged in
         setIsLoggedIn(response.ok);
+        if (response.ok) {
+          const data = await response.json().catch(() => null);
+          setHasApprovedDesign(Boolean(data?.hasApprovedDesign));
+        }
       } catch (error) {
         console.error('Error checking login status:', error);
         setIsLoggedIn(false);
@@ -96,12 +101,14 @@ export default function TeamPortalNav() {
             <LocaleSwitcher />
             {isLoggedIn && (
               <>
-                <Link 
-                  href={`/custom/${teamname}/order/products`} 
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                >
-                  {t("nav.products")}
-                </Link>
+                {hasApprovedDesign && (
+                  <Link 
+                    href={`/custom/${teamname}/order/products`} 
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  >
+                    {t("nav.products")}
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
