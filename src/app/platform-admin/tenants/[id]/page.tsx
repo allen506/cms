@@ -38,6 +38,12 @@ export default function TenantEditPage() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [showCaptainsForm, setShowCaptainsForm] = useState(false);
+  const [newCaptain, setNewCaptain] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+  });
+  const [creatingCaptain, setCreatingCaptain] = useState(false);
 
   useEffect(() => {
     fetchTenant();
@@ -164,6 +170,44 @@ export default function TenantEditPage() {
       setError(err instanceof Error ? err.message : 'Failed to update captain status');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreateCaptain = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (newCaptain.password.length < 8) {
+      setError('Captain password must be at least 8 characters');
+      return;
+    }
+
+    try {
+      setCreatingCaptain(true);
+      const response = await fetch('/api/platform-admin/team-captains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newCaptain.email,
+          password: newCaptain.password,
+          fullName: newCaptain.fullName,
+          tenantId,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create captain');
+      }
+
+      setNewCaptain({ email: '', password: '', fullName: '' });
+      await fetchTeamMembers();
+      setSuccess(`Captain ${data.user?.email ?? ''} created`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create captain');
+    } finally {
+      setCreatingCaptain(false);
     }
   };
 
@@ -428,6 +472,56 @@ export default function TenantEditPage() {
                   ))}
                 </div>
               )}
+
+              {/* Create a new captain (useful for brand-new teams with no members yet) */}
+              <form
+                onSubmit={handleCreateCaptain}
+                className="bg-white border border-blue-200 rounded-lg p-4 space-y-3"
+              >
+                <p className="text-sm font-semibold text-blue-900">
+                  Add a new team captain
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="email"
+                    required
+                    value={newCaptain.email}
+                    onChange={(e) =>
+                      setNewCaptain({ ...newCaptain, email: e.target.value })
+                    }
+                    placeholder="captain@email.com"
+                    className="px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <input
+                    type="text"
+                    value={newCaptain.fullName}
+                    onChange={(e) =>
+                      setNewCaptain({ ...newCaptain, fullName: e.target.value })
+                    }
+                    placeholder="Full name (optional)"
+                    className="px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={newCaptain.password}
+                  onChange={(e) =>
+                    setNewCaptain({ ...newCaptain, password: e.target.value })
+                  }
+                  placeholder="Temporary password (min. 8 characters)"
+                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={creatingCaptain}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold text-sm disabled:opacity-50"
+                >
+                  {creatingCaptain ? 'Creating...' : 'Create Captain'}
+                </button>
+              </form>
+
               <button
                 type="button"
                 onClick={() => {
