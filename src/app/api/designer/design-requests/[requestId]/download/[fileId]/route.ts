@@ -18,9 +18,9 @@ export async function GET(
       );
     }
 
-    // Get designer's tenant
+    // Validate designer (CMS designers serve all customer teams)
     const designers = await query(
-      "SELECT tenant_id FROM designer_accounts WHERE id = $1",
+      "SELECT id FROM designer_accounts WHERE id = $1 AND active = true",
       [designerId]
     );
 
@@ -31,12 +31,10 @@ export async function GET(
       );
     }
 
-    const tenantId = designers[0].tenant_id;
-
-    // Verify design request exists and belongs to designer's tenant
+    // Verify design request exists
     const requests = await query(
-      "SELECT id FROM design_requests WHERE id = $1 AND tenant_id = $2",
-      [requestId, tenantId]
+      "SELECT id FROM design_requests WHERE id = $1",
+      [requestId]
     );
 
     if (requests.length === 0) {

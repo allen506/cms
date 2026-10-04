@@ -16,9 +16,9 @@ export async function GET(
       );
     }
 
-    // Get designer's tenant
+    // Validate designer (CMS designers serve all customer teams)
     const designers = await query(
-      "SELECT tenant_id FROM designer_accounts WHERE id = $1",
+      "SELECT id FROM designer_accounts WHERE id = $1 AND active = true",
       [designerId]
     );
 
@@ -28,8 +28,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    const tenantId = designers[0].tenant_id;
 
     // Get request details with all columns
     const requests = await query(
@@ -45,8 +43,8 @@ export async function GET(
        FROM design_requests dr
        LEFT JOIN user_accounts u ON dr.requester_id = u.id
        LEFT JOIN teams t ON dr.team_id = t.id
-       WHERE dr.id = $1 AND dr.tenant_id = $2`,
-      [requestId, tenantId]
+       WHERE dr.id = $1`,
+      [requestId]
     );
 
     if (requests.length === 0) {
@@ -129,7 +127,7 @@ export async function PATCH(
     }
 
     const designers = await query(
-      "SELECT tenant_id FROM designer_accounts WHERE id = $1",
+      "SELECT id FROM designer_accounts WHERE id = $1 AND active = true",
       [designerId]
     );
 
@@ -140,11 +138,9 @@ export async function PATCH(
       );
     }
 
-    const tenantId = designers[0].tenant_id;
-
     const requests = await query(
-      "SELECT id FROM design_requests WHERE id = $1 AND tenant_id = $2",
-      [requestId, tenantId]
+      "SELECT id FROM design_requests WHERE id = $1",
+      [requestId]
     );
 
     if (requests.length === 0) {

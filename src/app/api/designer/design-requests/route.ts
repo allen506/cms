@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get designer info to find their tenant
+    // Get designer info (CMS designers serve all customer teams)
     const designers = await query(
-      "SELECT tenant_id FROM designer_accounts WHERE id = $1",
+      "SELECT id FROM designer_accounts WHERE id = $1 AND active = true",
       [designerId]
     );
 
@@ -25,9 +25,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tenantId = designers[0].tenant_id;
-
-    // Get all pending design requests for this tenant
+    // Get all pending design requests across every customer team
     const requests = await query(
       `SELECT 
         dr.id,
@@ -42,9 +40,7 @@ export async function GET(request: NextRequest) {
        FROM design_requests dr
        LEFT JOIN user_accounts u ON dr.requester_id = u.id
        LEFT JOIN teams t ON dr.team_id = t.id
-       WHERE dr.tenant_id = $1
-       ORDER BY dr.created_at DESC`,
-      [tenantId]
+       ORDER BY dr.created_at DESC`
     );
 
     return NextResponse.json({
