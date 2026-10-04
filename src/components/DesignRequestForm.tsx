@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface DesignRequestFormProps {
   teamName: string;
@@ -13,6 +14,7 @@ export default function DesignRequestForm({
   onSuccess,
 }: DesignRequestFormProps) {
   const router = useRouter();
+  const { t } = useLocale();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -52,12 +54,12 @@ export default function DesignRequestForm({
     setSuccess(null);
 
     if (!formData.title.trim()) {
-      setError("Please enter a title for your design request");
+      setError(t("design.errTitle"));
       return;
     }
 
     if (!formData.description.trim()) {
-      setError("Please enter a description");
+      setError(t("design.errDesc"));
       return;
     }
 
@@ -109,9 +111,7 @@ export default function DesignRequestForm({
         }
       }
 
-      setSuccess(
-        "Design request submitted successfully! Designers will review and submit their proposals."
-      );
+      setSuccess(t("design.success"));
       setFormData({ title: "", description: "", unlockCategory: "" });
       setFiles([]);
 
@@ -138,12 +138,9 @@ export default function DesignRequestForm({
     <div className="w-full max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Request Custom Design
+          {t("design.requestTitle")}
         </h2>
-        <p className="text-gray-600">
-          Submit your design requirements and our designers will create custom
-          designs for your team.
-        </p>
+        <p className="text-gray-600">{t("design.requestSubtitle")}</p>
       </div>
 
       {error && (
@@ -165,7 +162,7 @@ export default function DesignRequestForm({
             htmlFor="title"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Design Title *
+            {t("design.titleLabel")} *
           </label>
           <input
             type="text"
@@ -173,12 +170,12 @@ export default function DesignRequestForm({
             name="title"
             value={formData.title}
             onChange={handleInputChange}
-            placeholder="e.g., Team Jersey 2026 - Black & Red"
+            placeholder={t("design.titlePlaceholder")}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isLoading}
           />
           <p className="mt-1 text-sm text-gray-500">
-            Give your design a descriptive name
+            {t("design.titleHint")}
           </p>
         </div>
 
@@ -188,7 +185,7 @@ export default function DesignRequestForm({
             htmlFor="unlockCategory"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Product Category
+            {t("design.categoryLabel")}
           </label>
           <select
             id="unlockCategory"
@@ -198,14 +195,13 @@ export default function DesignRequestForm({
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isLoading}
           >
-            <option value="">All / Not sure yet</option>
-            <option value="enduro-jersey">Enduro Jerseys (BMX / Enduro / DH)</option>
-            <option value="cycling-jersey">Cycling Jerseys</option>
-            <option value="bib-licra">Bibs / Licras</option>
+            <option value="">{t("design.categoryAll")}</option>
+            <option value="enduro-jersey">{t("design.catEnduro")}</option>
+            <option value="cycling-jersey">{t("design.catCycling")}</option>
+            <option value="bib-licra">{t("design.catBib")}</option>
           </select>
           <p className="mt-1 text-sm text-gray-500">
-            Selecting a category unlocks the matching products once this design
-            is approved.
+            {t("design.categoryHint")}
           </p>
         </div>
 
@@ -215,27 +211,27 @@ export default function DesignRequestForm({
             htmlFor="description"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Design Requirements *
+            {t("design.descLabel")} *
           </label>
           <textarea
             id="description"
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            placeholder="Describe what you want in your design. Include style preferences, colors, team name, logos, etc."
+            placeholder={t("design.descPlaceholder")}
             rows={6}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isLoading}
           />
           <p className="mt-1 text-sm text-gray-500">
-            Be as detailed as possible to help designers understand your vision
+            {t("design.descHint")}
           </p>
         </div>
 
         {/* File Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload Reference Files (Optional)
+            {t("design.filesLabel")}
           </label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
             <input
@@ -248,14 +244,15 @@ export default function DesignRequestForm({
               accept="image/*,.pdf"
             />
             <p className="mt-2 text-sm text-gray-500">
-              Upload logos, inspiration images, or any reference files (PNG, JPG,
-              PDF)
+              {t("design.filesHint")}
             </p>
           </div>
 
           {files.length > 0 && (
             <div className="mt-4 space-y-2">
-              <h4 className="font-medium text-gray-900">Uploaded Files:</h4>
+              <h4 className="font-medium text-gray-900">
+                {t("design.uploadedFiles")}
+              </h4>
               {files.map((file, index) => (
                 <div
                   key={index}
@@ -275,7 +272,7 @@ export default function DesignRequestForm({
                     className="text-red-600 hover:text-red-900 text-sm"
                     disabled={isLoading}
                   >
-                    Remove
+                    {t("design.remove")}
                   </button>
                 </div>
               ))}
@@ -290,19 +287,21 @@ export default function DesignRequestForm({
             disabled={isLoading}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
           >
-            {isLoading ? "Submitting..." : "Submit Design Request"}
+            {isLoading ? t("design.submitting") : t("design.submit")}
           </button>
         </div>
       </form>
 
       {/* Info Section */}
       <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-        <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
+        <h4 className="font-semibold text-blue-900 mb-2">
+          {t("design.whatsNext")}
+        </h4>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>✓ Our design team reviews your request</li>
-          <li>✓ Designers submit their design proposals</li>
-          <li>✓ You review and provide feedback</li>
-          <li>✓ Once approved, you can select products and place your order</li>
+          <li>✓ {t("design.next1")}</li>
+          <li>✓ {t("design.next2")}</li>
+          <li>✓ {t("design.next3")}</li>
+          <li>✓ {t("design.next4")}</li>
         </ul>
       </div>
     </div>

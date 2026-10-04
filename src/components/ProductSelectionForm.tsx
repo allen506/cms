@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface PricingTier {
   min_qty: number;
@@ -58,6 +59,7 @@ export default function ProductSelectionForm({
   onSuccess,
 }: ProductSelectionFormProps) {
   const router = useRouter();
+  const { t, formatMoney, fxFecha, fxIsFallback, rate } = useLocale();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +67,6 @@ export default function ProductSelectionForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [exchangeRate, setExchangeRate] = useState(500); // Default CRC/USD
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,17 +84,6 @@ export default function ProductSelectionForm({
 
         const productsData = await productsRes.json();
         setProducts(productsData.products || []);
-
-        // Fetch exchange rate
-        try {
-          const rateRes = await fetch("/api/exchange-rate");
-          if (rateRes.ok) {
-            const rateData = await rateRes.json();
-            setExchangeRate(rateData.rate || 500);
-          }
-        } catch (e) {
-          // Use default if exchange rate API fails
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
@@ -186,7 +176,7 @@ export default function ProductSelectionForm({
     e.preventDefault();
 
     if (selectedItems.length === 0) {
-      setError("Please select at least one product");
+      setError(t("products.selectAtLeastOne"));
       return;
     }
 
@@ -214,9 +204,7 @@ export default function ProductSelectionForm({
 
       const data = await response.json();
 
-      setSuccess(
-        "Order created successfully! Proceed to payment to complete your order."
-      );
+      setSuccess(t("products.orderSuccess"));
 
       setTimeout(() => {
         if (onSuccess) {
@@ -255,27 +243,28 @@ export default function ProductSelectionForm({
               {adj.label
                 ? adj.label
                 : adj.type === "percent"
-                ? `${adj.value}% discount applied`
-                : "Special pricing applied"}
+                ? `${adj.value}% ${t("products.discountApplied")}`
+                : t("products.specialPricing")}
             </div>
           )}
-          <p className="font-semibold text-gray-700 mb-2">Pricing Tiers:</p>
+          <p className="font-semibold text-gray-700 mb-2">
+            {t("products.pricingTiers")}
+          </p>
           {product.pricing.map((tier, idx) => {
             const discounted =
-              tier.original_usd != null &&
-              tier.original_usd.toFixed(2) !== tier.price_usd.toFixed(2);
+              tier.original_crc != null &&
+              Math.round(tier.original_crc) !== Math.round(tier.price_crc);
             return (
               <p key={idx} className="text-gray-600">
                 {tier.min_qty}-{tier.max_qty || "+"}:{" "}
                 {discounted && (
                   <span className="text-gray-400 line-through mr-1">
-                    ${tier.original_usd!.toFixed(2)}
+                    {formatMoney(tier.original_crc!)}
                   </span>
                 )}
                 <span className={discounted ? "font-semibold text-green-700" : ""}>
-                  ${tier.price_usd.toFixed(2)}
-                </span>{" "}
-                / ₡{tier.price_crc.toLocaleString()}
+                  {formatMoney(tier.price_crc)}
+                </span>
               </p>
             );
           })}
@@ -283,7 +272,7 @@ export default function ProductSelectionForm({
       );
     }
 
-    return <p className="text-red-600">No pricing available</p>;
+    return <p className="text-red-600">{t("products.noPricing")}</p>;
   };
 
   if (isLoading) {
@@ -293,7 +282,7 @@ export default function ProductSelectionForm({
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <div className="w-8 h-8 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
           </div>
-          <p className="text-gray-600">Loading products...</p>
+          <p className="text-gray-600">{t("products.loading")}</p>
         </div>
       </div>
     );
@@ -302,10 +291,7 @@ export default function ProductSelectionForm({
   if (products.length === 0) {
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <p className="text-yellow-800">
-          No products available for your team yet. Please contact your
-          administrator.
-        </p>
+        <p className="text-yellow-800">{t("products.none")}</p>
       </div>
     );
   }
@@ -316,8 +302,16 @@ export default function ProductSelectionForm({
         {/* Products Grid */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Select Products
+            {t("products.selectProducts")}
           </h2>
+
+          {(fxFecha || fxIsFallback) && (
+            <p className="mb-4 text-xs text-gray-500">
+              {t("fx.reference")} ₡{Math.round(rate).toLocaleString()}/USD
+              {fxFecha ? ` ${t("fx.asOf")} ${fxFecha}` : ""}
+              {fxIsFallback ? ` (${t("fx.estimated")})` : ""}
+            </p>
+          )}
 
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -351,7 +345,7 @@ export default function ProductSelectionForm({
                     </h3>
                     {product.locked && (
                       <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600">
-                        🔒 Locked
+                        🔒 {t("products.locked")}
                       </span>
                     )}
                   </div>
@@ -361,8 +355,7 @@ export default function ProductSelectionForm({
 
                   {product.locked ? (
                     <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                      Available once a design for this product category has been
-                      approved for your team.
+                      {t("products.lockedHint")}
                     </div>
                   ) : (
                     <>
@@ -373,7 +366,7 @@ export default function ProductSelectionForm({
                       {product.addons && product.addons.length > 0 && (
                         <div className="mb-4">
                           <p className="text-sm font-medium text-gray-700 mb-2">
-                            Add-ons:
+                            {t("products.addons")}
                           </p>
                           <div className="space-y-1">
                             {product.addons.map((addon) => {
@@ -392,9 +385,7 @@ export default function ProductSelectionForm({
                                     disabled={isSubmitting}
                                   />
                                   <span>
-                                    {addon.name} (+$
-                                    {addon.price_usd.toFixed(2)} / ₡
-                                    {addon.price_crc.toLocaleString()})
+                                    {addon.name} (+{formatMoney(addon.price_crc)})
                                   </span>
                                 </label>
                               );
@@ -406,7 +397,7 @@ export default function ProductSelectionForm({
                       <div className="space-y-3">
                         <label className="block">
                           <span className="text-sm font-medium text-gray-700 mb-2 block">
-                            Quantity:
+                            {t("products.quantity")}
                           </span>
                           <input
                             type="number"
@@ -426,19 +417,16 @@ export default function ProductSelectionForm({
                         {quantity > 0 && selectedItem && (
                           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                             <p className="text-sm text-blue-900">
-                              <span className="font-semibold">Unit Price:</span> $
-                              {selectedItem.priceUsd.toFixed(2)}
+                              <span className="font-semibold">
+                                {t("products.unitPrice")}
+                              </span>{" "}
+                              {formatMoney(selectedItem.priceCrc)}
                             </p>
                             <p className="text-sm text-blue-900 mt-1">
-                              <span className="font-semibold">Subtotal:</span> $
-                              {(selectedItem.priceUsd * quantity).toFixed(2)} USD
-                            </p>
-                            <p className="text-xs text-blue-700 mt-1">
-                              ₡
-                              {(
-                                selectedItem.priceCrc * quantity
-                              ).toLocaleString()}{" "}
-                              CRC
+                              <span className="font-semibold">
+                                {t("products.subtotal")}
+                              </span>{" "}
+                              {formatMoney(selectedItem.priceCrc * quantity)}
                             </p>
                           </div>
                         )}
@@ -455,12 +443,12 @@ export default function ProductSelectionForm({
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <label className="block">
             <span className="text-sm font-medium text-gray-700 mb-2 block">
-              Additional Notes (Optional)
+              {t("products.notesLabel")}
             </span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any special requests or notes for this order..."
+              placeholder={t("products.notesPlaceholder")}
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isSubmitting}
@@ -472,31 +460,34 @@ export default function ProductSelectionForm({
         {selectedItems.length > 0 && (
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6 mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Order Summary
+              {t("products.orderSummary")}
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-700">Items Selected:</span>
+                <span className="text-gray-700">
+                  {t("products.itemsSelected")}
+                </span>
                 <span className="font-semibold text-gray-900">
                   {selectedItems.length}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-700">Total Quantity:</span>
+                <span className="text-gray-700">
+                  {t("products.totalQuantity")}
+                </span>
                 <span className="font-semibold text-gray-900">
                   {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               </div>
               <div className="border-t border-blue-300 pt-3 mt-3">
                 <div className="flex justify-between text-lg">
-                  <span className="font-bold text-gray-900">Total:</span>
+                  <span className="font-bold text-gray-900">
+                    {t("products.total")}
+                  </span>
                   <span className="font-bold text-blue-600">
-                    ${total.usd.toFixed(2)} USD
+                    {formatMoney(total.crc)}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  ₡{total.crc.toLocaleString()} CRC (at ${exchangeRate}/USD)
-                </p>
               </div>
             </div>
           </div>
@@ -509,8 +500,12 @@ export default function ProductSelectionForm({
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors"
         >
           {isSubmitting
-            ? "Creating Order..."
-            : `Continue to Payment (${selectedItems.length > 0 ? `$${total.usd.toFixed(2)}` : "Select items"})`}
+            ? t("products.creatingOrder")
+            : `${t("products.continuePayment")} (${
+                selectedItems.length > 0
+                  ? formatMoney(total.crc)
+                  : t("products.selectItems")
+              })`}
         </button>
       </form>
     </div>

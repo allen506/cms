@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export default function TeamPortalNav() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -11,6 +13,7 @@ export default function TeamPortalNav() {
   const params = useParams();
   const router = useRouter();
   const teamname = params.teamname as string;
+  const { t } = useLocale();
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -89,21 +92,22 @@ export default function TeamPortalNav() {
           </Link>
           
           {/* Desktop Menu */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-3">
+            <LocaleSwitcher />
             {isLoggedIn && (
               <>
                 <Link 
                   href={`/custom/${teamname}/order/products`} 
                   className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                 >
-                  Products
+                  {t("nav.products")}
                 </Link>
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
                   className="ml-2 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 transition-colors"
                 >
-                  {isLoading ? "Signing out..." : "Sign out"}
+                  {isLoading ? t("nav.signingOut") : t("nav.signOut")}
                 </button>
               </>
             )}
@@ -111,13 +115,14 @@ export default function TeamPortalNav() {
 
           {/* Mobile Menu */}
           <div className="flex sm:hidden items-center gap-2">
+            <LocaleSwitcher />
             {isLoggedIn && (
               <button
                 onClick={handleLogout}
                 disabled={isLoading}
                 className="px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
-                {isLoading ? "..." : "Sign out"}
+                {isLoading ? "..." : t("nav.signOut")}
               </button>
             )}
           </div>
