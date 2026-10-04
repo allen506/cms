@@ -1,4 +1,5 @@
-import { query } from "@/lib/db-async";
+import { cookies } from "next/headers";
+import { query, queryOne } from "@/lib/db-async";
 
 export const UNLOCK_CATEGORIES = [
   "enduro-jersey",
@@ -43,5 +44,57 @@ export async function getUnlockedCategories(
   } catch (err) {
     console.error("[unlock] failed to compute unlocked categories:", err);
     return all;
+  }
+}
+
+export interface TeamOrderAccess {
+  /** The logged-in user's team id, if resolved. */
+  teamId: string | null;
+  /** Categories unlocked by approved designs for the team. */
+  unlocked: Set<string>;
+  /** True when at least one approved design makes products available. */
+  hasApprovedDesign: boolean;
+}
+
+/**
+ * Resolve the current (cookie-authenticated) user's team for a tenant slug and
+ * compute whether they have any approved design unlocking product selection.
+ * Used by server components to gate the "Select Products" step.
+ */
+export async function getCurrentTeamOrderAccess(
+  tenantSlug: string
+): Promise<TeamOrderAccess> {
+  const empty: TeamOrderAccess = {
+    teamId: null,
+    unlocked: new Set(),
+    hasApprovedDesign: false,
+  };
+
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("tenant_user_id")?.value || null;
+    if (!userId) return empty;
+
+    const tenant = await queryOne<{ id: string }>(
+      "SELECT id FROM tenants WHERE slug = ?",
+      [tenantSlug.toLowerCase()]
+    );
+    if (!tenant) return empty;
+
+    const user = await queryOne<{ team_id: string | null }>(
+      "SELECT team_id FROM user_accounts WHERE id = ? AND tenant_id = ?",
+      [userId, tenant.id]
+    );
+    if (!user?.team_id) return empty;
+
+    const unlocked = await getUnlockedCategories(user.team_id);
+    return {
+      teamId: user.team_id,
+      unlocked,
+      hasApprovedDesign: unlocked.size > 0,
+    };
+  } catch (err) {
+    console.error("[unlock] failed to resolve team order access:", err);
+    return empty;
   }
 }

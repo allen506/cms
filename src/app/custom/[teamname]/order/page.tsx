@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { queryOne } from "@/lib/db-async";
+import { getCurrentTeamOrderAccess } from "@/lib/unlock";
 
 export default async function OrderHubPage({
   params}: {
@@ -18,6 +19,8 @@ export default async function OrderHubPage({
   if (!team) {
     redirect("/custom");
   }
+
+  const { hasApprovedDesign } = await getCurrentTeamOrderAccess(teamname);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -74,11 +77,57 @@ export default async function OrderHubPage({
           </Link>
 
           {/* Products & Pricing */}
-          <Link href={`/custom/${teamname}/order/products`}>
-            <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-8 cursor-pointer">
-              <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+          {hasApprovedDesign ? (
+            <Link href={`/custom/${teamname}/order/products`}>
+              <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-8 cursor-pointer">
+                <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Products & Pricing
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Browse our product catalog and pricing. Select your items and quantities
+                </p>
+                <span className="inline-flex items-center text-green-600 font-semibold">
+                  View Products
+                  <svg
+                    className="w-4 h-4 ml-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <div
+              className="bg-gray-50 rounded-lg shadow p-8 opacity-60 cursor-not-allowed"
+              aria-disabled="true"
+              title="Available after your design is approved"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-gray-200 rounded-full mb-4">
                 <svg
-                  className="w-8 h-8 text-green-600"
+                  className="w-8 h-8 text-gray-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -95,26 +144,13 @@ export default async function OrderHubPage({
                 Products & Pricing
               </h2>
               <p className="text-gray-600 mb-4">
-                Browse our product catalog and pricing. Select your items once your design is approved
+                Select your items once your design is approved
               </p>
-              <span className="inline-flex items-center text-green-600 font-semibold">
-                View Products
-                <svg
-                  className="w-4 h-4 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+              <span className="inline-flex items-center text-gray-400 font-semibold">
+                🔒 Locked until design approved
               </span>
             </div>
-          </Link>
+          )}
         </div>
 
         {/* Info Section */}

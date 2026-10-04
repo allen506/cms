@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Metadata } from "next";
 import ProductSelectionForm from "@/components/ProductSelectionForm";
 import { queryOne } from "@/lib/db-async";
+import { getCurrentTeamOrderAccess } from "@/lib/unlock";
 
 export async function generateMetadata({
   params}: {
@@ -40,6 +42,9 @@ export default async function ProductSelectionPage({
     redirect("/custom");
   }
 
+  // Gate access: the team must have an approved design before selecting products.
+  const { hasApprovedDesign } = await getCurrentTeamOrderAccess(teamname);
+
   // If designRequestId provided, verify it's approved
   if (designRequestId) {
     const designRequest = await queryOne<{ status: string }>(
@@ -50,6 +55,43 @@ export default async function ProductSelectionPage({
     if (!designRequest || designRequest.status !== "approved") {
       redirect(`/custom/${teamname}/order/design-requests`);
     }
+  }
+
+  // Block direct navigation when nothing is unlocked yet.
+  if (!hasApprovedDesign) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-8 text-sm text-gray-600">
+            <a href={`/custom/${teamname}`} className="hover:text-gray-900">
+              {team.name}
+            </a>
+            {" / "}
+            <span className="text-gray-900 font-semibold">Products & Pricing</span>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+              <span className="text-3xl">🔒</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Products Locked
+            </h1>
+            <p className="text-gray-600 mb-6">
+              You can select products once your team has an approved design.
+              Submit a design request and our team will review it. The product
+              catalog unlocks automatically after approval.
+            </p>
+            <Link
+              href={`/custom/${teamname}/order/design-requests`}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              Go to Design Requests
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

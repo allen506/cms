@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { queryOne } from "@/lib/db-async";
+import { getCurrentTeamOrderAccess } from "@/lib/unlock";
 
 export default async function TeamHomePage({
   params}: {
@@ -18,6 +19,8 @@ export default async function TeamHomePage({
   if (!team) {
     redirect("/custom");
   }
+
+  const { hasApprovedDesign } = await getCurrentTeamOrderAccess(teamname);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -66,35 +69,56 @@ export default async function TeamHomePage({
           </Link>
 
           {/* Step 2: Select Products */}
-          <Link href={`/custom/${teamname}/order/products`}>
-            <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 cursor-pointer">
-              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
-                <span className="text-xl font-bold text-blue-600">2</span>
+          {hasApprovedDesign ? (
+            <Link href={`/custom/${teamname}/order/products`}>
+              <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 cursor-pointer">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
+                  <span className="text-xl font-bold text-blue-600">2</span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  Step 2: Select Products
+                </h2>
+                <p className="text-gray-600 text-sm mb-4">
+                  Browse available products and pricing. Choose quantities and styles.
+                </p>
+                <div className="inline-flex items-center text-blue-600 font-semibold">
+                  View Products
+                  <svg
+                    className="w-4 h-4 ml-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div
+              className="bg-gray-50 rounded-lg shadow p-6 opacity-60 cursor-not-allowed"
+              aria-disabled="true"
+              title="Available after your design is approved"
+            >
+              <div className="flex items-center justify-center w-12 h-12 bg-gray-300 rounded-full mb-4">
+                <span className="text-xl font-bold text-gray-600">2</span>
               </div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">
                 Step 2: Select Products
               </h2>
               <p className="text-gray-600 text-sm mb-4">
-                Browse available products and pricing. Choose quantities and styles. Your design must be approved before this step.
+                Browse available products and pricing. Your design must be approved before this step.
               </p>
-              <div className="inline-flex items-center text-blue-600 font-semibold">
-                View Products
-                <svg
-                  className="w-4 h-4 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+              <div className="inline-flex items-center text-gray-400 font-semibold">
+                🔒 Locked until design approved
               </div>
             </div>
-          </Link>
+          )}
 
           {/* Step 3: Checkout */}
           <div className="bg-gray-50 rounded-lg shadow p-6 opacity-60">
