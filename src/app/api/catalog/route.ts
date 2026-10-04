@@ -22,9 +22,9 @@ export async function GET() {
         ),
       ]);
 
-    // Get current exchange rate and calculate USD in real-time
+    // Get current exchange rate (BCCR sell rate) and calculate USD in real-time
     const exchangeRate = await getExchangeRate();
-    const rate = exchangeRate.compra;
+    const rate = exchangeRate.rate;
 
     const pricingTiersWithLiveUSD = pricingTiers.map((tier: any) => ({
       ...tier,
@@ -36,7 +36,13 @@ export async function GET() {
       sizes,
       pricingTiers: pricingTiersWithLiveUSD,
       productDesigns,
-      exchangeRate: rate});
+      exchangeRate: rate,
+      exchangeRateInfo: {
+        rate,
+        source: exchangeRate.source,
+        fecha: exchangeRate.fecha,
+        isFallback: exchangeRate.isFallback || false,
+      }});
   } catch (error) {
     console.error("Error fetching catalog:", error);
     return NextResponse.json(

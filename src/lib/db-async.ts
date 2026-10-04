@@ -335,6 +335,55 @@ async function runMigrations(client: any): Promise<void> {
     )`,
 
     `CREATE INDEX IF NOT EXISTS idx_designer_accounts_tenant ON designer_accounts(tenant_id)`,
+
+    // === Phase 0: Catalog/pricing/FX enhancements ===
+
+    // Exchange rate history (replaces broken SQLite-based cache)
+    `CREATE TABLE IF NOT EXISTS exchange_rates (
+      id SERIAL PRIMARY KEY,
+      source TEXT DEFAULT 'BCCR',
+      buy_crc DECIMAL(12, 4),
+      sell_crc DECIMAL(12, 4),
+      fecha DATE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    // Unlock category on products (enduro-jersey | cycling-jersey | bib-licra)
+    `ALTER TABLE product_types ADD COLUMN IF NOT EXISTS unlock_category TEXT`,
+
+    // Target unlock categories for a design (comma-separated slugs)
+    `ALTER TABLE designs ADD COLUMN IF NOT EXISTS categories TEXT`,
+
+    // Selectable product add-ons (e.g., long sleeve, stamped logo mold)
+    `CREATE TABLE IF NOT EXISTS product_addons (
+      id TEXT PRIMARY KEY,
+      product_type_id TEXT NOT NULL REFERENCES product_types(id),
+      tenant_id TEXT REFERENCES tenants(id),
+      name_en TEXT NOT NULL,
+      name_es TEXT NOT NULL,
+      price_crc DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      active INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_product_addons_product ON product_addons(product_type_id)`,
+
+    // Add-ons captured on an order line (price snapshotted at checkout)
+    `CREATE TABLE IF NOT EXISTS order_item_addons (
+      id TEXT PRIMARY KEY,
+      order_item_id TEXT NOT NULL REFERENCES order_items(id),
+      product_addon_id TEXT REFERENCES product_addons(id),
+      name_snapshot TEXT,
+      price_crc_snapshot DECIMAL(12, 2) DEFAULT 0,
+      price_usd_snapshot DECIMAL(10, 2) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_order_item_addons_item ON order_item_addons(order_item_id)`,
+
+    // Per-customer price adjustments (extend price_overrides)
+    `ALTER TABLE price_overrides ADD COLUMN IF NOT EXISTS adjustment_type TEXT DEFAULT 'fixed'`,
+    `ALTER TABLE price_overrides ADD COLUMN IF NOT EXISTS discount_percent DECIMAL(5, 2)`,
+    `ALTER TABLE price_overrides ADD COLUMN IF NOT EXISTS label TEXT`,
   ];
 
   for (const migration of migrations) {
