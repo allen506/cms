@@ -52,12 +52,19 @@ export async function GET(
     const ext = path.extname(normalized).toLowerCase();
     const contentType = MIME_BY_EXT[ext] || "application/octet-stream";
 
+    // HTTP header values must be latin1, but filenames can contain Unicode
+    // (e.g. U+202F from macOS screenshots). Provide an ASCII fallback plus an
+    // RFC 5987 UTF-8 encoded name.
+    const basename = path.basename(normalized);
+    const asciiName = basename.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "'");
+    const encodedName = encodeURIComponent(basename);
+
     return new NextResponse(new Uint8Array(data), {
       status: 200,
       headers: {
         "Content-Type": contentType,
         "Content-Length": String(fileStat.size),
-        "Content-Disposition": `inline; filename="${path.basename(normalized)}"`,
+        "Content-Disposition": `inline; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
         "Cache-Control": "private, max-age=3600",
       },
     });
