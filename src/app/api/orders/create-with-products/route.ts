@@ -14,16 +14,12 @@ interface OrderItem {
 export async function POST(request: NextRequest) {
   try {
     const ctx = extractContext(request);
-    const teamId = request.headers.get("x-team-id");
+    let teamId = request.headers.get("x-team-id");
 
     // Require auth
     const authError = requireAuth(ctx);
     if (authError) {
       return NextResponse.json({ error: authError.error }, { status: 400 });
-    }
-
-    if (!teamId) {
-      return NextResponse.json({ error: "Team ID required in headers" }, { status: 400 });
     }
 
     // Get tenant ID
@@ -34,6 +30,19 @@ export async function POST(request: NextRequest) {
 
     if (!tenant) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+    }
+
+    // Fall back to the authenticated user's team when no header is provided
+    if (!teamId && ctx.userId) {
+      const user = await queryOne<{ team_id: string }>(
+        "SELECT team_id FROM user_accounts WHERE id = ? AND tenant_id = ?",
+        [ctx.userId, tenant.id]
+      );
+      teamId = user?.team_id ?? null;
+    }
+
+    if (!teamId) {
+      return NextResponse.json({ error: "Team could not be determined" }, { status: 400 });
     }
 
     const { items, designRequestId, notes } = await request.json();

@@ -8,11 +8,7 @@ import { getProductAddons } from "@/lib/pricing-resolver";
 export async function GET(request: NextRequest) {
   try {
     const ctx = extractContext(request);
-    const teamId = request.headers.get("x-team-id");
-
-    if (!teamId) {
-      return NextResponse.json({ error: "Team ID required in headers" }, { status: 400 });
-    }
+    let teamId = request.headers.get("x-team-id");
 
     const tenant = await queryOne<{ id: string }>(
       "SELECT id FROM tenants WHERE slug = ?",
@@ -21,6 +17,19 @@ export async function GET(request: NextRequest) {
 
     if (!tenant) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+    }
+
+    // Fall back to the authenticated user's team when no header is provided
+    if (!teamId && ctx.userId) {
+      const user = await queryOne<{ team_id: string }>(
+        "SELECT team_id FROM user_accounts WHERE id = ? AND tenant_id = ?",
+        [ctx.userId, tenant.id]
+      );
+      teamId = user?.team_id ?? null;
+    }
+
+    if (!teamId) {
+      return NextResponse.json({ error: "Team could not be determined" }, { status: 400 });
     }
 
     const [{ rate, source, fecha, isFallback }, unlocked] = await Promise.all([

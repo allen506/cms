@@ -6,11 +6,7 @@ import { resolvePrice, getProductAddons } from "@/lib/pricing-resolver";
 export async function POST(request: NextRequest) {
   try {
     const ctx = extractContext(request);
-    const teamId = request.headers.get("x-team-id");
-
-    if (!teamId) {
-      return NextResponse.json({ error: "Team ID required in headers" }, { status: 400 });
-    }
+    let teamId = request.headers.get("x-team-id");
 
     const tenant = await queryOne<{ id: string }>(
       "SELECT id FROM tenants WHERE slug = ?",
@@ -19,6 +15,14 @@ export async function POST(request: NextRequest) {
 
     if (!tenant) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+    }
+
+    if (!teamId && ctx.userId) {
+      const user = await queryOne<{ team_id: string }>(
+        "SELECT team_id FROM user_accounts WHERE id = ? AND tenant_id = ?",
+        [ctx.userId, tenant.id]
+      );
+      teamId = user?.team_id ?? null;
     }
 
     const { productId, quantity, addonIds } = await request.json();
