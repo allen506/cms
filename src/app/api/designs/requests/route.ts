@@ -103,21 +103,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only team captains can request designs" }, { status: 403 });
     }
 
-    const { title, description } = await request.json();
+    const { title, description, unlockCategory } = await request.json();
 
     if (!title || !description) {
       return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
     }
+
+    const validCategories = ["enduro-jersey", "cycling-jersey", "bib-licra"];
+    const category =
+      unlockCategory && validCategories.includes(unlockCategory)
+        ? unlockCategory
+        : null;
 
     const id = uuidv4();
 
     const result = await execute(
       `
       INSERT INTO design_requests 
-        (id, tenant_id, title, description, requester_id, team_id, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        (id, tenant_id, title, description, requester_id, team_id, status, unlock_category, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `,
-      [id, tenant.id, title, description, ctx.userId, user.team_id, "pending"]
+      [id, tenant.id, title, description, ctx.userId, user.team_id, "pending", category]
     );
 
     if (result.changes === 0) {

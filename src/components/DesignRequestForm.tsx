@@ -16,6 +16,7 @@ export default function DesignRequestForm({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    unlockCategory: "",
   });
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +25,9 @@ export default function DesignRequestForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -71,6 +74,7 @@ export default function DesignRequestForm({
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
+          unlockCategory: formData.unlockCategory || null,
         }),
       });
 
@@ -108,7 +112,7 @@ export default function DesignRequestForm({
       setSuccess(
         "Design request submitted successfully! Designers will review and submit their proposals."
       );
-      setFormData({ title: "", description: "" });
+      setFormData({ title: "", description: "", unlockCategory: "" });
       setFiles([]);
 
       if (fileInputRef.current) {
@@ -175,6 +179,33 @@ export default function DesignRequestForm({
           />
           <p className="mt-1 text-sm text-gray-500">
             Give your design a descriptive name
+          </p>
+        </div>
+
+        {/* Product Category */}
+        <div>
+          <label
+            htmlFor="unlockCategory"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Product Category
+          </label>
+          <select
+            id="unlockCategory"
+            name="unlockCategory"
+            value={formData.unlockCategory}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={isLoading}
+          >
+            <option value="">All / Not sure yet</option>
+            <option value="enduro-jersey">Enduro Jerseys (BMX / Enduro / DH)</option>
+            <option value="cycling-jersey">Cycling Jerseys</option>
+            <option value="bib-licra">Bibs / Licras</option>
+          </select>
+          <p className="mt-1 text-sm text-gray-500">
+            Selecting a category unlocks the matching products once this design
+            is approved.
           </p>
         </div>
 
