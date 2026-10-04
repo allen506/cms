@@ -106,7 +106,7 @@ export default function AdminPricingPage() {
   };
 
   return (
-    <PasswordGate>
+    <PasswordGate password="" storageKey="auth-admin" verifyEndpoint="/api/admin/verify-password">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Customer Price Adjustments
