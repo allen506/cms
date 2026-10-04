@@ -8,6 +8,21 @@ interface PricingTier {
   max_qty: number;
   price_crc: number;
   price_usd: number;
+  original_crc?: number;
+  original_usd?: number;
+}
+
+interface Adjustment {
+  type: "percent" | "fixed";
+  value: number;
+  label: string | null;
+}
+
+interface Addon {
+  id: string;
+  name: string;
+  price_crc: number;
+  price_usd: number;
 }
 
 interface Product {
@@ -16,12 +31,11 @@ interface Product {
   description: string;
   category: string;
   sort_order: number;
+  locked?: boolean;
   hasOverride: boolean;
-  overridePrice?: {
-    priceCrc: number;
-    priceUsd: number;
-  };
+  adjustment?: Adjustment | null;
   pricing: PricingTier[];
+  addons?: Addon[];
 }
 
 interface SelectedItem {
@@ -29,6 +43,7 @@ interface SelectedItem {
   quantity: number;
   priceCrc: number;
   priceUsd: number;
+  addonIds: string[];
 }
 
 interface ProductSelectionFormProps {
@@ -91,8 +106,12 @@ export default function ProductSelectionForm({
 
   const updateQuantity = async (
     productId: string,
-    quantity: number
+    quantity: number,
+    addonIds?: string[]
   ) => {
+    const existingItem = selectedItems.find((i) => i.productId === productId);
+    const selectedAddonIds = addonIds ?? existingItem?.addonIds ?? [];
+
     if (quantity < 1) {
       // Remove item
       setSelectedItems((prev) =>
@@ -111,6 +130,7 @@ export default function ProductSelectionForm({
         body: JSON.stringify({
           productId,
           quantity,
+          addonIds: selectedAddonIds,
         }),
       });
 
@@ -130,6 +150,7 @@ export default function ProductSelectionForm({
                   quantity,
                   priceCrc: data.priceCrc,
                   priceUsd: data.priceUsd,
+                  addonIds: selectedAddonIds,
                 }
               : item
           );
@@ -141,6 +162,7 @@ export default function ProductSelectionForm({
               quantity,
               priceCrc: data.priceCrc,
               priceUsd: data.priceUsd,
+              addonIds: selectedAddonIds,
             },
           ];
         }
@@ -148,6 +170,16 @@ export default function ProductSelectionForm({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Price calculation failed");
     }
+  };
+
+  const toggleAddon = (product: Product, addonId: string) => {
+    const existing = selectedItems.find((i) => i.productId === product.id);
+    const current = existing?.addonIds ?? [];
+    const next = current.includes(addonId)
+      ? current.filter((id) => id !== addonId)
+      : [...current, addonId];
+    const quantity = existing?.quantity ?? 1;
+    updateQuantity(product.id, quantity, next);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -213,29 +245,40 @@ export default function ProductSelectionForm({
   const total = calculateTotal();
 
   const getPricingDisplay = (product: Product) => {
-    if (product.hasOverride && product.overridePrice) {
-      return (
-        <div className="text-sm">
-          <p className="font-semibold text-green-600">
-            Special Price: ${product.overridePrice.priceUsd.toFixed(2)} USD
-          </p>
-          <p className="text-gray-600">
-            ₡{product.overridePrice.priceCrc.toLocaleString()} CRC
-          </p>
-        </div>
-      );
-    }
+    const adj = product.adjustment;
 
     if (product.pricing.length > 0) {
       return (
         <div className="text-sm">
+          {adj && (
+            <div className="mb-2 inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+              {adj.label
+                ? adj.label
+                : adj.type === "percent"
+                ? `${adj.value}% discount applied`
+                : "Special pricing applied"}
+            </div>
+          )}
           <p className="font-semibold text-gray-700 mb-2">Pricing Tiers:</p>
-          {product.pricing.map((tier, idx) => (
-            <p key={idx} className="text-gray-600">
-              {tier.min_qty}-{tier.max_qty || "+"}: ${tier.price_usd.toFixed(2)}{" "}
-              / ₡{tier.price_crc.toLocaleString()}
-            </p>
-          ))}
+          {product.pricing.map((tier, idx) => {
+            const discounted =
+              tier.original_usd != null &&
+              tier.original_usd.toFixed(2) !== tier.price_usd.toFixed(2);
+            return (
+              <p key={idx} className="text-gray-600">
+                {tier.min_qty}-{tier.max_qty || "+"}:{" "}
+                {discounted && (
+                  <span className="text-gray-400 line-through mr-1">
+                    ${tier.original_usd!.toFixed(2)}
+                  </span>
+                )}
+                <span className={discounted ? "font-semibold text-green-700" : ""}>
+                  ${tier.price_usd.toFixed(2)}
+                </span>{" "}
+                / ₡{tier.price_crc.toLocaleString()}
+              </p>
+            );
+          })}
         </div>
       );
     }
@@ -298,52 +341,110 @@ export default function ProductSelectionForm({
               return (
                 <div
                   key={product.id}
-                  className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                  className={`border border-gray-200 rounded-lg p-6 transition-shadow ${
+                    product.locked ? "opacity-60" : "hover:shadow-lg"
+                  }`}
                 >
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    {product.name}
-                  </h3>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {product.name}
+                    </h3>
+                    {product.locked && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600">
+                        🔒 Locked
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-600 mb-4">
                     {product.description}
                   </p>
 
-                  <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                    {getPricingDisplay(product)}
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="block">
-                      <span className="text-sm font-medium text-gray-700 mb-2 block">
-                        Quantity:
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={quantity}
-                        onChange={(e) =>
-                          updateQuantity(product.id, parseInt(e.target.value) || 0)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        disabled={isSubmitting}
-                      />
-                    </label>
-
-                    {quantity > 0 && selectedItem && (
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-sm text-blue-900">
-                          <span className="font-semibold">Unit Price:</span> $
-                          {selectedItem.priceUsd.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-blue-900 mt-1">
-                          <span className="font-semibold">Subtotal:</span> $
-                          {(selectedItem.priceUsd * quantity).toFixed(2)} USD
-                        </p>
-                        <p className="text-xs text-blue-700 mt-1">
-                          ₡{(selectedItem.priceCrc * quantity).toLocaleString()} CRC
-                        </p>
+                  {product.locked ? (
+                    <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+                      Available once a design for this product category has been
+                      approved for your team.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                        {getPricingDisplay(product)}
                       </div>
-                    )}
-                  </div>
+
+                      {product.addons && product.addons.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-sm font-medium text-gray-700 mb-2">
+                            Add-ons:
+                          </p>
+                          <div className="space-y-1">
+                            {product.addons.map((addon) => {
+                              const checked =
+                                selectedItem?.addonIds?.includes(addon.id) ??
+                                false;
+                              return (
+                                <label
+                                  key={addon.id}
+                                  className="flex items-center gap-2 text-sm text-gray-700"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleAddon(product, addon.id)}
+                                    disabled={isSubmitting}
+                                  />
+                                  <span>
+                                    {addon.name} (+$
+                                    {addon.price_usd.toFixed(2)} / ₡
+                                    {addon.price_crc.toLocaleString()})
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <label className="block">
+                          <span className="text-sm font-medium text-gray-700 mb-2 block">
+                            Quantity:
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={quantity}
+                            onChange={(e) =>
+                              updateQuantity(
+                                product.id,
+                                parseInt(e.target.value) || 0
+                              )
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            disabled={isSubmitting}
+                          />
+                        </label>
+
+                        {quantity > 0 && selectedItem && (
+                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <p className="text-sm text-blue-900">
+                              <span className="font-semibold">Unit Price:</span> $
+                              {selectedItem.priceUsd.toFixed(2)}
+                            </p>
+                            <p className="text-sm text-blue-900 mt-1">
+                              <span className="font-semibold">Subtotal:</span> $
+                              {(selectedItem.priceUsd * quantity).toFixed(2)} USD
+                            </p>
+                            <p className="text-xs text-blue-700 mt-1">
+                              ₡
+                              {(
+                                selectedItem.priceCrc * quantity
+                              ).toLocaleString()}{" "}
+                              CRC
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}

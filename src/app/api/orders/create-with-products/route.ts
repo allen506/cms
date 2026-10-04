@@ -8,6 +8,7 @@ interface OrderItem {
   priceCrc: number;
   priceUsd: number;
   designApprovedId?: string;
+  addonIds?: string[];
 }
 
 export async function POST(request: NextRequest) {
@@ -113,6 +114,36 @@ export async function POST(request: NextRequest) {
             item.priceUsd,
           ]
         );
+
+        // Snapshot selected add-ons for this item
+        if (Array.isArray(item.addonIds) && item.addonIds.length > 0) {
+          const placeholders = item.addonIds.map(() => "?").join(", ");
+          const addonRows = await tx.query<any>(
+            `SELECT id, name_en, price_crc
+               FROM product_addons
+              WHERE id IN (${placeholders})`,
+            item.addonIds
+          );
+
+          for (const addon of addonRows) {
+            const addonItemId = `oia_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await tx.execute(
+              `
+              INSERT INTO order_item_addons
+                (id, order_item_id, product_addon_id, name_snapshot, price_crc_snapshot, price_usd_snapshot, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, NOW())
+            `,
+              [
+                addonItemId,
+                itemId,
+                addon.id,
+                addon.name_en,
+                addon.price_crc,
+                0,
+              ]
+            );
+          }
+        }
       }
 
       return NextResponse.json({

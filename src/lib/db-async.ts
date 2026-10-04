@@ -384,6 +384,9 @@ async function runMigrations(client: any): Promise<void> {
     `ALTER TABLE price_overrides ADD COLUMN IF NOT EXISTS adjustment_type TEXT DEFAULT 'fixed'`,
     `ALTER TABLE price_overrides ADD COLUMN IF NOT EXISTS discount_percent DECIMAL(5, 2)`,
     `ALTER TABLE price_overrides ADD COLUMN IF NOT EXISTS label TEXT`,
+
+    // Category a design request targets (gates product availability once approved)
+    `ALTER TABLE design_requests ADD COLUMN IF NOT EXISTS unlock_category TEXT`,
   ];
 
   for (const migration of migrations) {

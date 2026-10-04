@@ -229,21 +229,20 @@ async function seed() {
         ]
       );
 
-      // Replace platform pricing tiers for this product
+      // Replace platform (global) pricing tiers for this product
       await client.query(
-        "DELETE FROM pricing_tiers WHERE product_type_id = $1 AND tenant_id = $2",
-        [p.id, tenantId]
+        "DELETE FROM pricing_tiers WHERE product_type_id = $1 AND tenant_id IS NULL",
+        [p.id]
       );
       for (const t of p.tiers) {
         const priceUsd = Math.round((t.crc / FALLBACK_RATE) * 100) / 100;
         await client.query(
           `INSERT INTO pricing_tiers
              (id, product_type_id, tenant_id, min_qty, max_qty, price_crc, price_usd)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+           VALUES ($1,$2,NULL,$3,$4,$5,$6)`,
           [
             `tier_${p.id}_${t.min}`,
             p.id,
-            tenantId,
             t.min,
             t.max,
             t.crc,
@@ -252,21 +251,20 @@ async function seed() {
         );
       }
 
-      // Replace add-ons for this product
+      // Replace global add-ons for this product
       await client.query(
-        "DELETE FROM product_addons WHERE product_type_id = $1 AND tenant_id = $2",
-        [p.id, tenantId]
+        "DELETE FROM product_addons WHERE product_type_id = $1 AND tenant_id IS NULL",
+        [p.id]
       );
       let addonSort = 0;
       for (const a of p.addons) {
         await client.query(
           `INSERT INTO product_addons
              (id, product_type_id, tenant_id, name_en, name_es, price_crc, active, sort_order)
-           VALUES ($1,$2,$3,$4,$5,$6,1,$7)`,
+           VALUES ($1,$2,NULL,$3,$4,$5,1,$6)`,
           [
             `addon_${p.id}_${a.id_suffix}`,
             p.id,
-            tenantId,
             a.name_en,
             a.name_es,
             a.price_crc,
