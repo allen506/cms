@@ -141,7 +141,12 @@ export default function DesignRequestDetail({
   };
 
   const handleApproveSubmission = async (submissionId: string) => {
-    if (!window.confirm("Approve this design?")) return;
+    if (
+      !window.confirm(
+        "Approve this design? You'll be taken to product selection next."
+      )
+    )
+      return;
 
     try {
       const response = await fetch(
@@ -160,8 +165,8 @@ export default function DesignRequestDetail({
         throw new Error("Failed to approve design");
       }
 
-      // Refresh data
-      window.location.reload();
+      // Design approved → send the captain straight to product selection.
+      window.location.href = `/custom/${teamName.toLowerCase()}/order/products`;
     } catch (err) {
       alert(err instanceof Error ? err.message : "Error approving design");
     }
