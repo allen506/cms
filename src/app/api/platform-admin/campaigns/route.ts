@@ -7,6 +7,7 @@ import {
   reopenCampaign,
   submitCampaign,
   setCampaignBacLink,
+  markCampaignPaid,
 } from "@/lib/campaigns";
 import { getCampaignOrderRows } from "@/lib/campaign-export";
 
@@ -19,6 +20,7 @@ interface CampaignSummary {
   created_at: string;
   closed_at: string | null;
   submitted_at: string | null;
+  paid_at: string | null;
   line_items: number;
   total_qty: number;
 }
@@ -54,7 +56,7 @@ export async function GET(req: NextRequest) {
     const campaigns = await query<CampaignSummary>(
       `SELECT
           c.id, c.team_id, c.name, c.status, c.bac_payment_link,
-          c.created_at, c.closed_at, c.submitted_at,
+          c.created_at, c.closed_at, c.submitted_at, c.paid_at,
           COUNT(oi.id)                     AS line_items,
           COALESCE(SUM(oi.quantity), 0)    AS total_qty
         FROM team_campaigns c
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
         LEFT JOIN order_items oi ON oi.order_id = o.id
        WHERE c.tenant_id = ?
        GROUP BY c.id, c.team_id, c.name, c.status, c.bac_payment_link,
-                c.created_at, c.closed_at, c.submitted_at
+                c.created_at, c.closed_at, c.submitted_at, c.paid_at
        ORDER BY c.created_at DESC`,
       [tenantId]
     );
@@ -73,7 +75,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: admin acts on any campaign — close | reopen | submit | set-bac-link.
+// POST: admin acts on any campaign — close | reopen | submit | mark-paid | set-bac-link.
 export async function POST(req: NextRequest) {
   const authError = requirePlatformAdmin(req);
   if (authError) return NextResponse.json(authError, { status: 401 });
@@ -105,6 +107,10 @@ export async function POST(req: NextRequest) {
       }
       case "submit": {
         const updated = await submitCampaign(tenantId, campaignId);
+        return NextResponse.json({ campaign: updated });
+      }
+      case "mark-paid": {
+        const updated = await markCampaignPaid(tenantId, campaignId);
         return NextResponse.json({ campaign: updated });
       }
       case "set-bac-link": {

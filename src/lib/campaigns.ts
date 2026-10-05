@@ -9,7 +9,7 @@
 
 import { query, queryOne, execute } from "./db-async";
 
-export type CampaignStatus = "open" | "closed" | "submitted";
+export type CampaignStatus = "open" | "closed" | "submitted" | "archived";
 
 export interface TeamCampaign {
   id: string;
@@ -21,6 +21,7 @@ export interface TeamCampaign {
   closed_by: string | null;
   closed_at: string | null;
   submitted_at: string | null;
+  paid_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -127,18 +128,40 @@ export async function closeCampaign(
 }
 
 /**
- * Re-open a closed (not yet submitted) campaign.
+ * Re-open a campaign that is not currently open. A team can only have one open
+ * campaign at a time, so this is safe once the current one is closed/archived.
  */
 export async function reopenCampaign(
   tenantId: string,
   campaignId: string
 ): Promise<TeamCampaign | null> {
   const campaign = await getCampaignById(campaignId, tenantId);
-  if (!campaign || campaign.status === "submitted") return null;
+  if (!campaign || campaign.status === "open") return null;
 
   await execute(
     `UPDATE team_campaigns
-        SET status = 'open', closed_by = NULL, closed_at = NULL, updated_at = NOW()
+        SET status = 'open', closed_by = NULL, closed_at = NULL,
+            submitted_at = NULL, paid_at = NULL, updated_at = NOW()
+      WHERE id = ?`,
+    [campaignId]
+  );
+  return getCampaignById(campaignId, tenantId);
+}
+
+/**
+ * Mark a campaign as paid and move it to archive mode. Captains keep read-only
+ * access for reference.
+ */
+export async function markCampaignPaid(
+  tenantId: string,
+  campaignId: string
+): Promise<TeamCampaign | null> {
+  const campaign = await getCampaignById(campaignId, tenantId);
+  if (!campaign) return null;
+
+  await execute(
+    `UPDATE team_campaigns
+        SET status = 'archived', paid_at = NOW(), updated_at = NOW()
       WHERE id = ?`,
     [campaignId]
   );

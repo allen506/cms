@@ -11,6 +11,7 @@ interface CampaignSummary {
   created_at: string;
   closed_at: string | null;
   submitted_at: string | null;
+  paid_at: string | null;
   line_items: number;
   total_qty: number;
 }
@@ -28,6 +29,7 @@ const STATUS_BADGE: Record<string, string> = {
   open: "bg-green-100 text-green-700",
   closed: "bg-amber-100 text-amber-700",
   submitted: "bg-blue-100 text-blue-700",
+  archived: "bg-gray-200 text-gray-600",
 };
 
 export default function CampaignAdmin({
@@ -186,23 +188,41 @@ export default function CampaignAdmin({
                     Close
                   </button>
                 )}
+                {(c.status === "closed" || c.status === "submitted" || c.status === "archived") && (
+                  <button
+                    onClick={() => act(c.id, "reopen")}
+                    disabled={busy}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+                  >
+                    Re-open
+                  </button>
+                )}
                 {c.status === "closed" && (
-                  <>
-                    <button
-                      onClick={() => act(c.id, "reopen")}
-                      disabled={busy}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-                    >
-                      Re-open
-                    </button>
-                    <button
-                      onClick={() => act(c.id, "submit")}
-                      disabled={busy}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      Submit
-                    </button>
-                  </>
+                  <button
+                    onClick={() => act(c.id, "submit")}
+                    disabled={busy}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Submit
+                  </button>
+                )}
+                {(c.status === "closed" || c.status === "submitted") && (
+                  <button
+                    onClick={() => {
+                      if (confirm("Mark this order as paid? It will move to archive mode (captains keep read-only access).")) {
+                        act(c.id, "mark-paid");
+                      }
+                    }}
+                    disabled={busy}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Mark Paid
+                  </button>
+                )}
+                {c.status === "archived" && (
+                  <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-500">
+                    Paid &amp; archived
+                  </span>
                 )}
               </div>
             </div>

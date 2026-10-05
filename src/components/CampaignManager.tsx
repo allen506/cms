@@ -18,7 +18,7 @@ interface CampaignOrderRow {
 
 interface Campaign {
   id: string;
-  status: "open" | "closed" | "submitted";
+  status: "open" | "closed" | "submitted" | "archived";
   bac_payment_link: string | null;
   closed_at: string | null;
   submitted_at: string | null;
@@ -36,6 +36,7 @@ const STATUS_BADGE: Record<string, string> = {
   open: "bg-green-100 text-green-700",
   closed: "bg-amber-100 text-amber-700",
   submitted: "bg-blue-100 text-blue-700",
+  archived: "bg-gray-200 text-gray-600",
 };
 
 export default function CampaignManager({ teamName }: { teamName: string }) {
@@ -251,6 +252,12 @@ export default function CampaignManager({ teamName }: { teamName: string }) {
         {status === "submitted" && (
           <p className="text-sm text-gray-500 mt-3">
             Submitted to CMS. An admin will take it from here.
+          </p>
+        )}
+        {status === "archived" && (
+          <p className="text-sm text-gray-500 mt-3">
+            Paid &amp; archived. This order is complete — kept here read-only for
+            your reference.
           </p>
         )}
       </div>

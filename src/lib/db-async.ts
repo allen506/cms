@@ -418,6 +418,9 @@ async function runMigrations(client: any): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_team_campaigns_team ON team_campaigns(tenant_id, team_id)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_team_campaigns_one_open ON team_campaigns(tenant_id, team_id) WHERE status = 'open'`,
 
+    // Timestamp a campaign was marked paid (moves it to archive mode).
+    `ALTER TABLE team_campaigns ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP`,
+
     // Link each order to the campaign it was placed in.
     `ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id TEXT`,
   ];
