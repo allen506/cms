@@ -19,19 +19,17 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get("tenant_id");
     const teamId = searchParams.get("team_id");
 
-    if (teamId && !tenantId) {
-      return NextResponse.json({ error: "tenant_id is required when filtering by team_id" }, { status: 400 });
-    }
-
     const filters: string[] = [];
     const params: string[] = [];
-    if (tenantId) {
-      filters.push("tenant_id = ?");
-      params.push(tenantId);
-    }
+
+    // Prefer team-based scoping when present. Team and tenant are alternative filters,
+    // not a required pair.
     if (teamId) {
       filters.push("team_id = ?");
       params.push(teamId);
+    } else if (tenantId) {
+      filters.push("tenant_id = ?");
+      params.push(tenantId);
     }
 
     const whereClause = filters.length > 0 ? ` WHERE ${filters.join(" AND ")}` : "";

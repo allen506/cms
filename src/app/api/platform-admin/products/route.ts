@@ -13,19 +13,15 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get("tenant_id");
     const teamId = searchParams.get("team_id");
 
-    if (teamId && !tenantId) {
-      return NextResponse.json({ error: "tenant_id is required when filtering by team_id" }, { status: 400 });
-    }
-
     const filters: string[] = ["active = 1"];
     const params: string[] = [];
-    if (tenantId) {
+
+    if (teamId) {
+      filters.push("id IN (SELECT product_type_id FROM team_products WHERE team_id = ?)");
+      params.push(teamId);
+    } else if (tenantId) {
       filters.push("tenant_id = ?");
       params.push(tenantId);
-    }
-    if (teamId) {
-      filters.push("id IN (SELECT product_type_id FROM team_products WHERE tenant_id = ? AND team_id = ?)");
-      params.push(tenantId as string, teamId);
     }
 
     const products = await query<any>(

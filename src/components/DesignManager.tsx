@@ -65,10 +65,9 @@ export default function DesignManager() {
       if (!res.ok) return;
       const data = await res.json();
       setTenants(data || []);
-      if (data?.length) {
-        setSelectedTenantId(data[0].id);
-        setFormData((prev) => ({ ...prev, tenant_id: data[0].id }));
-      }
+      setSelectedTenantId("all");
+      setSelectedTeamId("all");
+      setFormData((prev) => ({ ...prev, tenant_id: "", team_id: "" }));
     } catch (error) {
       console.error("Failed to fetch tenants:", error);
     }
@@ -80,13 +79,15 @@ export default function DesignManager() {
       let designsList: Design[] = [];
       let productsList: ProductType[] = [];
 
-      const designsUrl = selectedTenantId === "all"
-        ? "/api/platform-admin/designs"
-        : `/api/platform-admin/designs?tenant_id=${encodeURIComponent(selectedTenantId)}${selectedTeamId !== "all" ? `&team_id=${encodeURIComponent(selectedTeamId)}` : ""}`;
+      const activeTeamId = selectedTeamId !== "all" ? selectedTeamId : "";
+      const activeTenantId = selectedTenantId !== "all" && !activeTeamId ? selectedTenantId : "";
 
-      const productsUrl = selectedTenantId === "all"
-        ? "/api/platform-admin/products"
-        : `/api/platform-admin/products?tenant_id=${encodeURIComponent(selectedTenantId)}${selectedTeamId !== "all" ? `&team_id=${encodeURIComponent(selectedTeamId)}` : ""}`;
+      const queryParams = new URLSearchParams();
+      if (activeTeamId) queryParams.set("team_id", activeTeamId);
+      else if (activeTenantId) queryParams.set("tenant_id", activeTenantId);
+
+      const designsUrl = queryParams.toString() ? `/api/platform-admin/designs?${queryParams.toString()}` : "/api/platform-admin/designs";
+      const productsUrl = queryParams.toString() ? `/api/platform-admin/products?${queryParams.toString()}` : "/api/platform-admin/products";
 
       const [designsRes, productsRes] = await Promise.all([
         fetch(designsUrl),
