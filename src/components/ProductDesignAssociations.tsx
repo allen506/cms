@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { normalizeCatalogDesigns, normalizeCatalogProducts } from "@/lib/catalog-fallback";
 
 interface Product {
   id: string;
@@ -42,20 +43,46 @@ export default function ProductDesignAssociations() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        let productsList: Product[] = [];
+        let designsList: Design[] = [];
+
         const [productsRes, designsRes] = await Promise.all([
-          fetch("/api/admin/products"),
-          fetch("/api/admin/designs"),
+          fetch("/api/platform-admin/products"),
+          fetch("/api/platform-admin/designs"),
         ]);
 
-        if (!productsRes.ok || !designsRes.ok) {
-          throw new Error("Failed to fetch data");
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          productsList = productsData.products || [];
         }
 
-        const productsData = await productsRes.json();
-        const designsData = await designsRes.json();
+        if (designsRes.ok) {
+          const designsData = await designsRes.json();
+          designsList = designsData.designs || [];
+        }
 
-        setProducts(productsData.products || []);
-        setDesigns(designsData.designs || []);
+        if (productsList.length === 0 || designsList.length === 0) {
+          const catalogRes = await fetch("/api/catalog", { credentials: "include" });
+          if (catalogRes.ok) {
+            const catalogData = await catalogRes.json();
+            productsList = normalizeCatalogProducts(productsList, catalogData).map((product: any) => ({
+              id: product.id,
+              name: product.name,
+              category: product.category,
+              active: product.active ?? 1,
+            }));
+            designsList = normalizeCatalogDesigns(designsList, catalogData).map((design: any) => ({
+              id: design.id,
+              name: design.name,
+              image_url: design.image_url,
+              active: design.active,
+              designed_for: design.designed_for,
+            }));
+          }
+        }
+
+        setProducts(productsList);
+        setDesigns(designsList);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data");
       }
@@ -75,7 +102,7 @@ export default function ProductDesignAssociations() {
       try {
         setLoading(true);
         const res = await fetch(
-          `/api/admin/product-designs?productId=${encodeURIComponent(
+          `/api/platform-admin/product-designs?productId=${encodeURIComponent(
             selectedProductId
           )}`
         );
@@ -112,7 +139,7 @@ export default function ProductDesignAssociations() {
       setError("");
       setSuccess("");
 
-      const res = await fetch("/api/admin/product-designs", {
+      const res = await fetch("/api/platform-admin/product-designs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -129,7 +156,7 @@ export default function ProductDesignAssociations() {
 
       // Refresh associations
       const associationsRes = await fetch(
-        `/api/admin/product-designs?productId=${encodeURIComponent(
+        `/api/platform-admin/product-designs?productId=${encodeURIComponent(
           selectedProductId
         )}`
       );
@@ -155,7 +182,7 @@ export default function ProductDesignAssociations() {
       setSuccess("");
 
       const res = await fetch(
-        `/api/admin/product-designs/${associationId}`,
+        `/api/platform-admin/product-designs/${associationId}`,
         { method: "DELETE" }
       );
 

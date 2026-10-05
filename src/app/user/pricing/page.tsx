@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import PasswordGate from "@/components/PasswordGate";
+import { apiUrl } from "@/lib/api";
 
 interface PricingTier {
   id: string;
@@ -25,7 +26,7 @@ interface CatalogData {
   exchangeRate: number;
 }
 
-export default function UserPricingPage() {
+export default function UserPricingPage({ apiBaseUrl }: { apiBaseUrl?: string }) {
   const [catalog, setCatalog] = useState<CatalogData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
@@ -34,17 +35,17 @@ export default function UserPricingPage() {
   useEffect(() => {
     fetchCatalog();
     fetchTeamQuantities();
-  }, []);
+  }, [apiBaseUrl]);
 
   const fetchTeamQuantities = () => {
-    fetch("/api/orders/team-quantities")
+    fetch(apiUrl("/api/orders/team-quantities", apiBaseUrl))
       .then((res) => res.json())
       .then((data) => setTeamQty(data || {}))
       .catch(() => {});
   };
 
   const fetchCatalog = () => {
-    fetch("/api/catalog")
+    fetch(apiUrl("/api/catalog", apiBaseUrl))
       .then((res) => res.json())
       .then((data) => {
         setCatalog(data);

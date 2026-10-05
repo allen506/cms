@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { normalizeCatalogProducts } from "@/lib/catalog-fallback";
 
 interface Product {
   id: string;
@@ -39,11 +40,25 @@ export default function ProductManager() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/products");
-      const data = await res.json();
-      setProducts(data.products || []);
+      const res = await fetch("/api/platform-admin/products");
+      let productsData: any[] = [];
+
+      if (res.ok) {
+        const data = await res.json();
+        productsData = data.products || [];
+      }
+
+      if (!res.ok || productsData.length === 0) {
+        const fallbackRes = await fetch("/api/catalog", { credentials: "include" });
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          productsData = normalizeCatalogProducts(productsData, fallbackData);
+        }
+      }
+
+      setProducts(productsData);
     } catch (err) {
-      setError("Failed to load products");
+      setError(err instanceof Error ? err.message : "Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -81,8 +96,8 @@ export default function ProductManager() {
 
     try {
       const url = editingId
-        ? `/api/admin/products/${editingId}`
-        : "/api/admin/products";
+        ? `/api/platform-admin/products/${editingId}`
+        : "/api/platform-admin/products";
       const method = editingId ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -140,7 +155,7 @@ export default function ProductManager() {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const res = await fetch(`/api/admin/products/${id}`, {
+      const res = await fetch(`/api/platform-admin/products/${id}`, {
         method: "DELETE",
       });
 

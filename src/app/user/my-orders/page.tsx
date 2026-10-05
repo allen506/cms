@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import PasswordGate from "@/components/PasswordGate";
+import { apiUrl } from "@/lib/api";
 import { getUnitPriceCRC } from "@/lib/pricing";
 
 const statusColors: { [key: string]: string } = {
@@ -37,7 +38,7 @@ interface OrderResult {
   items: OrderItem[];
 }
 
-export default function UserMyOrdersPage() {
+export default function UserMyOrdersPage({ apiBaseUrl }: { apiBaseUrl?: string }) {
   const [orders, setOrders] = useState<OrderResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export default function UserMyOrdersPage() {
   const [paySettings, setPaySettings] = useState<Record<string, string>>({});
 
   const fetchPaymentStatuses = useCallback((name: string) => {
-    fetch(`/api/payments?userName=${encodeURIComponent(name)}`).then(r => r.json()).then(d => {
+    fetch(apiUrl(`/api/payments?userName=${encodeURIComponent(name)}`, apiBaseUrl)).then(r => r.json()).then(d => {
       const byOrder: Record<string, any[]> = {};
       for (const p of (d.payments || [])) {
         if (!byOrder[p.order_id]) byOrder[p.order_id] = [];
@@ -75,29 +76,29 @@ export default function UserMyOrdersPage() {
       }
       setPaymentsByOrder(byOrder);
     }).catch(() => {});
-  }, []);
+  }, [apiBaseUrl]);
 
   const fetchOrders = useCallback((name: string) => {
     setLoading(true);
-    fetch(`/api/orders/search?name=${encodeURIComponent(name)}`)
+    fetch(apiUrl(`/api/orders/search?name=${encodeURIComponent(name)}`, apiBaseUrl))
       .then(r => r.json())
       .then(d => { setOrders(d.orders || []); setLoading(false); })
       .catch(() => { setOrders([]); setLoading(false); });
-  }, []);
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     const name = localStorage.getItem("thinkmtb-user-name");
     if (name) { setUserName(name); fetchOrders(name); fetchPaymentStatuses(name); }
 
     // Load exchange rate and team quantities for pricing
-    fetch("/api/exchange-rate").then(r => r.json()).then(d => { if (d.compra) setExchangeRate(d.compra); }).catch(() => {});
-    fetch("/api/orders/team-quantities").then(r => r.json()).then(d => setTeamQty(d || {})).catch(() => {});
-    fetch("/api/catalog").then(r => r.json()).then(d => {
+    fetch(apiUrl("/api/exchange-rate", apiBaseUrl)).then(r => r.json()).then(d => { if (d.compra) setExchangeRate(d.compra); }).catch(() => {});
+    fetch(apiUrl("/api/orders/team-quantities", apiBaseUrl)).then(r => r.json()).then(d => setTeamQty(d || {})).catch(() => {});
+    fetch(apiUrl("/api/catalog", apiBaseUrl)).then(r => r.json()).then(d => {
       setSizes(d.sizes || []);
       setProducts(d.productTypes || []);
       setDesigns(d.designs || []);
     }).catch(() => {});
-    fetch("/api/admin/payment-settings").then(r => r.json()).then(d => setPaySettings(d)).catch(() => {});
+    fetch(apiUrl("/api/admin/payment-settings", apiBaseUrl)).then(r => r.json()).then(d => setPaySettings(d)).catch(() => {});
 
     // Poll payment statuses every 20 seconds so admin confirmations appear automatically
     const interval = setInterval(() => {
@@ -106,7 +107,7 @@ export default function UserMyOrdersPage() {
     }, 20000);
 
     return () => clearInterval(interval);
-  }, [fetchOrders, fetchPaymentStatuses]);
+  }, [fetchOrders, fetchPaymentStatuses, apiBaseUrl]);
 
   const getItemPrice = (productTypeId: string, qty: number) => {
     if (!exchangeRate || !productTypeId) return null;
@@ -123,7 +124,7 @@ export default function UserMyOrdersPage() {
 
   const saveEdit = async (itemId: number) => {
     setSaving(true);
-    const res = await fetch(`/api/orders/items/${itemId}`, {
+    const res = await fetch(apiUrl(`/api/orders/items/${itemId}`, apiBaseUrl), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productTypeId: editFields.productTypeId, designId: editFields.designId, sizeId: editFields.sizeId, quantity: editFields.quantity }),
@@ -138,20 +139,20 @@ export default function UserMyOrdersPage() {
   const deleteItem = async (itemId: number) => {
     setConfirmingDelete(null);
     setDeletingItem(itemId);
-    const res = await fetch(`/api/orders/items/${itemId}`, { method: "DELETE" });
+    const res = await fetch(apiUrl(`/api/orders/items/${itemId}`, apiBaseUrl), { method: "DELETE" });
     setDeletingItem(null);
     if (res.ok && userName) fetchOrders(userName);
   };
 
   const fetchOrderPayments = async (orderId: string) => {
-    const res = await fetch(`/api/payments?orderId=${orderId}`);
+    const res = await fetch(apiUrl(`/api/payments?orderId=${orderId}`, apiBaseUrl));
     const d = await res.json();
     setPaymentsByOrder(prev => ({ ...prev, [orderId]: d.payments || [] }));
   };
 
   const submitPayment = async (orderId: string, totalUSD: number, totalCRC: number) => {
     setSubmittingPay(true);
-    await fetch("/api/payments", {
+    await fetch(apiUrl("/api/payments", apiBaseUrl), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderId, userName, amountUsd: totalUSD || null, amountCrc: totalCRC || null, method: payMethod, reference: payRef.trim() || null }),

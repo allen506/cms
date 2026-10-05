@@ -8,9 +8,51 @@
  *   DATABASE_URL=postgres://user:pass@host:5432/db node scripts/seed-catalog.js
  * Falls back to local dev credentials if DATABASE_URL is not set.
  */
+const fs = require("fs");
+const path = require("path");
 const { Pool } = require("pg");
+const Database = require("better-sqlite3");
 
 const FALLBACK_RATE = 464.54; // placeholder for NOT NULL price_usd; live USD computed at read time
+
+function loadEnvFiles() {
+  const envCandidates = [
+    path.join(process.cwd(), ".env"),
+    path.join(process.cwd(), ".env.local"),
+    path.join(process.cwd(), ".env.production"),
+    path.join(process.cwd(), ".env.production.local"),
+  ];
+
+  for (const envFile of envCandidates) {
+    if (!fs.existsSync(envFile)) continue;
+
+    const content = fs.readFileSync(envFile, "utf8");
+    for (const rawLine of content.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+
+      const equalsIndex = line.indexOf("=");
+      if (equalsIndex === -1) continue;
+
+      const key = line.slice(0, equalsIndex).trim();
+      let value = line.slice(equalsIndex + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFiles();
+
+const STANDARD_DESIGNS = [
+  { id: "design-1", name: "Traditional Black", description: "Classic black ThinkMTB team design", image_url: "/designs/design1.jpg", designed_for: JSON.stringify(["jersey", "vest"]) },
+  { id: "design-2", name: "Traditional White", description: "Classic white ThinkMTB team design", image_url: "/designs/design2.jpg", designed_for: JSON.stringify(["jersey", "vest"]) },
+  { id: "design-3", name: "Race Green", description: "Green race ThinkMTB team design", image_url: "/designs/design3.jpg", designed_for: JSON.stringify(["jersey", "vest"]) },
+  { id: "design-4", name: "Race Purple", description: "Purple race ThinkMTB team design", image_url: "/designs/design4.jpg", designed_for: JSON.stringify(["jersey", "vest"]) },
+];
 
 const STANDARD_TIERS = (p) => [
   { min: 1, max: 1, crc: p[0] },
@@ -184,7 +226,136 @@ async function getDefaultTenantId(client) {
   return again.rows[0].id;
 }
 
+function hasColumn(db, table, columnName) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  return cols.some((col) => col.name === columnName);
+}
+
+function seedSqlite(dbPath) {
+  const db = new Database(dbPath);
+  const defaultTenantId = "tenant_default";
+  const hasTenantColumnForProducts = hasColumn(db, "product_types", "tenant_id");
+  const hasTenantColumnForDesigns = hasColumn(db, "designs", "tenant_id");
+  const hasTenantColumnForProductDesigns = hasColumn(db, "product_designs", "tenant_id");
+
+  if (hasColumn(db, "tenants", "slug")) {
+    const tenantCount = db.prepare("SELECT COUNT(*) as count FROM tenants WHERE slug = ?").get("default").count;
+    if (!tenantCount) {
+      db.prepare(`INSERT INTO tenants (id, name, slug, admin_email, status, created_at)
+        VALUES (?, 'Default Tenant', 'default', 'admin@default.local', 'active', datetime('now'))`).run(defaultTenantId);
+    }
+  }
+
+  for (const design of STANDARD_DESIGNS) {
+    if (hasTenantColumnForDesigns) {
+      db.prepare(`INSERT OR REPLACE INTO designs (id, name, description, image_url, active, sort_order, tenant_id, designed_for, created_at)
+        VALUES (?, ?, ?, ?, 1, ?, ?, ?, datetime('now'))`).run(
+        design.id,
+        design.name,
+        design.description,
+        design.image_url,
+        Number(design.id.replace(/\D/g, '')),
+        defaultTenantId,
+        design.designed_for
+      );
+    } else {
+      db.prepare(`INSERT OR REPLACE INTO designs (id, name, description, image_url, active, sort_order, designed_for, created_at)
+        VALUES (?, ?, ?, ?, 1, ?, ?, datetime('now'))`).run(
+        design.id,
+        design.name,
+        design.description,
+        design.image_url,
+        Number(design.id.replace(/\D/g, '')),
+        design.designed_for
+      );
+    }
+  }
+
+  for (const p of PRODUCTS) {
+    if (hasTenantColumnForProducts) {
+      db.prepare(`INSERT OR REPLACE INTO product_types
+        (id, name, description, category, example_url, active, sort_order, tenant_id, fit_options, created_at)
+        VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, datetime('now'))`).run(
+        p.id,
+        p.name,
+        p.description || null,
+        p.category,
+        p.example_url,
+        p.sort_order,
+        defaultTenantId,
+        JSON.stringify(p.fit_options)
+      );
+    } else {
+      db.prepare(`INSERT OR REPLACE INTO product_types
+        (id, name, description, category, example_url, active, sort_order, fit_options, created_at)
+        VALUES (?, ?, ?, ?, ?, 1, ?, ?, datetime('now'))`).run(
+        p.id,
+        p.name,
+        p.description || null,
+        p.category,
+        p.example_url,
+        p.sort_order,
+        JSON.stringify(p.fit_options)
+      );
+    }
+
+    if (hasColumn(db, "pricing_tiers", "tenant_id")) {
+      db.prepare("DELETE FROM pricing_tiers WHERE product_type_id = ? AND tenant_id IS NULL").run(p.id);
+    } else {
+      db.prepare("DELETE FROM pricing_tiers WHERE product_type_id = ?").run(p.id);
+    }
+    for (const t of p.tiers) {
+      const priceUsd = Math.round((t.crc / FALLBACK_RATE) * 100) / 100;
+      if (hasColumn(db, "pricing_tiers", "tenant_id")) {
+        db.prepare(`INSERT INTO pricing_tiers (product_type_id, min_qty, max_qty, price_crc, price_usd, tenant_id)
+          VALUES (?, ?, ?, ?, ?, NULL)`).run(
+          p.id,
+          t.min,
+          t.max,
+          t.crc,
+          priceUsd
+        );
+      } else {
+        db.prepare(`INSERT INTO pricing_tiers (product_type_id, min_qty, max_qty, price_crc, price_usd)
+          VALUES (?, ?, ?, ?, ?)`).run(
+          p.id,
+          t.min,
+          t.max,
+          t.crc,
+          priceUsd
+        );
+      }
+    }
+
+    db.prepare("DELETE FROM product_designs WHERE product_type_id = ?").run(p.id);
+    for (const [index, design] of STANDARD_DESIGNS.entries()) {
+      if (hasTenantColumnForProductDesigns) {
+        db.prepare(`INSERT INTO product_designs (product_type_id, design_id, sort_order, active, tenant_id, created_at)
+          VALUES (?, ?, ?, 1, ?, datetime('now'))`).run(p.id, design.id, index, defaultTenantId);
+      } else {
+        db.prepare(`INSERT INTO product_designs (product_type_id, design_id, sort_order, active, created_at)
+          VALUES (?, ?, ?, 1, datetime('now'))`).run(p.id, design.id, index);
+      }
+    }
+  }
+
+  db.close();
+  console.log(`✅ Seeded ${PRODUCTS.length} products and ${STANDARD_DESIGNS.length} default designs in SQLite at ${dbPath}`);
+}
+
 async function seed() {
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith("sqlite:")) {
+    const dbPath = process.env.DATABASE_URL.replace(/^sqlite:/, "");
+    seedSqlite(dbPath);
+    return;
+  }
+
+  if (!process.env.DATABASE_URL && fs.existsSync(path.join(process.cwd(), "data", "orders.db"))) {
+    const dbPath = path.join(process.cwd(), "data", "orders.db");
+    seedSqlite(dbPath);
+    return;
+  }
+
   const pool = process.env.DATABASE_URL
     ? new Pool({ connectionString: process.env.DATABASE_URL })
     : new Pool({
@@ -200,6 +371,42 @@ async function seed() {
     await client.query("BEGIN");
     const tenantId = await getDefaultTenantId(client);
     console.log(`Using tenant_id = ${tenantId}`);
+
+    const designColumns = await client.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'designs'`
+    );
+    const hasDesignedFor = designColumns.rows.some((row) => row.column_name === "designed_for");
+    if (!hasDesignedFor) {
+      await client.query("ALTER TABLE designs ADD COLUMN IF NOT EXISTS designed_for TEXT");
+    }
+
+    const productDesignColumns = await client.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'product_designs'`
+    );
+    const hasProductDesignTenant = productDesignColumns.rows.some((row) => row.column_name === "tenant_id");
+
+    for (const design of STANDARD_DESIGNS) {
+      await client.query(
+        `INSERT INTO designs (id, tenant_id, name, description, image_url, active, sort_order, designed_for, created_at)
+         VALUES ($1, $2, $3, $4, $5, 1, $6, $7, NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           image_url = EXCLUDED.image_url,
+           active = 1,
+           sort_order = EXCLUDED.sort_order,
+           designed_for = EXCLUDED.designed_for`,
+        [
+          design.id,
+          tenantId,
+          design.name,
+          design.description || null,
+          design.image_url || null,
+          Number(design.id.replace(/\D/g, '')),
+          design.designed_for || null,
+        ]
+      );
+    }
 
     for (const p of PRODUCTS) {
       const fitJson = JSON.stringify(p.fit_options);
@@ -239,7 +446,12 @@ async function seed() {
         await client.query(
           `INSERT INTO pricing_tiers
              (id, product_type_id, tenant_id, min_qty, max_qty, price_crc, price_usd)
-           VALUES ($1,$2,NULL,$3,$4,$5,$6)`,
+           VALUES ($1,$2,NULL,$3,$4,$5,$6)
+           ON CONFLICT (id) DO UPDATE SET
+             min_qty = EXCLUDED.min_qty,
+             max_qty = EXCLUDED.max_qty,
+             price_crc = EXCLUDED.price_crc,
+             price_usd = EXCLUDED.price_usd`,
           [
             `tier_${p.id}_${t.min}`,
             p.id,
@@ -249,6 +461,30 @@ async function seed() {
             priceUsd,
           ]
         );
+      }
+
+      await client.query("DELETE FROM product_designs WHERE product_type_id = $1", [p.id]);
+      for (const [index, design] of STANDARD_DESIGNS.entries()) {
+        const productDesignId = `pd_${p.id}_${design.id}`;
+        if (hasProductDesignTenant) {
+          await client.query(
+            `INSERT INTO product_designs (id, product_type_id, design_id, sort_order, active, tenant_id, created_at)
+             VALUES ($1, $2, $3, $4, 1, $5, NOW())
+             ON CONFLICT (id) DO UPDATE SET
+               sort_order = EXCLUDED.sort_order,
+               active = 1`,
+            [productDesignId, p.id, design.id, index, tenantId]
+          );
+        } else {
+          await client.query(
+            `INSERT INTO product_designs (id, product_type_id, design_id, sort_order, active, created_at)
+             VALUES ($1, $2, $3, $4, 1, NOW())
+             ON CONFLICT (id) DO UPDATE SET
+               sort_order = EXCLUDED.sort_order,
+               active = 1`,
+            [productDesignId, p.id, design.id, index]
+          );
+        }
       }
 
       // Replace global add-ons for this product

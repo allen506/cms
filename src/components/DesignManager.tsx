@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { normalizeCatalogDesigns, normalizeCatalogProducts } from "@/lib/catalog-fallback";
 
 interface Design {
   id: string;
@@ -47,19 +48,42 @@ export default function DesignManager() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      let designsList: Design[] = [];
+      let productsList: ProductType[] = [];
+
       const [designsRes, productsRes] = await Promise.all([
-        fetch("/api/admin/designs"),
-        fetch("/api/admin/products"),
+        fetch("/api/platform-admin/designs"),
+        fetch("/api/platform-admin/products"),
       ]);
-      const designsData = await designsRes.json();
-      const productsData = await productsRes.json();
 
-      setDesigns(designsData.designs || []);
-      setProductTypes(productsData.products || []);
+      if (designsRes.ok) {
+        const designsData = await designsRes.json();
+        designsList = designsData.designs || [];
+      }
 
-      // Extract unique categories
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        productsList = productsData.products || [];
+      }
+
+      if (designsList.length === 0 || productsList.length === 0) {
+        const catalogRes = await fetch("/api/catalog", { credentials: "include" });
+        if (catalogRes.ok) {
+          const catalogData = await catalogRes.json();
+          designsList = normalizeCatalogDesigns(designsList, catalogData);
+          productsList = normalizeCatalogProducts(productsList, catalogData).map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            category: product.category,
+          }));
+        }
+      }
+
+      setDesigns(designsList);
+      setProductTypes(productsList);
+
       const uniqueCategories = new Set<string>(
-        (productsData.products || []).map((p: ProductType) => p.category)
+        productsList.map((p: ProductType) => p.category)
       );
       setCategories(uniqueCategories);
     } catch (err) {
@@ -122,8 +146,8 @@ export default function DesignManager() {
 
     try {
       const url = editingId
-        ? `/api/admin/designs/${editingId}`
-        : "/api/admin/designs";
+        ? `/api/platform-admin/designs/${editingId}`
+        : "/api/platform-admin/designs";
       const method = editingId ? "PATCH" : "POST";
 
       const formDataToSend = new FormData();
@@ -190,7 +214,7 @@ export default function DesignManager() {
     if (!confirm("Are you sure you want to delete this design?")) return;
 
     try {
-      const res = await fetch(`/api/admin/designs/${id}`, {
+      const res = await fetch(`/api/platform-admin/designs/${id}`, {
         method: "DELETE",
       });
 

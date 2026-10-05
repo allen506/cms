@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import DesignSelector, { type DesignSelection } from "@/components/DesignSelector";
 import ProductSelector from "@/components/ProductSelector";
+import { apiUrl } from "@/lib/api";
 import { Design, ProductType, Size } from "@/lib/types";
 import { getUnitPriceCRC } from "@/lib/pricing";
 
@@ -24,7 +25,13 @@ interface OrderItem {
   quantity: number;
 }
 
-export default function OrderForm({ onOrderPlaced }: { onOrderPlaced?: () => void }) {
+export default function OrderForm({
+  onOrderPlaced,
+  apiBaseUrl,
+}: {
+  onOrderPlaced?: () => void;
+  apiBaseUrl?: string;
+}) {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
@@ -69,7 +76,7 @@ export default function OrderForm({ onOrderPlaced }: { onOrderPlaced?: () => voi
       setLockedName(true);
     }
 
-    fetch("/api/catalog")
+    fetch(apiUrl("/api/catalog", apiBaseUrl))
       .then((res) => res.json())
       .then((data) => {
         setDesigns(data.designs || []);
@@ -82,12 +89,12 @@ export default function OrderForm({ onOrderPlaced }: { onOrderPlaced?: () => voi
         setLoading(false);
       });
     // Fetch team-wide quantities for pricing
-    fetch("/api/orders/team-quantities")
+    fetch(apiUrl("/api/orders/team-quantities", apiBaseUrl))
       .then((res) => res.json())
       .then((data) => setTeamQty(data || {}))
       .catch(() => {});
     // Fetch live exchange rate
-    fetch("/api/exchange-rate")
+    fetch(apiUrl("/api/exchange-rate", apiBaseUrl))
       .then((res) => res.json())
       .then((data) => {
         if (data.compra) {
@@ -96,7 +103,7 @@ export default function OrderForm({ onOrderPlaced }: { onOrderPlaced?: () => voi
         }
       })
       .catch(() => {});
-  }, []);
+  }, [apiBaseUrl]);
 
   // When designs are selected, create items for each design with their quantities
   const handleDesignsSelected = useCallback((selections: DesignSelection[]) => {
@@ -183,7 +190,7 @@ export default function OrderForm({ onOrderPlaced }: { onOrderPlaced?: () => voi
     setError("");
 
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch(apiUrl("/api/orders", apiBaseUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

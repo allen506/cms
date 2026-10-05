@@ -4,7 +4,7 @@ import Link from "next/link";
 import OrderForm from "@/components/OrderForm";
 import PasswordGate from "@/components/PasswordGate";
 
-export default function OrderPage() {
+export default function OrderPage({ apiBaseUrl }: { apiBaseUrl?: string }) {
   return (
     <PasswordGate password={["thinkmtb-go", "thinkmtb123"]} storageKey="auth-user" title="ThinkMTB Orders" checkOrderingStatus={true}>
       <div>
@@ -17,7 +17,7 @@ export default function OrderPage() {
           </p>
         </div>
 
-        <OrderForm onOrderPlaced={() => {}} />
+        <OrderForm onOrderPlaced={() => {}} apiBaseUrl={apiBaseUrl} />
       </div>
     </PasswordGate>
   );
