@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface PricingTier {
@@ -82,14 +82,13 @@ export default function ProductSelectionForm({
   designRequestId,
   onSuccess,
 }: ProductSelectionFormProps) {
-  const router = useRouter();
   const { t, formatMoney, fxFecha, fxIsFallback, rate } = useLocale();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [placed, setPlaced] = useState(false);
   const [notes, setNotes] = useState("");
 
   // Catalog data used for per-member design / size / gender selection.
@@ -322,15 +321,14 @@ export default function ProductSelectionForm({
 
       const data = await response.json();
 
-      setSuccess(t("products.orderSuccess"));
-
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess(data.orderId);
-        } else {
-          router.push(`/custom/${teamName}/order/payment/${data.orderId}`);
-        }
-      }, 2000);
+      // Platform does not take payment: just confirm the items were added to the
+      // team order. CMS gets totals later via the captain's CSV export.
+      setSelectedItems([]);
+      if (onSuccess) {
+        onSuccess(data.orderId);
+      } else {
+        setPlaced(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create order");
     } finally {
@@ -435,6 +433,36 @@ export default function ProductSelectionForm({
     );
   }
 
+  if (placed) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-12">
+        <div className="text-5xl mb-4">✅</div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Added to your team order
+        </h2>
+        <p className="text-gray-600 mb-8">
+          Your items were added to the team order. Your captain will close the
+          campaign and send everything to CMS, who will confirm the total. No
+          payment is taken here.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => setPlaced(false)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
+          >
+            Add Another Item
+          </button>
+          <Link
+            href={`/custom/${teamName}/order/campaign`}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium"
+          >
+            View Team Order
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit}>
@@ -455,12 +483,6 @@ export default function ProductSelectionForm({
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-800">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800">{success}</p>
             </div>
           )}
 
@@ -749,11 +771,9 @@ export default function ProductSelectionForm({
         >
           {isSubmitting
             ? t("products.creatingOrder")
-            : `${t("products.continuePayment")} (${
-                selectedItems.length > 0
-                  ? formatMoney(total.crc)
-                  : t("products.selectItems")
-              })`}
+            : `Add to Team Order${
+                selectedItems.length > 0 ? ` (${formatMoney(total.crc)})` : ""
+              }`}
         </button>
       </form>
     </div>
