@@ -63,6 +63,8 @@ export async function PATCH(
         ? parseInt(formData.get("sort_order") as string)
         : undefined;
       body.designed_for = formData.get("designed_for") as string;
+      body.tenant_id = (formData.get("tenant_id") as string | null) || undefined;
+      body.team_id = (formData.get("team_id") as string | null) || undefined;
       file = formData.get("file") as File | null;
     }
 
@@ -100,6 +102,14 @@ export async function PATCH(
     if (normalizedBody.designed_for !== undefined) {
       updates.push("designed_for = ?");
       values.push(normalizedBody.designed_for || null);
+    }
+    if (normalizedBody.tenant_id !== undefined) {
+      updates.push("tenant_id = ?");
+      values.push(normalizedBody.tenant_id || "default-tenant");
+    }
+    if (normalizedBody.team_id !== undefined) {
+      updates.push("team_id = ?");
+      values.push(normalizedBody.team_id || null);
     }
 
     // Handle file upload

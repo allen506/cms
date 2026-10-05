@@ -321,6 +321,9 @@ function initializeDb(db: Database.Database) {
   if (!designCols.includes('designed_for')) {
     db.prepare(`ALTER TABLE designs ADD COLUMN designed_for TEXT`).run();
   }
+  if (!designCols.includes('team_id')) {
+    db.prepare(`ALTER TABLE designs ADD COLUMN team_id TEXT`).run();
+  }
 
   // Create product_designs table if it doesn't exist
   db.exec(`
@@ -331,6 +334,7 @@ function initializeDb(db: Database.Database) {
       sort_order INTEGER NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
       tenant_id TEXT,
+      team_id TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(product_type_id, design_id, tenant_id),
       FOREIGN KEY (product_type_id) REFERENCES product_types(id),

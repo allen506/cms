@@ -61,7 +61,7 @@ const STANDARD_DESIGNS = [
   { id: "design-thinkmtb-enduro", name: "ThinkMTB Enduro Jersey", sort_order: 18, description: "Official ThinkMTB enduro jersey design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey"]) },
   { id: "design-1787605520817", name: "Enduro Purple Long Sleeve", sort_order: 19, description: "ThinkMTB enduro long-sleeve purple design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey"]) },
   { id: "design-1787605788329", name: "Enduro Purple Short Sleeve", sort_order: 20, description: "ThinkMTB enduro short-sleeve purple design", image_url: "/designs/design-1787605788327-enduro-purple-short-.png", designed_for: JSON.stringify(["enduro-short"]) },
-  { id: "design-rivian-enduro", name: "Enduro Jersey", sort_order: 21, description: "Approved enduro jersey design for the Rivian team", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey", "enduro-short"]) },
+  { id: "design-rivian-enduro", name: "Friends as Family", sort_order: 21, description: "Custom Rivian enduro jersey design featuring the Friends as Family graphic", image_url: "/designs/design-1791219676230-rivian-enduro.png", designed_for: JSON.stringify(["enduro-jersey", "enduro-short"]) },
   { id: "fd-16", name: "Bib ThinkMTB 2026 Black", sort_order: 22, description: "Legacy ThinkMTB bib design in black", image_url: "/final-designs/1787277944521_Gemini_Generated_Image_c6k784c6k784c6k7.jpeg", designed_for: JSON.stringify(["bib"]) },
 ];
 

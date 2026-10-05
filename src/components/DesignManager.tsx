@@ -12,6 +12,8 @@ interface Design {
   active: number;
   sort_order: number;
   designed_for: string | null;
+  tenant_id?: string | null;
+  team_id?: string | null;
 }
 
 interface ProductType {
@@ -20,9 +22,18 @@ interface ProductType {
   category: string;
 }
 
+interface TeamOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function DesignManager() {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [tenants, setTenants] = useState<TeamOption[]>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>("all");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("all");
   const [categories, setCategories] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -33,6 +44,8 @@ export default function DesignManager() {
     active: true,
     sort_order: 999,
     designed_for: [] as string[],
+    tenant_id: "",
+    team_id: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -40,10 +53,26 @@ export default function DesignManager() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Load designs and product types
+  // Load tenant/team context and catalog data
   useEffect(() => {
+    fetchTenants();
     fetchData();
   }, []);
+
+  const fetchTenants = async () => {
+    try {
+      const res = await fetch("/api/platform-admin/tenants");
+      if (!res.ok) return;
+      const data = await res.json();
+      setTenants(data || []);
+      if (data?.length) {
+        setSelectedTenantId(data[0].id);
+        setFormData((prev) => ({ ...prev, tenant_id: data[0].id }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch tenants:", error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -51,9 +80,17 @@ export default function DesignManager() {
       let designsList: Design[] = [];
       let productsList: ProductType[] = [];
 
+      const designsUrl = selectedTenantId === "all"
+        ? "/api/platform-admin/designs"
+        : `/api/platform-admin/designs?tenant_id=${encodeURIComponent(selectedTenantId)}${selectedTeamId !== "all" ? `&team_id=${encodeURIComponent(selectedTeamId)}` : ""}`;
+
+      const productsUrl = selectedTenantId === "all"
+        ? "/api/platform-admin/products"
+        : `/api/platform-admin/products?tenant_id=${encodeURIComponent(selectedTenantId)}${selectedTeamId !== "all" ? `&team_id=${encodeURIComponent(selectedTeamId)}` : ""}`;
+
       const [designsRes, productsRes] = await Promise.all([
-        fetch("/api/platform-admin/designs"),
-        fetch("/api/platform-admin/products"),
+        fetch(designsUrl),
+        fetch(productsUrl),
       ]);
 
       if (designsRes.ok) {
@@ -156,6 +193,8 @@ export default function DesignManager() {
       formDataToSend.append("active", formData.active.toString());
       formDataToSend.append("sort_order", formData.sort_order.toString());
       formDataToSend.append("designed_for", JSON.stringify(formData.designed_for));
+      if (formData.tenant_id) formDataToSend.append("tenant_id", formData.tenant_id);
+      if (formData.team_id) formDataToSend.append("team_id", formData.team_id);
 
       if (file) {
         formDataToSend.append("file", file);
@@ -182,6 +221,8 @@ export default function DesignManager() {
         active: true,
         sort_order: 999,
         designed_for: [],
+        tenant_id: selectedTenantId === "all" ? "" : selectedTenantId,
+        team_id: selectedTeamId === "all" ? "" : selectedTeamId,
       });
       setFile(null);
       setPreviewUrl("");
@@ -202,6 +243,8 @@ export default function DesignManager() {
       active: design.active === 1,
       sort_order: design.sort_order,
       designed_for: design.designed_for ? JSON.parse(design.designed_for) : [],
+      tenant_id: design.tenant_id || "",
+      team_id: design.team_id || "",
     });
     if (design.image_url) {
       setPreviewUrl(`/api/designs/${design.id}/image`);
@@ -239,6 +282,8 @@ export default function DesignManager() {
       active: true,
       sort_order: 999,
       designed_for: [],
+      tenant_id: selectedTenantId === "all" ? "" : selectedTenantId,
+      team_id: selectedTeamId === "all" ? "" : selectedTeamId,
     });
     setFile(null);
     setPreviewUrl("");
@@ -248,14 +293,51 @@ export default function DesignManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Designs Management</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-        >
-          {showForm ? "Cancel" : "+ Add New Design"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={selectedTenantId}
+            onChange={(e) => {
+              const nextTenant = e.target.value;
+              setSelectedTenantId(nextTenant);
+              if (nextTenant !== "all") {
+                setSelectedTeamId("all");
+                setFormData((prev) => ({ ...prev, tenant_id: nextTenant, team_id: "" }));
+              }
+            }}
+            className="px-3 py-2 border border-gray-300 rounded text-sm text-black bg-white"
+          >
+            <option value="all">All teams</option>
+            {tenants.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+            ))}
+          </select>
+          {selectedTenantId !== "all" && (
+            <select
+              value={selectedTeamId}
+              onChange={(e) => {
+                const nextTeam = e.target.value;
+                setSelectedTeamId(nextTeam);
+                setFormData((prev) => ({ ...prev, tenant_id: selectedTenantId, team_id: nextTeam === "all" ? "" : nextTeam }));
+              }}
+              className="px-3 py-2 border border-gray-300 rounded text-sm text-black bg-white"
+            >
+              <option value="all">All teams in this tenant</option>
+              {tenants
+                .filter((tenant) => tenant.id === selectedTenantId)
+                .map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                ))}
+            </select>
+          )}
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            {showForm ? "Cancel" : "+ Add New Design"}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -303,6 +385,38 @@ export default function DesignManager() {
                   rows={3}
                   placeholder="Describe the design..."
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Team
+                </label>
+                <select
+                  value={formData.team_id || ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, team_id: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-black bg-white"
+                >
+                  <option value="">Global / all teams</option>
+                  {tenants.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tenant
+                </label>
+                <select
+                  value={formData.tenant_id || ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, tenant_id: e.target.value, team_id: "" }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-black bg-white"
+                >
+                  <option value="">Default tenant</option>
+                  {tenants.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="col-span-2">
@@ -446,6 +560,9 @@ export default function DesignManager() {
                             <p className="text-xs text-blue-600 mt-2">
                               For: {JSON.parse(design.designed_for || "[]").map((c: string) => c.charAt(0).toUpperCase() + c.slice(1)).join(", ")}
                             </p>
+                          )}
+                          {(design as any).team_id && (
+                            <p className="text-xs text-amber-700 mt-2">Assigned to team: {(design as any).team_id}</p>
                           )}
                           <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
                             <span>{design.active === 1 ? "✓ Active" : "✗ Inactive"}</span>

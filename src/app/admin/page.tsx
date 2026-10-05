@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import PasswordGate from "@/components/PasswordGate";
 import ProductManager from "@/components/ProductManager";
+import { asNumber } from "@/lib/number";
 import DesignManager from "@/components/DesignManager";
 import PricingTierManager from "@/components/PricingTierManager";
 import PricingTiersViewer from "@/components/PricingTiersViewer";
@@ -291,8 +292,8 @@ export default function AdminPage() {
             Size: item.sizeName,
             "Fit / Gender": item.fit || "",
             Qty: item.quantity,
-            "Unit Price (USD)": item.unitPriceUSD.toFixed(2),
-            "Total (USD)": item.totalUSD.toFixed(2),
+            "Unit Price (USD)": asNumber(item.unitPriceUSD).toFixed(2),
+            "Total (USD)": asNumber(item.totalUSD).toFixed(2),
             Notes: "",
           });
         });
@@ -303,8 +304,8 @@ export default function AdminPage() {
           Size: "",
           Qty: "",
           "Unit Price (USD)": "",
-          "Total (USD)": user.grandTotalUSD.toFixed(2),
-          Notes: `Amount Due: $${user.grandTotalUSD.toFixed(2)}`,
+          "Total (USD)": asNumber(user.grandTotalUSD).toFixed(2),
+          Notes: `Amount Due: $${asNumber(user.grandTotalUSD).toFixed(2)}`,
         });
         perPersonRows.push({
           Name: "",
@@ -532,13 +533,13 @@ export default function AdminPage() {
                       ₡{p.tierPriceCRC.toLocaleString()}
                     </td>
                     <td className="px-6 py-3 text-right">
-                      ${p.tierPriceUSD.toFixed(2)}
+                      ${asNumber(p.tierPriceUSD).toFixed(2)}
                     </td>
                     <td className="px-6 py-3 text-right font-medium text-green-700">
                       ₡{p.totalCRC.toLocaleString()}
                     </td>
                     <td className="px-6 py-3 text-right font-medium text-blue-700">
-                      ${p.totalUSD.toFixed(2)}
+                      ${asNumber(p.totalUSD).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -972,7 +973,7 @@ export default function AdminPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold text-blue-700">${user.grandTotalUSD.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-blue-700">${asNumber(user.grandTotalUSD).toFixed(2)}</span>
                       {!allPaid && (
                         <button
                           onClick={() => handleMarkAllPaid(user.userName, orderIds)}
@@ -1003,8 +1004,8 @@ export default function AdminPage() {
                             <td className="px-6 py-2">{item.designName}</td>
                             <td className="px-6 py-2">{item.sizeName}</td>
                             <td className="px-6 py-2 text-right">{item.quantity}</td>
-                            <td className="px-6 py-2 text-right">${item.unitPriceUSD.toFixed(2)}</td>
-                            <td className="px-6 py-2 text-right font-semibold">${item.totalUSD.toFixed(2)}</td>
+                            <td className="px-6 py-2 text-right">${asNumber(item.unitPriceUSD).toFixed(2)}</td>
+                            <td className="px-6 py-2 text-right font-semibold">${asNumber(item.totalUSD).toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>

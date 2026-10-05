@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import PasswordGate from "@/components/PasswordGate";
 import { apiUrl } from "@/lib/api";
+import { asNumber } from "@/lib/number";
 import { getUnitPriceCRC } from "@/lib/pricing";
 
 const statusColors: { [key: string]: string } = {
@@ -232,7 +233,7 @@ export default function UserMyOrdersPage({ apiBaseUrl }: { apiBaseUrl?: string }
                       </div>
                       <div className="flex items-center gap-3">
                         {totalUSD > 0 && (
-                          <span className="text-sm font-semibold text-gray-700">~${totalUSD.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-gray-700">~${asNumber(totalUSD).toFixed(2)}</span>
                         )}
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status] || "bg-gray-100 text-gray-800"}`}>
                           {order.status}
@@ -401,8 +402,8 @@ export default function UserMyOrdersPage({ apiBaseUrl }: { apiBaseUrl?: string }
                                 <div className="flex items-center gap-4 shrink-0">
                                   {price ? (
                                     <div className="text-right">
-                                      <p className="font-semibold text-gray-900">${price.totalUSD.toFixed(2)}</p>
-                                      <p className="text-xs text-gray-500">${price.unitUSD.toFixed(2)} each</p>
+                                      <p className="font-semibold text-gray-900">${asNumber(price.totalUSD).toFixed(2)}</p>
+                                      <p className="text-xs text-gray-500">${asNumber(price.unitUSD).toFixed(2)} each</p>
                                     </div>
                                   ) : (
                                     <span className="text-xs text-gray-400">—</span>
@@ -453,7 +454,7 @@ export default function UserMyOrdersPage({ apiBaseUrl }: { apiBaseUrl?: string }
                       {totalUSD > 0 && (
                         <div className="text-right">
                           <p className="text-xs text-gray-500">Estimated total</p>
-                          <p className="font-bold text-gray-900">${totalUSD.toFixed(2)}</p>
+                          <p className="font-bold text-gray-900">${asNumber(totalUSD).toFixed(2)}</p>
                           {exchangeRate && <p className="text-xs text-gray-400">₡{Math.round(order.items.reduce((s, i) => s + (getItemPrice(i.product_type_id, i.quantity)?.totalCRC || 0), 0)).toLocaleString()}</p>}
                         </div>
                       )}

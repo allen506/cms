@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import PasswordGate from "@/components/PasswordGate";
 import { apiUrl } from "@/lib/api";
+import { asNumber } from "@/lib/number";
 
 interface PricingTier {
   id: string;
@@ -202,10 +203,10 @@ export default function UserPricingPage({ apiBaseUrl }: { apiBaseUrl?: string })
                                 </div>
                               </td>
                               <td className={`px-6 py-3 text-right font-medium ${isCurrentTier ? "text-amber-900 font-bold text-lg" : "text-gray-900"}`}>
-                                ₡{tier.price_crc.toLocaleString("es-CR")}
+                                ₡{asNumber(tier.price_crc).toLocaleString("es-CR")}
                               </td>
                               <td className={`px-6 py-3 text-right font-bold ${isCurrentTier ? "text-amber-700 text-lg" : "text-green-700"}`}>
-                                ${tier.price_usd.toFixed(2)}
+                                ${asNumber(tier.price_usd).toFixed(2)}
                               </td>
                             </tr>
                           );

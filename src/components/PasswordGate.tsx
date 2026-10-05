@@ -32,6 +32,7 @@ export default function PasswordGate({
   const [loadingTimeout, setLoadingTimeout] = useState(true);
 
   const validPasswords = Array.isArray(password) ? password : [password];
+  const passwordless = !verifyEndpoint && validPasswords.length === 1 && validPasswords[0] === "";
 
   // Fetch session timeout setting only after authentication
   useEffect(() => {
@@ -87,8 +88,17 @@ export default function PasswordGate({
     } catch {
       // sessionStorage unavailable (e.g. private browsing)
     }
+
+    if (passwordless) {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
+        localStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
+      } catch {}
+      setAuthenticated(true);
+    }
+
     setChecking(false);
-  }, [storageKey]);
+  }, [storageKey, passwordless]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +201,7 @@ export default function PasswordGate({
     );
   }
 
-  if (authenticated) {
+  if (authenticated || passwordless) {
     return (
       <div>
         <SessionWarningModal

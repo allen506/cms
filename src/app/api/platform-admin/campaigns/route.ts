@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const tenantId = searchParams.get("tenant_id");
+  const teamId = searchParams.get("team_id");
   const campaignId = searchParams.get("campaign_id");
 
   if (!tenantId) {
@@ -45,12 +46,22 @@ export async function GET(req: NextRequest) {
       if (!campaign) {
         return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
       }
+      if (teamId && campaign.team_id !== teamId) {
+        return NextResponse.json({ error: "Campaign not found for team" }, { status: 404 });
+      }
       const orders = await getCampaignOrderRows(
         tenantId,
         campaign.team_id,
         campaign.id
       );
       return NextResponse.json({ campaign, orders });
+    }
+
+    const filters: string[] = ["c.tenant_id = ?"];
+    const params: string[] = [tenantId];
+    if (teamId) {
+      filters.push("c.team_id = ?");
+      params.push(teamId);
     }
 
     const campaigns = await query<CampaignSummary>(
@@ -62,11 +73,11 @@ export async function GET(req: NextRequest) {
         FROM team_campaigns c
         LEFT JOIN orders o      ON o.campaign_id = c.id
         LEFT JOIN order_items oi ON oi.order_id = o.id
-       WHERE c.tenant_id = ?
+       WHERE ${filters.join(" AND ")}
        GROUP BY c.id, c.team_id, c.name, c.status, c.bac_payment_link,
                 c.created_at, c.closed_at, c.submitted_at, c.paid_at
        ORDER BY c.created_at DESC`,
-      [tenantId]
+      params
     );
     return NextResponse.json({ campaigns });
   } catch (err) {

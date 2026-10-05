@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
+import { useState, useEffect } from "react";import { asNumber } from "@/lib/number";
 interface Product {
   id: string;
   name: string;
@@ -351,10 +350,10 @@ export default function PricingTierManager({
                     <td className="px-5 py-3 text-gray-900">{tier.min_qty}</td>
                     <td className="px-5 py-3 text-gray-900">{tier.max_qty}</td>
                     <td className="px-5 py-3 text-right font-semibold text-gray-900">
-                      ₡{tier.price_crc.toLocaleString()}
+                      ₡{asNumber(tier.price_crc).toLocaleString()}
                     </td>
                     <td className="px-5 py-3 text-right text-gray-600">
-                      ${tier.price_usd?.toFixed(2)}
+                      ${asNumber(tier.price_usd).toFixed(2)}
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-2">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { asNumber } from "@/lib/number";
 
 interface OrderItem {
   id: string;
@@ -229,10 +230,10 @@ export default function PaymentReviewForm({
                     {item.quantity}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-900">
-                    ${item.price_usd.toFixed(2)}
+                    ${asNumber(item.price_usd).toFixed(2)}
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-gray-900">
-                    ${(item.price_usd * item.quantity).toFixed(2)}
+                    ${(asNumber(item.price_usd) * asNumber(item.quantity)).toFixed(2)}
                   </td>
                 </tr>
               ))}
@@ -243,10 +244,10 @@ export default function PaymentReviewForm({
         <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="text-right">
             <p className="text-gray-600 mb-2">
-              Subtotal: <span className="font-semibold">${order.total_usd.toFixed(2)}</span>
+              Subtotal: <span className="font-semibold">${asNumber(order?.total_usd).toFixed(2)}</span>
             </p>
             <p className="text-xs text-gray-500">
-              ₡{order.total_crc.toLocaleString()} CRC
+              ₡{asNumber(order?.total_crc).toLocaleString()} CRC
             </p>
           </div>
         </div>
@@ -260,16 +261,16 @@ export default function PaymentReviewForm({
           <div className="p-4 bg-white rounded-lg">
             <p className="text-sm text-gray-600 mb-1">50% Deposit Due</p>
             <p className="text-2xl font-bold text-blue-600">
-              ${depositUsd.toFixed(2)}
+              ${asNumber(depositUsd).toFixed(2)}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              ₡{depositCrc.toLocaleString()} CRC
+              ₡{asNumber(depositCrc).toLocaleString()} CRC
             </p>
           </div>
           <div className="p-4 bg-white rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Final Payment (Later)</p>
             <p className="text-2xl font-bold text-gray-900">
-              ${depositUsd.toFixed(2)}
+              ${asNumber(depositUsd).toFixed(2)}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Due after items ship

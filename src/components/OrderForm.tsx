@@ -5,6 +5,7 @@ import Link from "next/link";
 import DesignSelector, { type DesignSelection } from "@/components/DesignSelector";
 import ProductSelector from "@/components/ProductSelector";
 import { apiUrl } from "@/lib/api";
+import { asNumber } from "@/lib/number";
 import { Design, ProductType, Size } from "@/lib/types";
 import { getUnitPriceCRC } from "@/lib/pricing";
 
@@ -381,7 +382,7 @@ export default function OrderForm({
                   <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">CURRENT PRICE — {selectedProductName}</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl sm:text-4xl font-bold text-gray-900">
-                      ${currentPrice.unitUSD.toFixed(2)}
+                      ${asNumber(currentPrice.unitUSD).toFixed(2)}
                     </span>
                     <span className="text-sm text-gray-600">per unit</span>
                     <span className="text-xs text-gray-500">
@@ -516,10 +517,10 @@ export default function OrderForm({
                     return (
                       <div className="mt-3 pt-3 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-1">
                         <span className="text-gray-500 text-xs sm:text-sm">
-                          ${price.unitUSD.toFixed(2)} × {item.quantity} · Based on {price.teamTotal} total team units
+                          ${asNumber(price.unitUSD).toFixed(2)} × {item.quantity} · Based on {price.teamTotal} total team units
                         </span>
                         <span className="font-semibold text-gray-800">
-                          ${price.totalUSD.toFixed(2)}
+                          ${asNumber(price.totalUSD).toFixed(2)}
                         </span>
                       </div>
                     );
@@ -542,7 +543,7 @@ export default function OrderForm({
                 <div className="text-left sm:text-right">
                   <p className="text-xs text-gray-500">Estimated Order Total</p>
                   <p className="text-lg font-bold text-gray-900">
-                    ${orderTotalUSD.toFixed(2)}
+                    ${asNumber(orderTotalUSD).toFixed(2)}
                     <span className="text-xs font-normal text-gray-500 ml-1">
                       (₡{orderTotalCRC.toLocaleString()})
                     </span>

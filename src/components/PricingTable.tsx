@@ -1,5 +1,6 @@
 "use client";
 
+import { asNumber } from "@/lib/number";
 import { PricingTier } from "@/lib/pricing";
 
 // Fallback rate used when live rate hasn't loaded yet
@@ -55,7 +56,7 @@ export default function PricingTable({
               currentTotalQty !== undefined &&
               currentTotalQty >= tier.minQty &&
               currentTotalQty <= tier.maxQty;
-            const priceUSD = crcToUsd(tier.priceCRC, rate);
+            const priceUSD = asNumber(crcToUsd(asNumber(tier.priceCRC), rate));
             return (
               <tr
                 key={i}
@@ -78,7 +79,7 @@ export default function PricingTable({
                   )}
                 </td>
                 <td className="px-2 sm:px-4 py-2 text-right">
-                  <span className="whitespace-nowrap">₡{tier.priceCRC.toLocaleString()}</span>
+                  <span className="whitespace-nowrap">₡{asNumber(tier.priceCRC).toLocaleString()}</span>
                 </td>
                 <td className="px-2 sm:px-4 py-2 text-right">
                   <span className="whitespace-nowrap">${priceUSD.toFixed(2)}</span>

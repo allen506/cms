@@ -42,7 +42,9 @@ export async function GET(request: NextRequest) {
     // Calculate USD in real-time for each tier
     const tiersWithUSD = tiers.map((tier) => ({
       ...tier,
-      price_usd: tier.price_usd || crcToUsd(tier.price_crc, rate)}));
+      price_crc: Number(tier.price_crc),
+      price_usd: Number(tier.price_usd ?? crcToUsd(Number(tier.price_crc), rate)),
+    }));
 
     return NextResponse.json({
       success: true,

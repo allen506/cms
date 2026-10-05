@@ -254,6 +254,7 @@ async function runMigrations(client: any): Promise<void> {
     `CREATE TABLE IF NOT EXISTS designs (
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL REFERENCES tenants(id),
+      team_id TEXT REFERENCES teams(id),
       name TEXT NOT NULL,
       image_url TEXT,
       description TEXT,
@@ -269,6 +270,8 @@ async function runMigrations(client: any): Promise<void> {
       id TEXT PRIMARY KEY,
       product_type_id TEXT NOT NULL REFERENCES product_types(id),
       design_id TEXT NOT NULL REFERENCES designs(id),
+      tenant_id TEXT REFERENCES tenants(id),
+      team_id TEXT REFERENCES teams(id),
       active INTEGER DEFAULT 1,
       sort_order INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -354,8 +357,11 @@ async function runMigrations(client: any): Promise<void> {
 
     // Target unlock categories for a design (comma-separated slugs)
     `ALTER TABLE designs ADD COLUMN IF NOT EXISTS designed_for TEXT`,
+    `ALTER TABLE designs ADD COLUMN IF NOT EXISTS team_id TEXT REFERENCES teams(id)`,
     `ALTER TABLE designs ADD COLUMN IF NOT EXISTS categories TEXT`,
     `ALTER TABLE designs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
+    `ALTER TABLE product_designs ADD COLUMN IF NOT EXISTS tenant_id TEXT REFERENCES tenants(id)`,
+    `ALTER TABLE product_designs ADD COLUMN IF NOT EXISTS team_id TEXT REFERENCES teams(id)`,
 
     // Selectable product add-ons (e.g., long sleeve, stamped logo mold)
     `CREATE TABLE IF NOT EXISTS product_addons (

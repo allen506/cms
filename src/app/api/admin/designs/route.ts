@@ -51,6 +51,8 @@ export async function POST(request: NextRequest) {
     const active = formData.get("active") === "true" ? 1 : 0;
     const sort_order = parseInt(formData.get("sort_order") as string) || 999;
     const designed_for = formData.get("designed_for") as string;
+    const tenant_id = (formData.get("tenant_id") as string | null) || "default-tenant";
+    const team_id = (formData.get("team_id") as string | null) || null;
     const file = formData.get("file") as File | null;
 
     if (!name) {
@@ -87,10 +89,12 @@ export async function POST(request: NextRequest) {
     const id = uuidv4();
 
     await execute(
-      `INSERT INTO designs (id, name, description, image_url, active, sort_order, designed_for, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      `INSERT INTO designs (id, tenant_id, team_id, name, description, image_url, active, sort_order, designed_for, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         id,
+        tenant_id,
+        team_id,
         name,
         description || null,
         image_url || null,
