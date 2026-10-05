@@ -432,6 +432,24 @@ async function runMigrations(client: any): Promise<void> {
 
     // Link each order to the campaign it was placed in.
     `ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id TEXT`,
+
+    // Legacy order/user metadata used by the app and payment flows.
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_name TEXT`,
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_email TEXT`,
+
+    `CREATE TABLE IF NOT EXISTS payments (
+      id SERIAL PRIMARY KEY,
+      order_id TEXT NOT NULL REFERENCES orders(id),
+      user_name TEXT NOT NULL,
+      amount_usd DECIMAL(12, 2),
+      amount_crc DECIMAL(12, 2),
+      method TEXT,
+      reference TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      admin_notes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
   ];
 
   for (const migration of migrations) {
