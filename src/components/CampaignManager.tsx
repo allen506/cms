@@ -142,18 +142,20 @@ export default function CampaignManager({ teamName }: { teamName: string }) {
         {campaign?.bac_payment_link && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="text-base font-semibold text-gray-900 mb-2">
-              How to Pay (BAC)
+              Team Order Deposit (BAC)
             </h3>
             <p className="text-sm text-gray-500 mb-3">
-              Use the CMS payment link below to pay for this order.
+              Payment is handled at the team level — your captain coordinates a
+              single 50% deposit for the whole order with CMS. You don&apos;t pay
+              individually here. This is the team&apos;s payment link for reference:
             </p>
             <a
               href={campaign.bac_payment_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
+              className="inline-block px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200"
             >
-              Open Payment Link
+              View Team Payment Link
             </a>
           </div>
         )}
@@ -255,14 +257,15 @@ export default function CampaignManager({ teamName }: { teamName: string }) {
         )}
       </div>
 
-      {/* BAC payment link */}
+      {/* Team-level BAC deposit link (captain-managed) */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="text-base font-semibold text-gray-900 mb-2">
-          CMS Payment Link (BAC)
+          Team Order Payment Link (BAC)
         </h3>
         <p className="text-sm text-gray-500 mb-3">
-          Paste the BAC payment link from CMS here so your team members can see how
-          to pay for the whole order.
+          One BAC link for the whole team order&apos;s 50% deposit. After CMS
+          confirms the total, paste their link here. The team pays a single
+          deposit for the entire order — members do not pay individually.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
