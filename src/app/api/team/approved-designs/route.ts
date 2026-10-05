@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
               FROM design_submissions ds
               JOIN design_submission_files f ON f.design_submission_id = ds.id
              WHERE ds.design_request_id = dr.id AND ds.status = 'approved'
-             ORDER BY ds.created_at DESC, f.created_at ASC
+             ORDER BY ds.submitted_at DESC NULLS LAST, f.created_at ASC
              LIMIT 1
           ) AS file_path
         FROM design_requests dr
