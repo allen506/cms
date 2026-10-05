@@ -10,6 +10,7 @@ interface OrderItem {
   priceUsd: number;
   designApprovedId?: string;
   designId?: string;
+  designName?: string;
   sizeId?: string;
   fit?: string;
   addonIds?: string[];
@@ -123,8 +124,11 @@ export async function POST(request: NextRequest) {
         const itemId = `oit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         // Snapshot design/size names so CSV exports stay stable over time.
-        let designNameSnapshot: string | null = null;
-        if (item.designId) {
+        let designNameSnapshot: string | null =
+          typeof item.designName === "string" && item.designName.trim()
+            ? item.designName.trim()
+            : null;
+        if (!designNameSnapshot && item.designId) {
           const design = await tx.queryOne<{ name: string; code: string | null }>(
             "SELECT name, code FROM designs WHERE id = ? AND tenant_id = ?",
             [item.designId, tenant.id]

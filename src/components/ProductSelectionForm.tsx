@@ -46,15 +46,17 @@ interface SelectedItem {
   priceUsd: number;
   addonIds: string[];
   designId?: string;
+  designName?: string;
   sizeId?: string;
   fit?: string;
 }
 
-interface CatalogDesign {
+// Approved design for the team (image comes from the approved design request).
+interface ApprovedDesign {
   id: string;
   name: string;
-  description?: string | null;
-  designed_for?: string | null;
+  category: string | null;
+  imageUrl: string | null;
 }
 
 interface CatalogSize {
@@ -91,11 +93,8 @@ export default function ProductSelectionForm({
   const [notes, setNotes] = useState("");
 
   // Catalog data used for per-member design / size / gender selection.
-  const [designs, setDesigns] = useState<CatalogDesign[]>([]);
+  const [designs, setDesigns] = useState<ApprovedDesign[]>([]);
   const [sizes, setSizes] = useState<CatalogSize[]>([]);
-  const [productDesigns, setProductDesigns] = useState<
-    { product_type_id: string; design_id: string }[]
-  >([]);
   const [catalogProducts, setCatalogProducts] = useState<CatalogProductType[]>([]);
 
   useEffect(() => {
@@ -115,13 +114,20 @@ export default function ProductSelectionForm({
         const productsData = await productsRes.json();
         setProducts(productsData.products || []);
 
-        // Fetch catalog for design / size / gender options.
+        // Approved designs (with preview images) available to this team.
+        const designsRes = await fetch("/api/team/approved-designs", {
+          headers: { "x-tenant-slug": teamName.toLowerCase() },
+        });
+        if (designsRes.ok) {
+          const d = await designsRes.json();
+          setDesigns(d.designs || []);
+        }
+
+        // Catalog for sizes + fit options.
         const catalogRes = await fetch("/api/catalog");
         if (catalogRes.ok) {
           const catalog = await catalogRes.json();
-          setDesigns(catalog.designs || []);
           setSizes(catalog.sizes || []);
-          setProductDesigns(catalog.productDesigns || []);
           setCatalogProducts(catalog.productTypes || []);
         }
       } catch (err) {
@@ -146,37 +152,35 @@ export default function ProductSelectionForm({
     }
   };
 
-  // Designs available for a product: explicit product_designs links, else those
-  // whose designed_for matches the product category.
-  const getDesignsForProduct = (productId: string): CatalogDesign[] => {
-    const linked = productDesigns
-      .filter((pd) => pd.product_type_id === productId)
-      .map((pd) => pd.design_id);
-    if (linked.length > 0) {
-      return designs.filter((d) => linked.includes(d.id));
-    }
+  // Approved designs available for a product (matched by unlock category; a
+  // design with no category applies to all products).
+  const getDesignsForProduct = (productId: string): ApprovedDesign[] => {
     const meta = catalogProducts.find((p) => p.id === productId);
     const category = meta?.category;
     if (!category) return designs;
-    return designs.filter((d) => {
-      try {
-        const designedFor = JSON.parse(d.designed_for || "[]");
-        return Array.isArray(designedFor) ? designedFor.includes(category) : true;
-      } catch {
-        return true;
-      }
-    });
+    return designs.filter((d) => !d.category || d.category === category);
   };
 
-  // Update a per-item attribute (design, size or gender/fit).
+  // Update a per-item attribute (size or gender/fit).
   const updateItemField = (
     productId: string,
-    field: "designId" | "sizeId" | "fit",
+    field: "sizeId" | "fit",
     value: string
   ) => {
     setSelectedItems((prev) =>
       prev.map((item) =>
         item.productId === productId ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  // Select the design (by id) for a product line, snapshotting its name too.
+  const selectDesign = (productId: string, design: ApprovedDesign) => {
+    setSelectedItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId
+          ? { ...item, designId: design.id, designName: design.name }
+          : item
       )
     );
   };
@@ -232,6 +236,8 @@ export default function ProductSelectionForm({
               : item
           );
         } else {
+          const avail = getDesignsForProduct(productId);
+          const soleDesign = avail.length === 1 ? avail[0] : undefined;
           return [
             ...prev,
             {
@@ -240,6 +246,9 @@ export default function ProductSelectionForm({
               priceCrc: data.priceCrc,
               priceUsd: data.priceUsd,
               addonIds: selectedAddonIds,
+              // Auto-pick the only available design.
+              designId: soleDesign?.id,
+              designName: soleDesign?.name,
               // Auto-pick gender when the product has a single fit option.
               fit: getFitOptions(productId).length === 1
                 ? getFitOptions(productId)[0]
@@ -341,10 +350,18 @@ export default function ProductSelectionForm({
 
   const total = calculateTotal();
 
-  const getPricingDisplay = (product: Product) => {
+  const getPricingDisplay = (product: Product, quantity: number = 0) => {
     const adj = product.adjustment;
 
     if (product.pricing.length > 0) {
+      // Which tier the current quantity falls into.
+      const activeIdx = quantity > 0
+        ? product.pricing.findIndex(
+            (tier) =>
+              quantity >= tier.min_qty &&
+              (tier.max_qty == null || quantity <= tier.max_qty)
+          )
+        : -1;
       return (
         <div className="text-sm">
           {adj && (
@@ -363,17 +380,30 @@ export default function ProductSelectionForm({
             const discounted =
               tier.original_crc != null &&
               Math.round(tier.original_crc) !== Math.round(tier.price_crc);
+            const active = idx === activeIdx;
             return (
-              <p key={idx} className="text-gray-600">
-                {tier.min_qty}-{tier.max_qty || "+"}:{" "}
-                {discounted && (
-                  <span className="text-gray-400 line-through mr-1">
-                    {formatMoney(tier.original_crc!)}
+              <p
+                key={idx}
+                className={`flex items-center gap-2 rounded px-1 ${
+                  active ? "bg-blue-50 text-blue-900 font-semibold" : "text-gray-600"
+                }`}
+              >
+                <span>
+                  {tier.min_qty}-{tier.max_qty || "+"}:{" "}
+                  {discounted && (
+                    <span className="text-gray-400 line-through mr-1">
+                      {formatMoney(tier.original_crc!)}
+                    </span>
+                  )}
+                  <span className={discounted && !active ? "font-semibold text-green-700" : ""}>
+                    {formatMoney(tier.price_crc)}
+                  </span>
+                </span>
+                {active && (
+                  <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                    Your tier
                   </span>
                 )}
-                <span className={discounted ? "font-semibold text-green-700" : ""}>
-                  {formatMoney(tier.price_crc)}
-                </span>
               </p>
             );
           })}
@@ -469,7 +499,7 @@ export default function ProductSelectionForm({
                   ) : (
                     <>
                       <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                        {getPricingDisplay(product)}
+                        {getPricingDisplay(product, quantity)}
                       </div>
 
                       {product.addons && product.addons.length > 0 && (
@@ -542,32 +572,60 @@ export default function ProductSelectionForm({
 
                         {quantity > 0 && selectedItem && (
                           <div className="space-y-3 pt-1">
-                            {/* Design */}
-                            <label className="block">
+                            {/* Design — visual picker from approved designs */}
+                            <div>
                               <span className="text-sm font-medium text-gray-700 mb-1 block">
                                 Design *
                               </span>
-                              <select
-                                value={selectedItem.designId || ""}
-                                onChange={(e) =>
-                                  updateItemField(product.id, "designId", e.target.value)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled={isSubmitting}
-                              >
-                                <option value="">Select a design…</option>
-                                {getDesignsForProduct(product.id).map((d) => (
-                                  <option key={d.id} value={d.id}>
-                                    {d.name}
-                                  </option>
-                                ))}
-                              </select>
-                              {getDesignsForProduct(product.id).length === 0 && (
-                                <span className="text-xs text-amber-600 mt-1 block">
-                                  No designs available for this product yet.
+                              {getDesignsForProduct(product.id).length === 0 ? (
+                                <span className="text-xs text-amber-600 block">
+                                  No approved design available for this product yet.
                                 </span>
+                              ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                  {getDesignsForProduct(product.id).map((d) => {
+                                    const selected = selectedItem.designId === d.id;
+                                    return (
+                                      <button
+                                        key={d.id}
+                                        type="button"
+                                        onClick={() => selectDesign(product.id, d)}
+                                        disabled={isSubmitting}
+                                        className={`relative rounded-lg overflow-hidden border-2 text-left transition-all ${
+                                          selected
+                                            ? "border-blue-500 ring-2 ring-blue-200"
+                                            : "border-gray-200 hover:border-gray-300"
+                                        }`}
+                                      >
+                                        <div className="aspect-square bg-gray-100">
+                                          {d.imageUrl ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                              src={d.imageUrl}
+                                              alt={d.name}
+                                              className="w-full h-full object-cover"
+                                              loading="lazy"
+                                            />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                                              No image
+                                            </div>
+                                          )}
+                                          {selected && (
+                                            <span className="absolute top-1 right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                                              ✓
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="px-2 py-1 text-xs font-medium text-gray-700 truncate">
+                                          {d.name}
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               )}
-                            </label>
+                            </div>
 
                             {/* Size */}
                             <label className="block">
