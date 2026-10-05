@@ -120,21 +120,37 @@ export default async function TeamHomePage({
             </div>
           )}
 
-          {/* Step 3: Checkout */}
-          <div className="bg-gray-50 rounded-lg shadow p-6 opacity-60">
-            <div className="flex items-center justify-center w-12 h-12 bg-gray-300 rounded-full mb-4">
-              <span className="text-xl font-bold text-gray-600">3</span>
+          {/* Step 3: Team Order */}
+          <Link href={`/custom/${teamname}/order/campaign`}>
+            <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 cursor-pointer">
+              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-full mb-4">
+                <span className="text-xl font-bold text-amber-600">3</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Step 3: Team Order
+              </h2>
+              <p className="text-gray-600 text-sm mb-4">
+                See everyone&apos;s items in one place. Captains can close the
+                campaign and send the order to CMS for the final total.
+              </p>
+              <div className="inline-flex items-center text-amber-600 font-semibold">
+                View Team Order
+                <svg
+                  className="w-4 h-4 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Step 3: Payment & Review
-            </h2>
-            <p className="text-gray-600 text-sm mb-4">
-              Review your order and proceed to payment. Complete this step after selecting products.
-            </p>
-            <div className="inline-flex items-center text-gray-400 font-semibold">
-              Coming Soon
-            </div>
-          </div>
+          </Link>
         </div>
 
         {/* Quick Info */}
@@ -164,7 +180,7 @@ export default async function TeamHomePage({
             <li className="flex gap-3">
               <span className="text-blue-600 font-bold">•</span>
               <span>
-                <strong>Payment:</strong> 50% deposit upfront, balance due before shipping
+                <strong>Team Order &amp; CMS:</strong> Your captain closes the campaign and sends the order to CMS, who confirms the total. The 50% deposit is arranged directly with CMS.
               </span>
             </li>
           </ul>
