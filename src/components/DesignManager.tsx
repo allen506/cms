@@ -32,7 +32,6 @@ export default function DesignManager() {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [tenants, setTenants] = useState<TeamOption[]>([]);
-  const [selectedTenantId, setSelectedTenantId] = useState<string>("all");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("all");
   const [categories, setCategories] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -65,7 +64,6 @@ export default function DesignManager() {
       if (!res.ok) return;
       const data = await res.json();
       setTenants(data || []);
-      setSelectedTenantId("all");
       setSelectedTeamId("all");
       setFormData((prev) => ({ ...prev, tenant_id: "", team_id: "" }));
     } catch (error) {
@@ -79,12 +77,10 @@ export default function DesignManager() {
       let designsList: Design[] = [];
       let productsList: ProductType[] = [];
 
-      const activeTeamId = selectedTeamId !== "all" ? selectedTeamId : "";
-      const activeTenantId = selectedTenantId !== "all" && !activeTeamId ? selectedTenantId : "";
-
       const queryParams = new URLSearchParams();
-      if (activeTeamId) queryParams.set("team_id", activeTeamId);
-      else if (activeTenantId) queryParams.set("tenant_id", activeTenantId);
+      if (selectedTeamId !== "all") {
+        queryParams.set("team_id", selectedTeamId);
+      }
 
       const designsUrl = queryParams.toString() ? `/api/platform-admin/designs?${queryParams.toString()}` : "/api/platform-admin/designs";
       const productsUrl = queryParams.toString() ? `/api/platform-admin/products?${queryParams.toString()}` : "/api/platform-admin/products";
@@ -222,7 +218,7 @@ export default function DesignManager() {
         active: true,
         sort_order: 999,
         designed_for: [],
-        tenant_id: selectedTenantId === "all" ? "" : selectedTenantId,
+        tenant_id: "",
         team_id: selectedTeamId === "all" ? "" : selectedTeamId,
       });
       setFile(null);
@@ -283,7 +279,7 @@ export default function DesignManager() {
       active: true,
       sort_order: 999,
       designed_for: [],
-      tenant_id: selectedTenantId === "all" ? "" : selectedTenantId,
+      tenant_id: "",
       team_id: selectedTeamId === "all" ? "" : selectedTeamId,
     });
     setFile(null);
@@ -297,41 +293,24 @@ export default function DesignManager() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Designs Management</h2>
         <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="design-team-filter" className="text-sm font-medium text-gray-700">
+            Filter by Team:
+          </label>
           <select
-            value={selectedTenantId}
+            id="design-team-filter"
+            value={selectedTeamId}
             onChange={(e) => {
-              const nextTenant = e.target.value;
-              setSelectedTenantId(nextTenant);
-              if (nextTenant !== "all") {
-                setSelectedTeamId("all");
-                setFormData((prev) => ({ ...prev, tenant_id: nextTenant, team_id: "" }));
-              }
+              const nextTeam = e.target.value;
+              setSelectedTeamId(nextTeam);
+              setFormData((prev) => ({ ...prev, team_id: nextTeam === "all" ? "" : nextTeam }));
             }}
             className="px-3 py-2 border border-gray-300 rounded text-sm text-black bg-white"
           >
             <option value="all">All teams</option>
-            {tenants.map((tenant) => (
-              <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+            {tenants.map((team) => (
+              <option key={team.id} value={team.id}>{team.name}</option>
             ))}
           </select>
-          {selectedTenantId !== "all" && (
-            <select
-              value={selectedTeamId}
-              onChange={(e) => {
-                const nextTeam = e.target.value;
-                setSelectedTeamId(nextTeam);
-                setFormData((prev) => ({ ...prev, tenant_id: selectedTenantId, team_id: nextTeam === "all" ? "" : nextTeam }));
-              }}
-              className="px-3 py-2 border border-gray-300 rounded text-sm text-black bg-white"
-            >
-              <option value="all">All teams in this tenant</option>
-              {tenants
-                .filter((tenant) => tenant.id === selectedTenantId)
-                .map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
-                ))}
-            </select>
-          )}
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -388,34 +367,18 @@ export default function DesignManager() {
                 />
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">
                   Team
                 </label>
                 <select
                   value={formData.team_id || ""}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, team_id: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, team_id: e.target.value, tenant_id: "" }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-black bg-white"
                 >
                   <option value="">Global / all teams</option>
-                  {tenants.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Tenant
-                </label>
-                <select
-                  value={formData.tenant_id || ""}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, tenant_id: e.target.value, team_id: "" }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-black bg-white"
-                >
-                  <option value="">Default tenant</option>
-                  {tenants.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                  {tenants.map((team) => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
               </div>

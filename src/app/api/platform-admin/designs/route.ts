@@ -22,12 +22,11 @@ export async function GET(request: NextRequest) {
     const filters: string[] = [];
     const params: string[] = [];
 
-    // Prefer team-based scoping when present. Team and tenant are alternative filters,
-    // not a required pair.
-    if (teamId) {
+    // Prefer team-based scoping. Tenant is legacy compatibility only.
+    if (teamId && teamId !== "all") {
       filters.push("team_id = ?");
       params.push(teamId);
-    } else if (tenantId) {
+    } else if (tenantId && tenantId !== "all") {
       filters.push("tenant_id = ?");
       params.push(tenantId);
     }
@@ -71,7 +70,7 @@ export async function POST(request: NextRequest) {
     const active = formData.get("active") === "true" ? 1 : 0;
     const sort_order = parseInt(formData.get("sort_order") as string) || 999;
     const designed_for = formData.get("designed_for") as string;
-    const tenant_id = (formData.get("tenant_id") as string | null) || "default-tenant";
+    const tenant_id = (formData.get("tenant_id") as string | null) || null;
     const team_id = (formData.get("team_id") as string | null) || null;
     const file = formData.get("file") as File | null;
 

@@ -43,7 +43,7 @@ export default function PlatformAdminLogin() {
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Platform Admin</h1>
-          <p className="text-gray-600 mt-2">Manage all tenants</p>
+          <p className="text-gray-600 mt-2">Manage all teams</p>
         </div>
 
         {error && (

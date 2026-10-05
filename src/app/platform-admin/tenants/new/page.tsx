@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function CreateTenantPage() {
+export default function CreateTeamPage() {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -53,7 +53,7 @@ export default function CreateTenantPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Failed to create tenant');
+        setError(data.error || 'Failed to create team');
         return;
       }
 
@@ -74,8 +74,8 @@ export default function CreateTenantPage() {
           <Link href="/platform-admin/dashboard">
             <button className="text-blue-600 hover:text-blue-800 mb-4">← Back to Dashboard</button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Tenant</h1>
-          <p className="text-gray-600 mt-1">Add a new client/tenant to the platform</p>
+          <h1 className="text-3xl font-bold text-gray-900">Create New Team</h1>
+          <p className="text-gray-600 mt-1">Add a new team to the platform</p>
         </div>
       </header>
 
@@ -88,10 +88,10 @@ export default function CreateTenantPage() {
         )}
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-8 space-y-6">
-          {/* Tenant Name */}
+          {/* Team Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Tenant Name *
+              Team Name *
             </label>
             <input
               id="name"
@@ -104,7 +104,7 @@ export default function CreateTenantPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
-            <p className="mt-1 text-sm text-gray-500">The name of your client/organization</p>
+            <p className="mt-1 text-sm text-gray-500">The name of your team or organization</p>
           </div>
 
           {/* Slug */}
@@ -142,7 +142,7 @@ export default function CreateTenantPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
-            <p className="mt-1 text-sm text-gray-500">Email for the tenant admin account</p>
+            <p className="mt-1 text-sm text-gray-500">Email for the team admin account</p>
           </div>
 
           {/* Admin Full Name */}
@@ -188,7 +188,7 @@ export default function CreateTenantPage() {
               disabled={loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-2 px-4 rounded-lg transition"
             >
-              {loading ? 'Creating...' : 'Create Tenant'}
+              {loading ? 'Creating...' : 'Create Team'}
             </button>
             <Link href="/platform-admin/dashboard" className="flex-1">
               <button
