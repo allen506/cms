@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { execute, query, queryOne, withTransaction } from "@/lib/db-async";
 import { extractContext, requireAuth } from "@/lib/route-helpers";
+import { resolveOrderingCampaign } from "@/lib/campaigns";
 
 interface OrderItem {
   productId: string;
@@ -8,6 +9,9 @@ interface OrderItem {
   priceCrc: number;
   priceUsd: number;
   designApprovedId?: string;
+  designId?: string;
+  sizeId?: string;
+  fit?: string;
   addonIds?: string[];
 }
 
@@ -43,6 +47,15 @@ export async function POST(request: NextRequest) {
 
     if (!teamId) {
       return NextResponse.json({ error: "Team could not be determined" }, { status: 400 });
+    }
+
+    // Block new orders when the team's campaign has been closed by its captain.
+    const campaign = await resolveOrderingCampaign(tenant.id, teamId);
+    if (!campaign) {
+      return NextResponse.json(
+        { error: "This team's order campaign is closed. Contact your team captain." },
+        { status: 403 }
+      );
     }
 
     const { items, designRequestId, notes } = await request.json();
@@ -83,8 +96,8 @@ export async function POST(request: NextRequest) {
       const orderResult = await tx.execute(
         `
         INSERT INTO orders 
-          (id, tenant_id, team_id, user_id, status, total_crc, total_usd, order_number, design_request_id, notes, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+          (id, tenant_id, team_id, user_id, status, total_crc, total_usd, order_number, design_request_id, campaign_id, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `,
         [
           orderId,
@@ -96,6 +109,7 @@ export async function POST(request: NextRequest) {
           totalUsd,
           `thnk-${Date.now()}`,
           designRequestId || null,
+          campaign.id,
           notes || "",
         ]
       );
@@ -107,11 +121,35 @@ export async function POST(request: NextRequest) {
       // Add order items
       for (const item of items) {
         const itemId = `oit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Snapshot design/size names so CSV exports stay stable over time.
+        let designNameSnapshot: string | null = null;
+        if (item.designId) {
+          const design = await tx.queryOne<{ name: string; code: string | null }>(
+            "SELECT name, code FROM designs WHERE id = ? AND tenant_id = ?",
+            [item.designId, tenant.id]
+          );
+          if (design) {
+            designNameSnapshot = design.code
+              ? `${design.code} \u2014 ${design.name}`
+              : design.name;
+          }
+        }
+
+        let sizeNameSnapshot: string | null = null;
+        if (item.sizeId) {
+          const size = await tx.queryOne<{ name: string }>(
+            "SELECT name FROM sizes WHERE id = ?",
+            [item.sizeId]
+          );
+          sizeNameSnapshot = size?.name ?? null;
+        }
+
         await tx.execute(
           `
           INSERT INTO order_items 
-            (id, order_id, product_type_id, tenant_id, quantity, price_crc, price_usd, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            (id, order_id, product_type_id, tenant_id, quantity, price_crc, price_usd, design_id, design_name_snapshot, size_id, size_name_snapshot, fit, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `,
           [
             itemId,
@@ -121,6 +159,11 @@ export async function POST(request: NextRequest) {
             item.quantity,
             item.priceCrc,
             item.priceUsd,
+            item.designId || null,
+            designNameSnapshot,
+            item.sizeId || null,
+            sizeNameSnapshot,
+            item.fit || null,
           ]
         );
 

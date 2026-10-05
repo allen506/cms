@@ -459,7 +459,7 @@ curl -H "Cookie: platform_admin_token=<TOKEN>" \
 **Note:** The following endpoints remain for backwards compatibility but should not be used for new development.
 
 #### Get Admin Summary (Legacy)
-```bash
+```bashi 
 curl https://custom.cmssportswear.us/api/cmsadmin/summary
 
 # This endpoint is deprecated. Use /api/platform-admin/* instead.

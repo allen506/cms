@@ -387,6 +387,39 @@ async function runMigrations(client: any): Promise<void> {
 
     // Category a design request targets (gates product availability once approved)
     `ALTER TABLE design_requests ADD COLUMN IF NOT EXISTS unlock_category TEXT`,
+
+    // === Team campaigns + per-item design/size/gender (custom flow) ===
+
+    // Per-item design, size and gender/fit on custom-flow order lines.
+    // Snapshots keep CSV exports stable even if a design/size is later renamed or removed.
+    `ALTER TABLE order_items ADD COLUMN IF NOT EXISTS design_id TEXT`,
+    `ALTER TABLE order_items ADD COLUMN IF NOT EXISTS design_name_snapshot TEXT`,
+    `ALTER TABLE order_items ADD COLUMN IF NOT EXISTS size_id TEXT`,
+    `ALTER TABLE order_items ADD COLUMN IF NOT EXISTS size_name_snapshot TEXT`,
+    `ALTER TABLE order_items ADD COLUMN IF NOT EXISTS fit TEXT`,
+
+    // Optional short code for a design, surfaced in CSV exports.
+    `ALTER TABLE designs ADD COLUMN IF NOT EXISTS code TEXT`,
+
+    // One campaign per team; captains open/close and attach a single BAC link.
+    `CREATE TABLE IF NOT EXISTS team_campaigns (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL REFERENCES tenants(id),
+      team_id TEXT NOT NULL,
+      name TEXT,
+      status TEXT NOT NULL DEFAULT 'open',
+      bac_payment_link TEXT,
+      closed_by TEXT,
+      closed_at TIMESTAMP,
+      submitted_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_team_campaigns_team ON team_campaigns(tenant_id, team_id)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_team_campaigns_one_open ON team_campaigns(tenant_id, team_id) WHERE status = 'open'`,
+
+    // Link each order to the campaign it was placed in.
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id TEXT`,
   ];
 
   for (const migration of migrations) {

@@ -45,6 +45,28 @@ interface SelectedItem {
   priceCrc: number;
   priceUsd: number;
   addonIds: string[];
+  designId?: string;
+  sizeId?: string;
+  fit?: string;
+}
+
+interface CatalogDesign {
+  id: string;
+  name: string;
+  description?: string | null;
+  designed_for?: string | null;
+}
+
+interface CatalogSize {
+  id: string;
+  name: string;
+  sort_order?: number;
+}
+
+interface CatalogProductType {
+  id: string;
+  category: string;
+  fit_options?: string | null;
 }
 
 interface ProductSelectionFormProps {
@@ -68,6 +90,14 @@ export default function ProductSelectionForm({
   const [success, setSuccess] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
 
+  // Catalog data used for per-member design / size / gender selection.
+  const [designs, setDesigns] = useState<CatalogDesign[]>([]);
+  const [sizes, setSizes] = useState<CatalogSize[]>([]);
+  const [productDesigns, setProductDesigns] = useState<
+    { product_type_id: string; design_id: string }[]
+  >([]);
+  const [catalogProducts, setCatalogProducts] = useState<CatalogProductType[]>([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -84,6 +114,16 @@ export default function ProductSelectionForm({
 
         const productsData = await productsRes.json();
         setProducts(productsData.products || []);
+
+        // Fetch catalog for design / size / gender options.
+        const catalogRes = await fetch("/api/catalog");
+        if (catalogRes.ok) {
+          const catalog = await catalogRes.json();
+          setDesigns(catalog.designs || []);
+          setSizes(catalog.sizes || []);
+          setProductDesigns(catalog.productDesigns || []);
+          setCatalogProducts(catalog.productTypes || []);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
@@ -93,6 +133,53 @@ export default function ProductSelectionForm({
 
     fetchData();
   }, [teamName]);
+
+  // Gender/fit options for a product (unisex when unset or single option).
+  const getFitOptions = (productId: string): string[] => {
+    const meta = catalogProducts.find((p) => p.id === productId);
+    if (!meta?.fit_options) return ["unisex"];
+    try {
+      const parsed = JSON.parse(meta.fit_options);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : ["unisex"];
+    } catch {
+      return ["unisex"];
+    }
+  };
+
+  // Designs available for a product: explicit product_designs links, else those
+  // whose designed_for matches the product category.
+  const getDesignsForProduct = (productId: string): CatalogDesign[] => {
+    const linked = productDesigns
+      .filter((pd) => pd.product_type_id === productId)
+      .map((pd) => pd.design_id);
+    if (linked.length > 0) {
+      return designs.filter((d) => linked.includes(d.id));
+    }
+    const meta = catalogProducts.find((p) => p.id === productId);
+    const category = meta?.category;
+    if (!category) return designs;
+    return designs.filter((d) => {
+      try {
+        const designedFor = JSON.parse(d.designed_for || "[]");
+        return Array.isArray(designedFor) ? designedFor.includes(category) : true;
+      } catch {
+        return true;
+      }
+    });
+  };
+
+  // Update a per-item attribute (design, size or gender/fit).
+  const updateItemField = (
+    productId: string,
+    field: "designId" | "sizeId" | "fit",
+    value: string
+  ) => {
+    setSelectedItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId ? { ...item, [field]: value } : item
+      )
+    );
+  };
 
   const updateQuantity = async (
     productId: string,
@@ -153,6 +240,10 @@ export default function ProductSelectionForm({
               priceCrc: data.priceCrc,
               priceUsd: data.priceUsd,
               addonIds: selectedAddonIds,
+              // Auto-pick gender when the product has a single fit option.
+              fit: getFitOptions(productId).length === 1
+                ? getFitOptions(productId)[0]
+                : undefined,
             },
           ];
         }
@@ -178,6 +269,24 @@ export default function ProductSelectionForm({
     if (selectedItems.length === 0) {
       setError(t("products.selectAtLeastOne"));
       return;
+    }
+
+    // Each selected product needs a design, a size, and a gender/fit.
+    for (const item of selectedItems) {
+      const product = products.find((p) => p.id === item.productId);
+      const label = product?.name || item.productId;
+      if (!item.designId) {
+        setError(`Please choose a design for ${label}.`);
+        return;
+      }
+      if (!item.sizeId) {
+        setError(`Please choose a size for ${label}.`);
+        return;
+      }
+      if (getFitOptions(item.productId).length > 1 && !item.fit) {
+        setError(`Please choose a gender/fit for ${label}.`);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -428,6 +537,87 @@ export default function ProductSelectionForm({
                               </span>{" "}
                               {formatMoney(selectedItem.priceCrc * quantity)}
                             </p>
+                          </div>
+                        )}
+
+                        {quantity > 0 && selectedItem && (
+                          <div className="space-y-3 pt-1">
+                            {/* Design */}
+                            <label className="block">
+                              <span className="text-sm font-medium text-gray-700 mb-1 block">
+                                Design *
+                              </span>
+                              <select
+                                value={selectedItem.designId || ""}
+                                onChange={(e) =>
+                                  updateItemField(product.id, "designId", e.target.value)
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                disabled={isSubmitting}
+                              >
+                                <option value="">Select a design…</option>
+                                {getDesignsForProduct(product.id).map((d) => (
+                                  <option key={d.id} value={d.id}>
+                                    {d.name}
+                                  </option>
+                                ))}
+                              </select>
+                              {getDesignsForProduct(product.id).length === 0 && (
+                                <span className="text-xs text-amber-600 mt-1 block">
+                                  No designs available for this product yet.
+                                </span>
+                              )}
+                            </label>
+
+                            {/* Size */}
+                            <label className="block">
+                              <span className="text-sm font-medium text-gray-700 mb-1 block">
+                                Size *
+                              </span>
+                              <select
+                                value={selectedItem.sizeId || ""}
+                                onChange={(e) =>
+                                  updateItemField(product.id, "sizeId", e.target.value)
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                disabled={isSubmitting}
+                              >
+                                <option value="">Select a size…</option>
+                                {sizes.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+
+                            {/* Gender / fit — only when the product offers a choice */}
+                            {getFitOptions(product.id).length > 1 && (
+                              <div>
+                                <span className="text-sm font-medium text-gray-700 mb-1 block">
+                                  Gender / Fit *
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                  {getFitOptions(product.id).map((opt) => (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() =>
+                                        updateItemField(product.id, "fit", opt)
+                                      }
+                                      disabled={isSubmitting}
+                                      className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize border transition-colors ${
+                                        selectedItem.fit === opt
+                                          ? "bg-blue-600 text-white border-blue-600"
+                                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

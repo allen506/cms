@@ -10,6 +10,7 @@ import PerPersonViewer from '@/components/PerPersonViewer';
 import PricingTierManager from '@/components/PricingTierManager';
 import CatalogManager from '@/components/CatalogManager';
 import PaymentsManager from '@/components/PaymentsManager';
+import CampaignAdmin from '@/components/CampaignAdmin';
 
 interface Tenant {
   id: string;
@@ -20,7 +21,7 @@ interface Tenant {
   created_at: string;
 }
 
-type DashboardTab = 'tenants' | 'catalog' | 'orders' | 'breakdown' | 'per-person' | 'payments' | 'pricing' | 'designers';
+type DashboardTab = 'tenants' | 'catalog' | 'orders' | 'campaigns' | 'breakdown' | 'per-person' | 'payments' | 'pricing' | 'designers';
 
 export default function PlatformAdminDashboard() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -97,7 +98,7 @@ export default function PlatformAdminDashboard() {
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-8 flex gap-4 overflow-x-auto">
-          {(['tenants', 'catalog', 'orders', 'breakdown', 'per-person', 'payments', 'pricing', 'designers'] as const).map((tab) => (
+          {(['tenants', 'catalog', 'orders', 'campaigns', 'breakdown', 'per-person', 'payments', 'pricing', 'designers'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -113,6 +114,8 @@ export default function PlatformAdminDashboard() {
                 ? '📦 Catalog'
                 : tab === 'orders'
                 ? '📋 Orders'
+                : tab === 'campaigns'
+                ? '🗂️ Campaigns'
                 : tab === 'breakdown'
                 ? '📊 Breakdown'
                 : tab === 'per-person'
@@ -225,6 +228,13 @@ export default function PlatformAdminDashboard() {
           <div className="space-y-4">
             <TenantSelector onTenantSelect={setSelectedTenantId} selectedTenantId={selectedTenantId} />
             <OrdersManager selectedTenantId={selectedTenantId} />
+          </div>
+        )}
+
+        {activeTab === 'campaigns' && (
+          <div className="space-y-4">
+            <TenantSelector onTenantSelect={setSelectedTenantId} selectedTenantId={selectedTenantId} />
+            <CampaignAdmin selectedTenantId={selectedTenantId} />
           </div>
         )}
 

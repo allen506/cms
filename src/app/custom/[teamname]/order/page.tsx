@@ -153,6 +153,52 @@ export default async function OrderHubPage({
           )}
         </div>
 
+        {/* Team Campaign (captains) */}
+        <div className="mt-6">
+          <Link href={`/custom/${teamname}/order/campaign`}>
+            <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-8 cursor-pointer">
+              <div className="flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
+                <svg
+                  className="w-8 h-8 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 17v-2a4 4 0 014-4h4m0 0l-3-3m3 3l-3 3M3 7h6m-6 4h4m-4 4h4"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Team Campaign
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Team captains: review everyone&apos;s orders, close the campaign,
+                download the CSV and submit it to CMS.
+              </p>
+              <span className="inline-flex items-center text-amber-600 font-semibold">
+                Manage Campaign
+                <svg
+                  className="w-4 h-4 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </span>
+            </div>
+          </Link>
+        </div>
+
         {/* Info Section */}
         <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-bold text-blue-900 mb-2">💡 Tip</h3>
