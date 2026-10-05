@@ -52,7 +52,7 @@ const STANDARD_DESIGNS = [
   { id: "design-2", name: "Traditional White", description: "Classic white ThinkMTB team design", image_url: "/designs/design2.jpg", designed_for: JSON.stringify(["jersey", "vest", "enduro-jersey", "cycling-jersey"]) },
   { id: "design-3", name: "Race Green", description: "Green race ThinkMTB team design", image_url: "/designs/design3.jpg", designed_for: JSON.stringify(["jersey", "vest", "enduro-jersey", "cycling-jersey"]) },
   { id: "design-4", name: "Race Purple", description: "Purple race ThinkMTB team design", image_url: "/designs/design4.jpg", designed_for: JSON.stringify(["jersey", "vest", "enduro-jersey", "cycling-jersey"]) },
-  { id: "design-rivian-enduro", name: "Rivian Enduro", description: "Official Rivian team enduro design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey"]) },
+  { id: "design-rivian-enduro", name: "ThinkMTB Enduro Jersey", description: "Official ThinkMTB enduro jersey design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey"]) },
 ];
 
 const STANDARD_TIERS = (p) => [
