@@ -55,8 +55,11 @@ export default function DesignManager() {
   // Load tenant/team context and catalog data
   useEffect(() => {
     fetchTenants();
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [selectedTeamId]);
 
   const fetchTenants = async () => {
     try {
