@@ -44,7 +44,6 @@ export default function CampaignManager({ teamName }: { teamName: string }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [bacLink, setBacLink] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -57,7 +56,6 @@ export default function CampaignManager({ teamName }: { teamName: string }) {
       }
       const json: CampaignResponse = await res.json();
       setData(json);
-      setBacLink(json.campaign?.bac_payment_link || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load campaign");
     } finally {
@@ -257,33 +255,27 @@ export default function CampaignManager({ teamName }: { teamName: string }) {
         )}
       </div>
 
-      {/* Team-level BAC deposit link (captain-managed) */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-base font-semibold text-gray-900 mb-2">
-          Team Order Payment Link (BAC)
-        </h3>
-        <p className="text-sm text-gray-500 mb-3">
-          One BAC link for the whole team order&apos;s 50% deposit. After CMS
-          confirms the total, paste their link here. The team pays a single
-          deposit for the entire order — members do not pay individually.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="url"
-            value={bacLink}
-            onChange={(e) => setBacLink(e.target.value)}
-            placeholder="https://…"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <button
-            onClick={() => act("set-bac-link", { link: bacLink })}
-            disabled={busy}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+      {/* Team-level BAC deposit link — assigned by CMS admins, shown read-only */}
+      {campaign?.bac_payment_link && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-base font-semibold text-gray-900 mb-2">
+            Team Order Payment Link (BAC)
+          </h3>
+          <p className="text-sm text-gray-500 mb-3">
+            CMS has provided a single BAC link for this team order&apos;s 50%
+            deposit. The team pays one deposit for the whole order — members do not
+            pay individually.
+          </p>
+          <a
+            href={campaign.bac_payment_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
           >
-            Save Link
-          </button>
+            Open Payment Link
+          </a>
         </div>
-      </div>
+      )}
 
       {/* Totals */}
       <div className="grid grid-cols-3 gap-4">

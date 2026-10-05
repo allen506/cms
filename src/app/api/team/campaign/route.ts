@@ -6,7 +6,6 @@ import {
   closeCampaign,
   reopenCampaign,
   submitCampaign,
-  setCampaignBacLink,
 } from "@/lib/campaigns";
 import { getCampaignOrderRows } from "@/lib/campaign-export";
 
@@ -149,19 +148,6 @@ export async function POST(req: NextRequest) {
           );
         }
         const campaign = await submitCampaign(caller.tenantId, current.id);
-        return NextResponse.json({ campaign });
-      }
-      case "set-bac-link": {
-        const current = await getCurrentCampaign(caller.tenantId, caller.teamId);
-        if (!current) {
-          return NextResponse.json({ error: "No campaign found" }, { status: 400 });
-        }
-        const link = typeof body.link === "string" ? body.link.trim() : null;
-        const campaign = await setCampaignBacLink(
-          caller.tenantId,
-          current.id,
-          link || null
-        );
         return NextResponse.json({ campaign });
       }
       default:

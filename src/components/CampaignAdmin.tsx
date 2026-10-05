@@ -41,6 +41,7 @@ export default function CampaignAdmin({
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [bacDrafts, setBacDrafts] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     if (!selectedTenantId) {
@@ -55,7 +56,11 @@ export default function CampaignAdmin({
       );
       if (!res.ok) throw new Error("Failed to load campaigns");
       const data = await res.json();
-      setCampaigns(data.campaigns || []);
+      const list: CampaignSummary[] = data.campaigns || [];
+      setCampaigns(list);
+      setBacDrafts(
+        Object.fromEntries(list.map((c) => [c.id, c.bac_payment_link || ""]))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load campaigns");
     } finally {
@@ -199,6 +204,31 @@ export default function CampaignAdmin({
                     </button>
                   </>
                 )}
+              </div>
+            </div>
+
+            {/* BAC deposit link — only admins assign this for the team order */}
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Team Order Payment Link (BAC) — single deposit link for this order
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="url"
+                  value={bacDrafts[c.id] ?? ""}
+                  onChange={(e) =>
+                    setBacDrafts((d) => ({ ...d, [c.id]: e.target.value }))
+                  }
+                  placeholder="https://… (paste BAC link from CMS)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={() => act(c.id, "set-bac-link", bacDrafts[c.id] || "")}
+                  disabled={busy}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {c.bac_payment_link ? "Update Link" : "Assign Link"}
+                </button>
               </div>
             </div>
 
