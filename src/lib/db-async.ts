@@ -259,6 +259,7 @@ async function runMigrations(client: any): Promise<void> {
       description TEXT,
       active INTEGER DEFAULT 1,
       sort_order INTEGER DEFAULT 0,
+      designed_for TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -352,7 +353,9 @@ async function runMigrations(client: any): Promise<void> {
     `ALTER TABLE product_types ADD COLUMN IF NOT EXISTS unlock_category TEXT`,
 
     // Target unlock categories for a design (comma-separated slugs)
+    `ALTER TABLE designs ADD COLUMN IF NOT EXISTS designed_for TEXT`,
     `ALTER TABLE designs ADD COLUMN IF NOT EXISTS categories TEXT`,
+    `ALTER TABLE designs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
 
     // Selectable product add-ons (e.g., long sleeve, stamped logo mold)
     `CREATE TABLE IF NOT EXISTS product_addons (

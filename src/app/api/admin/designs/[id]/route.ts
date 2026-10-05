@@ -4,6 +4,8 @@ import { requireAdminSession } from "@/lib/route-helpers";
 import { writeFileSync, mkdirSync, unlinkSync } from "fs";
 import path from "path";
 
+const { normalizeDesignUpdatePayload } = require("@/lib/design-normalization");
+
 const UPLOAD_DIR = path.join(process.cwd(), "public/designs");
 mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -64,6 +66,8 @@ export async function PATCH(
       file = formData.get("file") as File | null;
     }
 
+    const normalizedBody = normalizeDesignUpdatePayload(body);
+
     // Check if design exists
     const existing = await queryOne<any>(
       "SELECT * FROM designs WHERE id = ?",
@@ -77,25 +81,25 @@ export async function PATCH(
     const updates = [];
     const values = [];
 
-    if (body.name !== undefined) {
+    if (normalizedBody.name !== undefined) {
       updates.push("name = ?");
-      values.push(body.name);
+      values.push(normalizedBody.name);
     }
-    if (body.description !== undefined) {
+    if (normalizedBody.description !== undefined) {
       updates.push("description = ?");
-      values.push(body.description || null);
+      values.push(normalizedBody.description || null);
     }
-    if (body.active !== undefined) {
+    if (normalizedBody.active !== undefined) {
       updates.push("active = ?");
-      values.push(body.active);
+      values.push(normalizedBody.active);
     }
-    if (body.sort_order !== undefined) {
+    if (normalizedBody.sort_order !== undefined) {
       updates.push("sort_order = ?");
-      values.push(body.sort_order);
+      values.push(normalizedBody.sort_order);
     }
-    if (body.designed_for !== undefined) {
+    if (normalizedBody.designed_for !== undefined) {
       updates.push("designed_for = ?");
-      values.push(body.designed_for || null);
+      values.push(normalizedBody.designed_for || null);
     }
 
     // Handle file upload
