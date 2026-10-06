@@ -32,6 +32,8 @@ interface Product {
   description: string;
   category: string;
   sort_order: number;
+  example_url?: string | null;
+  teamQty?: number;
   locked?: boolean;
   fit_options?: string | null;
   hasOverride: boolean;
@@ -165,11 +167,13 @@ export default function ProductSelectionForm({
       )
     : [];
 
-  // Unit price from the product's pricing tier for a given quantity (+ add-ons).
+  // Unit price from the product's pricing tier. Volume pricing is team-wide, so
+  // the tier is picked from the team's total quantity plus this line's quantity.
   const unitPriceFor = (product: Product, qty: number, addons: string[]) => {
+    const tierQty = (product.teamQty || 0) + qty;
     const tier =
       product.pricing.find(
-        (t) => qty >= t.min_qty && (t.max_qty == null || qty <= t.max_qty)
+        (t) => tierQty >= t.min_qty && (t.max_qty == null || tierQty <= t.max_qty)
       ) || product.pricing[product.pricing.length - 1];
     let crc = tier ? tier.price_crc : 0;
     let usd = tier ? tier.price_usd : 0;
@@ -181,6 +185,14 @@ export default function ProductSelectionForm({
       }
     }
     return { crc, usd };
+  };
+
+  // Index of the pricing tier the team currently falls into for a product.
+  const activeTierIndex = (product: Product, extraQty: number): number => {
+    const q = (product.teamQty || 0) + extraQty;
+    return product.pricing.findIndex(
+      (t) => q >= t.min_qty && (t.max_qty == null || q <= t.max_qty)
+    );
   };
 
   const resetBuilder = () => {
@@ -382,6 +394,71 @@ export default function ProductSelectionForm({
           })}
         </div>
       </div>
+
+      {/* Product info + team pricing tier */}
+      {selectedProduct && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-lg font-bold text-gray-900">{selectedProduct.name}</h3>
+            {selectedProduct.example_url && (
+              <a
+                href={selectedProduct.example_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                View product
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+          </div>
+
+          {selectedProduct.pricing.length > 0 ? (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-gray-700">
+                  Team pricing (volume-based)
+                </p>
+                <span className="text-xs text-gray-500">
+                  Team ordered so far:{" "}
+                  <span className="font-semibold text-gray-900">
+                    {selectedProduct.teamQty || 0}
+                  </span>
+                </span>
+              </div>
+              <div className="space-y-1 text-sm">
+                {selectedProduct.pricing.map((tier, idx) => {
+                  const active = idx === activeTierIndex(selectedProduct, quantity);
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center gap-2 rounded px-2 py-1 ${
+                        active ? "bg-blue-50 text-blue-900 font-semibold" : "text-gray-600"
+                      }`}
+                    >
+                      <span>
+                        {tier.min_qty}-{tier.max_qty || "+"}: {formatMoney(tier.price_crc)}
+                      </span>
+                      {active && (
+                        <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                          Your team&apos;s tier
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                The more your team orders, the lower the unit price.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-red-600">No pricing configured for this product.</p>
+          )}
+        </div>
+      )}
 
       {/* Step 2 — Design */}
       {selectedProduct && (

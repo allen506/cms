@@ -3,6 +3,7 @@ import { query, queryOne } from "@/lib/db-async";
 import { extractContext } from "@/lib/route-helpers";
 import { getExchangeRate, crcToUsd } from "@/lib/exchange-rate";
 import { getUnlockedCategories } from "@/lib/unlock";
+import { getCurrentCampaign } from "@/lib/campaigns";
 import { getProductAddons } from "@/lib/pricing-resolver";
 
 export async function GET(request: NextRequest) {
@@ -36,6 +37,23 @@ export async function GET(request: NextRequest) {
       getExchangeRate(),
       getUnlockedCategories(teamId),
     ]);
+
+    // Team-wide quantity already ordered per product in the current campaign
+    // (drives which pricing tier the team is currently in).
+    const campaign = await getCurrentCampaign(tenant.id, teamId);
+    const teamQtyRows = campaign
+      ? await query<{ product_type_id: string; qty: string }>(
+          `SELECT oi.product_type_id, SUM(oi.quantity) AS qty
+             FROM orders o
+             JOIN order_items oi ON oi.order_id = o.id
+            WHERE o.team_id = ? AND o.campaign_id = ?
+            GROUP BY oi.product_type_id`,
+          [teamId, campaign.id]
+        )
+      : [];
+    const teamQtyByProduct = new Map<string, number>(
+      teamQtyRows.map((r) => [r.product_type_id, Number(r.qty) || 0])
+    );
 
     // Standard global catalog (all active products)
     const products = await query<any>(
@@ -126,6 +144,7 @@ export async function GET(request: NextRequest) {
           adjustment,
           pricing,
           addons,
+          teamQty: teamQtyByProduct.get(product.id) || 0,
         };
       })
     );
