@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne } from "@/lib/db-async";
+import { UNLOCK_CATEGORIES } from "@/lib/unlock";
+
+/** Parse a design's designed_for JSON and keep only real product categories. */
+function designCategories(designedFor: string | null): string[] {
+  if (!designedFor) return [];
+  try {
+    const arr = JSON.parse(designedFor);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((c: string) => (UNLOCK_CATEGORIES as readonly string[]).includes(c));
+  } catch {
+    return [];
+  }
+}
 
 /** Map a stored "/uploads/..." path to the file-serving API, encoding segments. */
 function fileSrc(fileUrl: string | null): string | null {
@@ -73,17 +86,19 @@ export async function GET(req: NextRequest) {
     const designs = rows.map((r) => ({
       id: r.id,
       name: r.title,
-      category: r.unlock_category, // null = applies to all products
+      categories: r.unlock_category ? [r.unlock_category] : [],
       imageUrl: fileSrc(r.file_path),
     }));
 
-    // Admin-assigned catalog designs (skip the design-request step).
+    // Admin-assigned catalog designs (skip the design-request step). Categories
+    // come from the design's designed_for (an optional team override wins).
     const assigned = await query<{
       design_id: string;
       name: string;
+      designed_for: string | null;
       category: string | null;
     }>(
-      `SELECT td.design_id, d.name, td.category
+      `SELECT td.design_id, d.name, d.designed_for, td.category
          FROM team_designs td
          JOIN designs d ON d.id = td.design_id
         WHERE td.tenant_id = ? AND td.team_id = ? AND d.active = 1
@@ -92,10 +107,15 @@ export async function GET(req: NextRequest) {
     );
 
     for (const a of assigned) {
+      const derived = designCategories(a.designed_for);
+      const categories =
+        a.category && (UNLOCK_CATEGORIES as readonly string[]).includes(a.category)
+          ? [a.category]
+          : derived;
       designs.push({
         id: a.design_id,
         name: a.name,
-        category: a.category,
+        categories,
         imageUrl: `/api/designs/${a.design_id}/image`,
       });
     }

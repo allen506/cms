@@ -51,11 +51,12 @@ interface SelectedItem {
   fit?: string;
 }
 
-// Approved design for the team (image comes from the approved design request).
+// Approved/assigned design for the team. categories = product categories it
+// applies to (empty = all products).
 interface ApprovedDesign {
   id: string;
   name: string;
-  category: string | null;
+  categories: string[];
   imageUrl: string | null;
 }
 
@@ -151,13 +152,15 @@ export default function ProductSelectionForm({
     }
   };
 
-  // Approved designs available for a product (matched by unlock category; a
-  // design with no category applies to all products).
+  // Approved designs available for a product (matched by product category; a
+  // design with no categories applies to all products).
   const getDesignsForProduct = (productId: string): ApprovedDesign[] => {
     const meta = catalogProducts.find((p) => p.id === productId);
     const category = meta?.category;
     if (!category) return designs;
-    return designs.filter((d) => !d.category || d.category === category);
+    return designs.filter(
+      (d) => d.categories.length === 0 || d.categories.includes(category)
+    );
   };
 
   // Update a per-item attribute (size or gender/fit).

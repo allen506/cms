@@ -32,16 +32,38 @@ export async function getUnlockedCategories(
     );
 
     // Admin-assigned designs also unlock products (skipping the design request).
-    const assigned = await query<{ category: string | null }>(
-      `SELECT DISTINCT category FROM team_designs WHERE team_id = $1`,
+    // Their categories come from designed_for (optional team override wins).
+    const assigned = await query<{ designed_for: string | null; category: string | null }>(
+      `SELECT d.designed_for, td.category
+         FROM team_designs td
+         JOIN designs d ON d.id = td.design_id
+        WHERE td.team_id = $1`,
       [teamId]
     );
+
+    const assignedCats: string[] = [];
+    for (const a of assigned) {
+      if (a.category && (UNLOCK_CATEGORIES as readonly string[]).includes(a.category)) {
+        assignedCats.push(a.category);
+        continue;
+      }
+      try {
+        const arr = JSON.parse(a.designed_for || "[]");
+        if (Array.isArray(arr)) {
+          for (const c of arr) {
+            if ((UNLOCK_CATEGORIES as readonly string[]).includes(c)) assignedCats.push(c);
+          }
+        }
+      } catch {
+        /* ignore malformed designed_for */
+      }
+    }
 
     if (rows.length === 0 && assigned.length === 0) return new Set(); // nothing unlocked
 
     const tagged = [
       ...rows.map((r) => r.unlock_category),
-      ...assigned.map((r) => r.category),
+      ...assignedCats,
     ].filter((c): c is string => !!c);
 
     // Unlocking exists but nothing is category-tagged → unlock everything.
