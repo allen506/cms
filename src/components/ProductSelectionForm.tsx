@@ -33,22 +33,26 @@ interface Product {
   category: string;
   sort_order: number;
   locked?: boolean;
+  fit_options?: string | null;
   hasOverride: boolean;
   adjustment?: Adjustment | null;
   pricing: PricingTier[];
   addons?: Addon[];
 }
 
-interface SelectedItem {
+interface CartItem {
+  key: string;
   productId: string;
+  productName: string;
+  designId: string;
+  designName: string;
+  sizeId: string;
+  sizeName: string;
+  fit: string | null;
   quantity: number;
-  priceCrc: number;
-  priceUsd: number;
+  unitCrc: number;
+  unitUsd: number;
   addonIds: string[];
-  designId?: string;
-  designName?: string;
-  sizeId?: string;
-  fit?: string;
 }
 
 // Approved/assigned design for the team. categories = product categories it
@@ -66,16 +70,18 @@ interface CatalogSize {
   sort_order?: number;
 }
 
-interface CatalogProductType {
-  id: string;
-  category: string;
-  fit_options?: string | null;
-}
-
 interface ProductSelectionFormProps {
   teamName: string;
   designRequestId?: string;
   onSuccess?: (orderId: string) => void;
+}
+
+function uid(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
 }
 
 export default function ProductSelectionForm({
@@ -83,38 +89,37 @@ export default function ProductSelectionForm({
   designRequestId,
   onSuccess,
 }: ProductSelectionFormProps) {
-  const { t, formatMoney, fxFecha, fxIsFallback, rate } = useLocale();
+  const { formatMoney, fxFecha, fxIsFallback, rate } = useLocale();
+
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [designs, setDesigns] = useState<ApprovedDesign[]>([]);
+  const [sizes, setSizes] = useState<CatalogSize[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState(false);
   const [notes, setNotes] = useState("");
 
-  // Catalog data used for per-member design / size / gender selection.
-  const [designs, setDesigns] = useState<ApprovedDesign[]>([]);
-  const [sizes, setSizes] = useState<CatalogSize[]>([]);
-  const [catalogProducts, setCatalogProducts] = useState<CatalogProductType[]>([]);
+  // In-progress line-item builder.
+  const [productId, setProductId] = useState("");
+  const [designId, setDesignId] = useState("");
+  const [sizeId, setSizeId] = useState("");
+  const [fit, setFit] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [addonIds, setAddonIds] = useState<string[]>([]);
+
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch products
         const productsRes = await fetch("/api/team/products", {
-          headers: {
-            "x-tenant-slug": teamName.toLowerCase(),
-          },
+          headers: { "x-tenant-slug": teamName.toLowerCase() },
         });
-
-        if (!productsRes.ok) {
-          throw new Error("Failed to load products");
-        }
-
+        if (!productsRes.ok) throw new Error("Failed to load products");
         const productsData = await productsRes.json();
         setProducts(productsData.products || []);
 
-        // Approved designs (with preview images) available to this team.
         const designsRes = await fetch("/api/team/approved-designs", {
           headers: { "x-tenant-slug": teamName.toLowerCase() },
         });
@@ -123,12 +128,10 @@ export default function ProductSelectionForm({
           setDesigns(d.designs || []);
         }
 
-        // Catalog for sizes + fit options.
         const catalogRes = await fetch("/api/catalog");
         if (catalogRes.ok) {
           const catalog = await catalogRes.json();
           setSizes(catalog.sizes || []);
-          setCatalogProducts(catalog.productTypes || []);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data");
@@ -136,173 +139,119 @@ export default function ProductSelectionForm({
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [teamName]);
 
-  // Gender/fit options for a product (unisex when unset or single option).
-  const getFitOptions = (productId: string): string[] => {
-    const meta = catalogProducts.find((p) => p.id === productId);
-    if (!meta?.fit_options) return ["unisex"];
+  const availableProducts = products.filter((p) => !p.locked);
+  const selectedProduct = products.find((p) => p.id === productId);
+
+  // Gender/fit options for the selected product.
+  const fitOptions: string[] = (() => {
+    if (!selectedProduct?.fit_options) return ["unisex"];
     try {
-      const parsed = JSON.parse(meta.fit_options);
+      const parsed = JSON.parse(selectedProduct.fit_options);
       return Array.isArray(parsed) && parsed.length > 0 ? parsed : ["unisex"];
     } catch {
       return ["unisex"];
     }
-  };
+  })();
 
-  // Approved designs available for a product (matched by product category; a
-  // design with no categories applies to all products).
-  const getDesignsForProduct = (productId: string): ApprovedDesign[] => {
-    const meta = catalogProducts.find((p) => p.id === productId);
-    const category = meta?.category;
-    if (!category) return designs;
-    return designs.filter(
-      (d) => d.categories.length === 0 || d.categories.includes(category)
-    );
-  };
-
-  // Update a per-item attribute (size or gender/fit).
-  const updateItemField = (
-    productId: string,
-    field: "sizeId" | "fit",
-    value: string
-  ) => {
-    setSelectedItems((prev) =>
-      prev.map((item) =>
-        item.productId === productId ? { ...item, [field]: value } : item
+  // Designs available for the selected product (by its category).
+  const designsForProduct: ApprovedDesign[] = selectedProduct
+    ? designs.filter(
+        (d) =>
+          d.categories.length === 0 ||
+          d.categories.includes(selectedProduct.category)
       )
-    );
-  };
+    : [];
 
-  // Select the design (by id) for a product line, snapshotting its name too.
-  const selectDesign = (productId: string, design: ApprovedDesign) => {
-    setSelectedItems((prev) =>
-      prev.map((item) =>
-        item.productId === productId
-          ? { ...item, designId: design.id, designName: design.name }
-          : item
-      )
-    );
-  };
-
-  const updateQuantity = async (
-    productId: string,
-    quantity: number,
-    addonIds?: string[]
-  ) => {
-    const existingItem = selectedItems.find((i) => i.productId === productId);
-    const selectedAddonIds = addonIds ?? existingItem?.addonIds ?? [];
-
-    if (quantity < 1) {
-      // Remove item
-      setSelectedItems((prev) =>
-        prev.filter((item) => item.productId !== productId)
-      );
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/team/products/calculate-price", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tenant-slug": teamName.toLowerCase(),
-        },
-        body: JSON.stringify({
-          productId,
-          quantity,
-          addonIds: selectedAddonIds,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to calculate price");
+  // Unit price from the product's pricing tier for a given quantity (+ add-ons).
+  const unitPriceFor = (product: Product, qty: number, addons: string[]) => {
+    const tier =
+      product.pricing.find(
+        (t) => qty >= t.min_qty && (t.max_qty == null || qty <= t.max_qty)
+      ) || product.pricing[product.pricing.length - 1];
+    let crc = tier ? tier.price_crc : 0;
+    let usd = tier ? tier.price_usd : 0;
+    for (const id of addons) {
+      const a = product.addons?.find((x) => x.id === id);
+      if (a) {
+        crc += a.price_crc;
+        usd += a.price_usd;
       }
-
-      const data = await response.json();
-
-      setSelectedItems((prev) => {
-        const existing = prev.find((item) => item.productId === productId);
-        if (existing) {
-          return prev.map((item) =>
-            item.productId === productId
-              ? {
-                  ...item,
-                  quantity,
-                  priceCrc: data.priceCrc,
-                  priceUsd: data.priceUsd,
-                  addonIds: selectedAddonIds,
-                }
-              : item
-          );
-        } else {
-          const avail = getDesignsForProduct(productId);
-          const soleDesign = avail.length === 1 ? avail[0] : undefined;
-          return [
-            ...prev,
-            {
-              productId,
-              quantity,
-              priceCrc: data.priceCrc,
-              priceUsd: data.priceUsd,
-              addonIds: selectedAddonIds,
-              // Auto-pick the only available design.
-              designId: soleDesign?.id,
-              designName: soleDesign?.name,
-              // Auto-pick gender when the product has a single fit option.
-              fit: getFitOptions(productId).length === 1
-                ? getFitOptions(productId)[0]
-                : undefined,
-            },
-          ];
-        }
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Price calculation failed");
     }
+    return { crc, usd };
   };
 
-  const toggleAddon = (product: Product, addonId: string) => {
-    const existing = selectedItems.find((i) => i.productId === product.id);
-    const current = existing?.addonIds ?? [];
-    const next = current.includes(addonId)
-      ? current.filter((id) => id !== addonId)
-      : [...current, addonId];
-    const quantity = existing?.quantity ?? 1;
-    updateQuantity(product.id, quantity, next);
+  const resetBuilder = () => {
+    setProductId("");
+    setDesignId("");
+    setSizeId("");
+    setFit("");
+    setQuantity(1);
+    setAddonIds([]);
   };
+
+  const selectProduct = (id: string) => {
+    setProductId(id);
+    setDesignId("");
+    setSizeId("");
+    setFit("");
+    setQuantity(1);
+    setAddonIds([]);
+  };
+
+  const canAdd =
+    !!selectedProduct &&
+    !!designId &&
+    !!sizeId &&
+    quantity > 0 &&
+    (fitOptions.length <= 1 || !!fit);
+
+  const addToCart = () => {
+    if (!selectedProduct || !canAdd) return;
+    const design = designs.find((d) => d.id === designId);
+    const size = sizes.find((s) => s.id === sizeId);
+    const price = unitPriceFor(selectedProduct, quantity, addonIds);
+    setCart((prev) => [
+      ...prev,
+      {
+        key: uid(),
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        designId,
+        designName: design?.name || "",
+        sizeId,
+        sizeName: size?.name || "",
+        fit: fitOptions.length > 1 ? fit : fitOptions[0] || null,
+        quantity,
+        unitCrc: price.crc,
+        unitUsd: price.usd,
+        addonIds,
+      },
+    ]);
+    resetBuilder();
+  };
+
+  const removeFromCart = (key: string) =>
+    setCart((prev) => prev.filter((i) => i.key !== key));
+
+  const total = cart.reduce(
+    (acc, i) => ({
+      crc: acc.crc + i.unitCrc * i.quantity,
+      usd: acc.usd + i.unitUsd * i.quantity,
+    }),
+    { crc: 0, usd: 0 }
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (selectedItems.length === 0) {
-      setError(t("products.selectAtLeastOne"));
+    if (cart.length === 0) {
+      setError("Add at least one item to your order.");
       return;
     }
-
-    // Each selected product needs a design, a size, and a gender/fit.
-    for (const item of selectedItems) {
-      const product = products.find((p) => p.id === item.productId);
-      const label = product?.name || item.productId;
-      if (!item.designId) {
-        setError(`Please choose a design for ${label}.`);
-        return;
-      }
-      if (!item.sizeId) {
-        setError(`Please choose a size for ${label}.`);
-        return;
-      }
-      if (getFitOptions(item.productId).length > 1 && !item.fit) {
-        setError(`Please choose a gender/fit for ${label}.`);
-        return;
-      }
-    }
-
     setIsSubmitting(true);
     setError(null);
-
     try {
       const response = await fetch("/api/orders/create-with-products", {
         method: "POST",
@@ -311,27 +260,29 @@ export default function ProductSelectionForm({
           "x-tenant-slug": teamName.toLowerCase(),
         },
         body: JSON.stringify({
-          items: selectedItems,
+          items: cart.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            priceCrc: i.unitCrc,
+            priceUsd: i.unitUsd,
+            designId: i.designId,
+            designName: i.designName,
+            sizeId: i.sizeId,
+            fit: i.fit,
+            addonIds: i.addonIds,
+          })),
           designRequestId: designRequestId || null,
           notes,
         }),
       });
-
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to create order");
       }
-
       const data = await response.json();
-
-      // Platform does not take payment: just confirm the items were added to the
-      // team order. CMS gets totals later via the captain's CSV export.
-      setSelectedItems([]);
-      if (onSuccess) {
-        onSuccess(data.orderId);
-      } else {
-        setPlaced(true);
-      }
+      setCart([]);
+      if (onSuccess) onSuccess(data.orderId);
+      else setPlaced(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create order");
     } finally {
@@ -339,99 +290,10 @@ export default function ProductSelectionForm({
     }
   };
 
-  const calculateTotal = () => {
-    return selectedItems.reduce(
-      (sum, item) => ({
-        crc: sum.crc + item.priceCrc * item.quantity,
-        usd: sum.usd + item.priceUsd * item.quantity,
-      }),
-      { crc: 0, usd: 0 }
-    );
-  };
-
-  const total = calculateTotal();
-
-  const getPricingDisplay = (product: Product, quantity: number = 0) => {
-    const adj = product.adjustment;
-
-    if (product.pricing.length > 0) {
-      // Which tier the current quantity falls into.
-      const activeIdx = quantity > 0
-        ? product.pricing.findIndex(
-            (tier) =>
-              quantity >= tier.min_qty &&
-              (tier.max_qty == null || quantity <= tier.max_qty)
-          )
-        : -1;
-      return (
-        <div className="text-sm">
-          {adj && (
-            <div className="mb-2 inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
-              {adj.label
-                ? adj.label
-                : adj.type === "percent"
-                ? `${adj.value}% ${t("products.discountApplied")}`
-                : t("products.specialPricing")}
-            </div>
-          )}
-          <p className="font-semibold text-gray-700 mb-2">
-            {t("products.pricingTiers")}
-          </p>
-          {product.pricing.map((tier, idx) => {
-            const discounted =
-              tier.original_crc != null &&
-              Math.round(tier.original_crc) !== Math.round(tier.price_crc);
-            const active = idx === activeIdx;
-            return (
-              <p
-                key={idx}
-                className={`flex items-center gap-2 rounded px-1 ${
-                  active ? "bg-blue-50 text-blue-900 font-semibold" : "text-gray-600"
-                }`}
-              >
-                <span>
-                  {tier.min_qty}-{tier.max_qty || "+"}:{" "}
-                  {discounted && (
-                    <span className="text-gray-400 line-through mr-1">
-                      {formatMoney(tier.original_crc!)}
-                    </span>
-                  )}
-                  <span className={discounted && !active ? "font-semibold text-green-700" : ""}>
-                    {formatMoney(tier.price_crc)}
-                  </span>
-                </span>
-                {active && (
-                  <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                    Your tier
-                  </span>
-                )}
-              </p>
-            );
-          })}
-        </div>
-      );
-    }
-
-    return <p className="text-red-600">{t("products.noPricing")}</p>;
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="w-8 h-8 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
-          </div>
-          <p className="text-gray-600">{t("products.loading")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <p className="text-yellow-800">{t("products.none")}</p>
+        <div className="w-10 h-10 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
       </div>
     );
   }
@@ -453,7 +315,7 @@ export default function ProductSelectionForm({
             onClick={() => setPlaced(false)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
           >
-            Add Another Item
+            Add More Items
           </button>
           <Link
             href={`/custom/${teamName}/order/campaign`}
@@ -466,317 +328,291 @@ export default function ProductSelectionForm({
     );
   }
 
+  if (availableProducts.length === 0) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-yellow-800">
+        No products are available yet. Your team needs an approved or assigned
+        design before products unlock.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit}>
-        {/* Products Grid */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            {t("products.selectProducts")}
-          </h2>
+      {(fxFecha || fxIsFallback) && (
+        <p className="text-xs text-gray-500">
+          Reference rate ₡{Math.round(rate).toLocaleString()}/USD
+          {fxFecha ? ` as of ${fxFecha}` : ""}
+          {fxIsFallback ? " (estimated)" : ""}
+        </p>
+      )}
 
-          {(fxFecha || fxIsFallback) && (
-            <p className="mb-4 text-xs text-gray-500">
-              {t("fx.reference")} ₡{Math.round(rate).toLocaleString()}/USD
-              {fxFecha ? ` ${t("fx.asOf")} ${fxFecha}` : ""}
-              {fxIsFallback ? ` (${t("fx.estimated")})` : ""}
-            </p>
-          )}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          {error}
+        </div>
+      )}
 
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800">{error}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {products.map((product) => {
-              const selectedItem = selectedItems.find(
-                (item) => item.productId === product.id
-              );
-              const quantity = selectedItem?.quantity || 0;
-
-              return (
-                <div
-                  key={product.id}
-                  className={`border border-gray-200 rounded-lg p-6 transition-shadow ${
-                    product.locked ? "opacity-60" : "hover:shadow-lg"
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {product.name}
-                    </h3>
-                    {product.locked && (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600">
-                        🔒 {t("products.locked")}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {product.description}
+      {/* Step 1 — Product */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-1">1. Choose a product</h3>
+        <p className="text-sm text-gray-500 mb-4">Pick what you want to order.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {availableProducts.map((p) => {
+            const selected = p.id === productId;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => selectProduct(p.id)}
+                className={`text-left rounded-lg border-2 p-4 transition-all ${
+                  selected
+                    ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <p className="font-semibold text-gray-900">{p.name}</p>
+                {p.description && (
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                    {p.description}
                   </p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                  {product.locked ? (
-                    <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                      {t("products.lockedHint")}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                        {getPricingDisplay(product, quantity)}
-                      </div>
-
-                      {product.addons && product.addons.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-700 mb-2">
-                            {t("products.addons")}
-                          </p>
-                          <div className="space-y-1">
-                            {product.addons.map((addon) => {
-                              const checked =
-                                selectedItem?.addonIds?.includes(addon.id) ??
-                                false;
-                              return (
-                                <label
-                                  key={addon.id}
-                                  className="flex items-center gap-2 text-sm text-gray-700"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => toggleAddon(product, addon.id)}
-                                    disabled={isSubmitting}
-                                  />
-                                  <span>
-                                    {addon.name} (+{formatMoney(addon.price_crc)})
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
+      {/* Step 2 — Design */}
+      {selectedProduct && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-1">2. Choose a design</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Designs available for {selectedProduct.name}.
+          </p>
+          {designsForProduct.length === 0 ? (
+            <p className="text-sm text-amber-600">
+              No designs available for this product yet.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {designsForProduct.map((d) => {
+                const selected = d.id === designId;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setDesignId(d.id)}
+                    className={`rounded-lg overflow-hidden border-2 text-left transition-all ${
+                      selected
+                        ? "border-blue-500 ring-2 ring-blue-200"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="aspect-square bg-gray-100">
+                      {d.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={d.imageUrl}
+                          alt={d.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                          No image
                         </div>
                       )}
+                    </div>
+                    <div className="px-2 py-1 text-xs font-medium text-gray-700 truncate">
+                      {d.name}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-                      <div className="space-y-3">
-                        <label className="block">
-                          <span className="text-sm font-medium text-gray-700 mb-2 block">
-                            {t("products.quantity")}
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={quantity}
-                            onChange={(e) =>
-                              updateQuantity(
-                                product.id,
-                                parseInt(e.target.value) || 0
-                              )
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            disabled={isSubmitting}
-                          />
-                        </label>
+      {/* Step 3 — Size, gender, quantity */}
+      {selectedProduct && designId && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <h3 className="text-lg font-bold text-gray-900">3. Size &amp; quantity</h3>
 
-                        {quantity > 0 && selectedItem && (
-                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <p className="text-sm text-blue-900">
-                              <span className="font-semibold">
-                                {t("products.unitPrice")}
-                              </span>{" "}
-                              {formatMoney(selectedItem.priceCrc)}
-                            </p>
-                            <p className="text-sm text-blue-900 mt-1">
-                              <span className="font-semibold">
-                                {t("products.subtotal")}
-                              </span>{" "}
-                              {formatMoney(selectedItem.priceCrc * quantity)}
-                            </p>
-                          </div>
-                        )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 mb-1 block">Size *</span>
+              <select
+                value={sizeId}
+                onChange={(e) => setSizeId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              >
+                <option value="">Select a size…</option>
+                {sizes.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-                        {quantity > 0 && selectedItem && (
-                          <div className="space-y-3 pt-1">
-                            {/* Design — visual picker from approved designs */}
-                            <div>
-                              <span className="text-sm font-medium text-gray-700 mb-1 block">
-                                Design *
-                              </span>
-                              {getDesignsForProduct(product.id).length === 0 ? (
-                                <span className="text-xs text-amber-600 block">
-                                  No approved design available for this product yet.
-                                </span>
-                              ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                  {getDesignsForProduct(product.id).map((d) => {
-                                    const selected = selectedItem.designId === d.id;
-                                    return (
-                                      <button
-                                        key={d.id}
-                                        type="button"
-                                        onClick={() => selectDesign(product.id, d)}
-                                        disabled={isSubmitting}
-                                        className={`relative rounded-lg overflow-hidden border-2 text-left transition-all ${
-                                          selected
-                                            ? "border-blue-500 ring-2 ring-blue-200"
-                                            : "border-gray-200 hover:border-gray-300"
-                                        }`}
-                                      >
-                                        <div className="aspect-square bg-gray-100">
-                                          {d.imageUrl ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img
-                                              src={d.imageUrl}
-                                              alt={d.name}
-                                              className="w-full h-full object-cover"
-                                              loading="lazy"
-                                            />
-                                          ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                              No image
-                                            </div>
-                                          )}
-                                          {selected && (
-                                            <span className="absolute top-1 right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                                              ✓
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="px-2 py-1 text-xs font-medium text-gray-700 truncate">
-                                          {d.name}
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 mb-1 block">Quantity *</span>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+            </label>
 
-                            {/* Size */}
-                            <label className="block">
-                              <span className="text-sm font-medium text-gray-700 mb-1 block">
-                                Size *
-                              </span>
-                              <select
-                                value={selectedItem.sizeId || ""}
-                                onChange={(e) =>
-                                  updateItemField(product.id, "sizeId", e.target.value)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled={isSubmitting}
-                              >
-                                <option value="">Select a size…</option>
-                                {sizes.map((s) => (
-                                  <option key={s.id} value={s.id}>
-                                    {s.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-
-                            {/* Gender / fit — only when the product offers a choice */}
-                            {getFitOptions(product.id).length > 1 && (
-                              <div>
-                                <span className="text-sm font-medium text-gray-700 mb-1 block">
-                                  Gender / Fit *
-                                </span>
-                                <div className="flex flex-wrap gap-2">
-                                  {getFitOptions(product.id).map((opt) => (
-                                    <button
-                                      key={opt}
-                                      type="button"
-                                      onClick={() =>
-                                        updateItemField(product.id, "fit", opt)
-                                      }
-                                      disabled={isSubmitting}
-                                      className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize border transition-colors ${
-                                        selectedItem.fit === opt
-                                          ? "bg-blue-600 text-white border-blue-600"
-                                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                                      }`}
-                                    >
-                                      {opt}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
+            {fitOptions.length > 1 && (
+              <div>
+                <span className="text-sm font-medium text-gray-700 mb-1 block">Gender / Fit *</span>
+                <div className="flex flex-wrap gap-2">
+                  {fitOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setFit(opt)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize border transition-colors ${
+                        fit === opt
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Notes */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700 mb-2 block">
-              {t("products.notesLabel")}
-            </span>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t("products.notesPlaceholder")}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isSubmitting}
-            />
-          </label>
-        </div>
-
-        {/* Order Summary */}
-        {selectedItems.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              {t("products.orderSummary")}
-            </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-700">
-                  {t("products.itemsSelected")}
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {selectedItems.length}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-700">
-                  {t("products.totalQuantity")}
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}
-                </span>
-              </div>
-              <div className="border-t border-blue-300 pt-3 mt-3">
-                <div className="flex justify-between text-lg">
-                  <span className="font-bold text-gray-900">
-                    {t("products.total")}
-                  </span>
-                  <span className="font-bold text-blue-600">
-                    {formatMoney(total.crc)}
-                  </span>
-                </div>
+          {selectedProduct.addons && selectedProduct.addons.length > 0 && (
+            <div>
+              <span className="text-sm font-medium text-gray-700 mb-1 block">Add-ons</span>
+              <div className="space-y-1">
+                {selectedProduct.addons.map((a) => (
+                  <label key={a.id} className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={addonIds.includes(a.id)}
+                      onChange={(e) =>
+                        setAddonIds((prev) =>
+                          e.target.checked
+                            ? [...prev, a.id]
+                            : prev.filter((x) => x !== a.id)
+                        )
+                      }
+                    />
+                    {a.name} (+{formatMoney(a.price_crc)})
+                  </label>
+                ))}
               </div>
             </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-sm text-gray-600">
+              {quantity} ×{" "}
+              {formatMoney(unitPriceFor(selectedProduct, quantity, addonIds).crc)} ={" "}
+              <span className="font-semibold text-gray-900">
+                {formatMoney(unitPriceFor(selectedProduct, quantity, addonIds).crc * quantity)}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={addToCart}
+              disabled={!canAdd}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold px-5 py-2.5 rounded-lg"
+            >
+              + Add to Order
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cart */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Your items</h3>
+        {cart.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            Nothing added yet. Build an item above and click “Add to Order”.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200">
+                  <th className="py-2 pr-3">Product</th>
+                  <th className="py-2 pr-3">Design</th>
+                  <th className="py-2 pr-3">Size</th>
+                  <th className="py-2 pr-3">Fit</th>
+                  <th className="py-2 pr-3 text-center">Qty</th>
+                  <th className="py-2 pr-3 text-right">Subtotal</th>
+                  <th className="py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {cart.map((i) => (
+                  <tr key={i.key} className="border-b border-gray-100">
+                    <td className="py-2 pr-3 text-gray-900">{i.productName}</td>
+                    <td className="py-2 pr-3 text-gray-700">{i.designName}</td>
+                    <td className="py-2 pr-3 text-gray-700">{i.sizeName}</td>
+                    <td className="py-2 pr-3 text-gray-700 capitalize">{i.fit || "—"}</td>
+                    <td className="py-2 pr-3 text-center text-gray-900">{i.quantity}</td>
+                    <td className="py-2 pr-3 text-right text-gray-900">
+                      {formatMoney(i.unitCrc * i.quantity)}
+                    </td>
+                    <td className="py-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => removeFromCart(i.key)}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* Submit Button */}
+        {cart.length > 0 && (
+          <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+            <span className="font-bold text-gray-900">Total</span>
+            <span className="font-bold text-blue-600">{formatMoney(total.crc)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Notes + submit */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <label className="block bg-white rounded-xl border border-gray-200 p-6">
+          <span className="text-sm font-medium text-gray-700 mb-2 block">
+            Notes (optional)
+          </span>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            placeholder="Anything CMS should know about your items"
+          />
+        </label>
         <button
           type="submit"
-          disabled={isSubmitting || selectedItems.length === 0}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+          disabled={isSubmitting || cart.length === 0}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg"
         >
           {isSubmitting
-            ? t("products.creatingOrder")
-            : `Add to Team Order${
-                selectedItems.length > 0 ? ` (${formatMoney(total.crc)})` : ""
-              }`}
+            ? "Adding…"
+            : `Add to Team Order${cart.length > 0 ? ` (${formatMoney(total.crc)})` : ""}`}
         </button>
       </form>
     </div>
