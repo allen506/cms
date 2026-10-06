@@ -33,6 +33,7 @@ interface Product {
   category: string;
   sort_order: number;
   example_url?: string | null;
+  image_url?: string | null;
   teamQty?: number;
   locked?: boolean;
   fit_options?: string | null;
@@ -170,6 +171,32 @@ export default function ProductSelectionForm({
     socks: "🧦",
     other: "📦",
   };
+
+  const categoryThumbStyles: Record<string, { bg: string; accent: string; icon: string }> = {
+    jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "🚴" },
+    "enduro-short": { bg: "from-sky-100 via-cyan-50 to-blue-100", accent: "text-sky-700", icon: "👕" },
+    "enduro-long": { bg: "from-stone-100 via-neutral-50 to-amber-100", accent: "text-stone-700", icon: "🏔️" },
+    bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "🩱" },
+    vest: { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "🧥" },
+    gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "🧤" },
+    shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "🩳" },
+    socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "🧦" },
+    other: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "📦" },
+  };
+
+  const isLikelyImageUrl = (value?: string | null) => {
+    if (!value) return false;
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    try {
+      const url = new URL(trimmed);
+      return /\.(png|jpe?g|gif|webp|svg|avif)(\?.*)?$/i.test(url.pathname) || /\/(images?|assets?)\//i.test(url.pathname);
+    } catch {
+      return /\.(png|jpe?g|gif|webp|svg|avif)(\?.*)?$/i.test(trimmed);
+    }
+  };
+
+  const getProductThumb = (p: Product) => p.example_url || p.image_url || "";
 
   const groupedProducts = availableProducts.reduce<Record<string, Product[]>>((acc, product) => {
     const key = product.category || "other";
@@ -424,6 +451,8 @@ export default function ProductSelectionForm({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {categoryProducts.map((p) => {
                     const selected = p.id === productId;
+                    const thumbUrl = getProductThumb(p);
+                    const thumbnailStyle = categoryThumbStyles[p.category] || categoryThumbStyles.other;
                     return (
                       <button
                         key={p.id}
@@ -435,6 +464,24 @@ export default function ProductSelectionForm({
                             : "border-gray-200 hover:border-gray-300 bg-white"
                         }`}
                       >
+                        <div className="mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gradient-to-br shadow-inner">
+                          <div className={`relative flex h-24 items-center justify-center bg-gradient-to-br ${thumbnailStyle.bg}`}>
+                            {isLikelyImageUrl(thumbUrl) ? (
+                              <img
+                                src={thumbUrl}
+                                alt={p.name}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className={`text-4xl drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
+                            )}
+                            <span className="absolute right-2 top-2 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-700">
+                              {p.teamQty || 0}
+                            </span>
+                          </div>
+                        </div>
+
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="font-semibold text-gray-900">{p.name}</p>
@@ -444,9 +491,6 @@ export default function ProductSelectionForm({
                               </p>
                             )}
                           </div>
-                          <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-600">
-                            {p.teamQty || 0} ordered
-                          </span>
                         </div>
 
                         {p.example_url && (
