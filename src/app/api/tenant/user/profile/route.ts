@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Get user profile
     const user = await queryOne<any>(
-      `SELECT id, email, is_team_captain, team_id, role
+      `SELECT id, email, full_name, is_team_captain, team_id, role
        FROM user_accounts 
        WHERE id = ? AND tenant_id = ?`,
       [userId, tenant.id]
@@ -41,10 +41,13 @@ export async function GET(request: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
+        fullName: user.full_name || null,
         isCaptain: user.is_team_captain === 1 || user.is_team_captain === true,
         teamId: user.team_id,
-        role: user.role},
-      hasApprovedDesign: (await getUnlockedCategories(user.team_id)).size > 0});
+        role: user.role,
+      },
+      hasApprovedDesign: (await getUnlockedCategories(user.team_id)).size > 0,
+    });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Profile error:', errorMsg);

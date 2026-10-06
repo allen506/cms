@@ -68,13 +68,40 @@ export default function OrderForm({
   const [items, setItems] = useState<OrderItem[]>([]);
 
   useEffect(() => {
+    const applyProfileName = (fullName: string | null | undefined) => {
+      if (!fullName || !fullName.trim()) return;
+      const trimmed = fullName.trim();
+      const parts = trimmed.split(/\s+/);
+      const first = parts[0] || "";
+      const last = parts.slice(1).join(" ");
+      setFirstName(first);
+      setLastName(last);
+      setLockedName(true);
+      localStorage.setItem("thinkmtb-user-name", trimmed);
+    };
+
     // Load saved identity so name is always consistent across devices
     const stored = localStorage.getItem("thinkmtb-user-name");
     if (stored) {
-      const parts = stored.trim().split(" ");
+      const parts = stored.trim().split(/\s+/);
       setFirstName(parts[0] || "");
       setLastName(parts.slice(1).join(" ") || "");
       setLockedName(true);
+    }
+
+    const tenantSlug = window.location.pathname.match(/\/custom\/([^/]+)/)?.[1];
+    if (!stored && tenantSlug) {
+      fetch(`/api/tenant/user/profile`, {
+        headers: { "x-tenant-slug": tenantSlug },
+        credentials: "include",
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.user?.fullName) {
+            applyProfileName(data.user.fullName);
+          }
+        })
+        .catch(() => {});
     }
 
     fetch(apiUrl("/api/catalog", apiBaseUrl))
