@@ -36,38 +36,35 @@ export async function POST(request: NextRequest) {
       [tenant.id, normalizedEmail]
     );
 
-    const candidates = [user, tenantAdmin].filter(Boolean);
-    let account: any = null;
+    const matchesUser = user ? await verifyPassword(String(password).trim(), user.password_hash) : false;
+    const matchesAdmin = tenantAdmin ? await verifyPassword(String(password).trim(), tenantAdmin.password_hash) : false;
 
-    for (const candidate of candidates) {
-      if (!candidate?.password_hash) continue;
-      const matches = await verifyPassword(String(password).trim(), candidate.password_hash);
-      if (matches) {
-        account = candidate;
-        break;
-      }
-    }
+    const account = user && (matchesUser || matchesAdmin)
+      ? user
+      : tenantAdmin && matchesAdmin
+        ? tenantAdmin
+        : null;
 
     if (!account) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     const isCaptain = Boolean(
-      account.is_team_captain === 1 ||
-      account.is_team_captain === true ||
-      account.role === 'owner' ||
-      account.role === 'admin'
+      (user && (user.is_team_captain === 1 || user.is_team_captain === true)) ||
+      (tenantAdmin && (tenantAdmin.role === 'owner' || tenantAdmin.role === 'admin')) ||
+      (account.role === 'owner' || account.role === 'admin') ||
+      (account.is_team_captain === 1 || account.is_team_captain === true)
     );
 
     const token = createSessionToken();
     const response = NextResponse.json({
       success: true,
       user: {
-        id: account.id,
-        email: account.email,
-        team_id: account.team_id ?? null,
+        id: user?.id ?? account.id,
+        email: user?.email ?? account.email,
+        team_id: user?.team_id ?? account.team_id ?? null,
         isCaptain,
-        role: account.role ?? 'user',
+        role: user?.role ?? account.role ?? 'user',
       }
     });
 
