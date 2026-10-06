@@ -22,6 +22,10 @@ export const UNLOCK_CATEGORY_ALIASES: Record<string, string[]> = {
 
 export type UnlockCategory = (typeof UNLOCK_CATEGORIES)[number];
 
+export function isAutoUnlockedTenant(tenantSlug?: string | null): boolean {
+  return (tenantSlug ?? "").trim().toLowerCase() === "thinkmtb";
+}
+
 export function expandUnlockCategories(rawCategories: Array<string | null | undefined>): string[] {
   const expanded = new Set<string>();
 
@@ -49,9 +53,11 @@ export function expandUnlockCategories(rawCategories: Array<string | null | unde
  * design is ready). Errors default to all-unlocked to avoid blocking orders.
  */
 export async function getUnlockedCategories(
-  teamId: string | null | undefined
+  teamId: string | null | undefined,
+  tenantSlug?: string | null
 ): Promise<Set<string>> {
   const all = new Set<string>(UNLOCK_CATEGORIES);
+  if (isAutoUnlockedTenant(tenantSlug)) return new Set(all);
   if (!teamId) return new Set();
 
   try {
@@ -150,7 +156,7 @@ export async function getCurrentTeamOrderAccess(
     );
     if (!user?.team_id) return empty;
 
-    const unlocked = await getUnlockedCategories(user.team_id);
+    const unlocked = await getUnlockedCategories(user.team_id, tenantSlug);
     return {
       teamId: user.team_id,
       unlocked,

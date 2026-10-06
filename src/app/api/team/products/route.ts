@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const [{ rate, source, fecha, isFallback }, unlocked] = await Promise.all([
       getExchangeRate(),
-      getUnlockedCategories(teamId),
+      getUnlockedCategories(teamId, ctx.tenantSlug),
     ]);
 
     // Team-wide quantity already ordered per product in the current campaign

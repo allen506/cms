@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         teamId: user.team_id,
         role: user.role,
       },
-      hasApprovedDesign: (await getUnlockedCategories(user.team_id)).size > 0,
+      hasApprovedDesign: (await getUnlockedCategories(user.team_id, tenantSlug)).size > 0,
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
