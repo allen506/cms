@@ -480,7 +480,8 @@ export default function ProductSelectionForm({
                   {categoryProducts.map((p) => {
                     const selected = p.id === productId;
                     const thumbUrl = getProductThumb(p);
-                    const thumbnailStyle = categoryThumbStyles[p.category] || categoryThumbStyles.other;
+                    const normalizedCategory = normalizeCategory(p.category);
+                    const thumbnailStyle = categoryThumbStyles[normalizedCategory] || categoryThumbStyles.other;
                     return (
                       <button
                         key={p.id}
@@ -542,8 +543,8 @@ export default function ProductSelectionForm({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
-                <span>{categoryIcons[selectedProduct.category || "other"] || "📦"}</span>
-                {categoryLabels[selectedProduct.category || "other"] || selectedProduct.category || "Product"}
+                <span>{categoryIcons[normalizeCategory(selectedProduct.category)] || "P"}</span>
+                {categoryLabels[normalizeCategory(selectedProduct.category)] || selectedProduct.category || "Product"}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mt-2">{selectedProduct.name}</h3>
             </div>
