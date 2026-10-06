@@ -6,8 +6,9 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password, teamSlug, teamPassword } = await request.json();
     const tenantSlug = teamSlug || request.headers.get('x-tenant-slug');
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-    if (!email || !password || !tenantSlug) {
+    if (!normalizedEmail || !password || !tenantSlug) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -21,46 +22,74 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    // Get user account by email
     const user = await queryOne<any>(
-      `SELECT id, email, password_hash, team_id, is_team_captain 
-       FROM user_accounts 
-       WHERE tenant_id = ? AND email = ?`,
-      [tenant.id, email]
+      `SELECT id, email, password_hash, team_id, is_team_captain, role
+       FROM user_accounts
+       WHERE tenant_id = ? AND LOWER(email) = LOWER(?)`,
+      [tenant.id, normalizedEmail]
     );
 
-    if (!user) {
+    const tenantAdmin = !user ? await queryOne<any>(
+      `SELECT id, email, password_hash, full_name AS name, role, status
+       FROM tenant_admins
+       WHERE tenant_id = ? AND LOWER(email) = LOWER(?)`,
+      [tenant.id, normalizedEmail]
+    ) : null;
+
+    const account = user || tenantAdmin;
+
+    if (!account) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Verify password
-    if (!(await verifyPassword(password, user.password_hash))) {
+    if (!(await verifyPassword(String(password).trim(), account.password_hash))) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Create session token
+    const isCaptain = Boolean(
+      account.is_team_captain === 1 ||
+      account.is_team_captain === true ||
+      account.role === 'owner' ||
+      account.role === 'admin'
+    );
+
     const token = createSessionToken();
     const response = NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        team_id: user.team_id,
-        isCaptain: user.is_team_captain === 1 || user.is_team_captain === true}});
+        id: account.id,
+        email: account.email,
+        team_id: account.team_id ?? null,
+        isCaptain,
+        role: account.role ?? 'user',
+      }
+    });
 
     response.cookies.set('tenant_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/'});
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
+    });
 
-    response.cookies.set('tenant_user_id', user.id, {
+    response.cookies.set('tenant_user_id', account.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
-      path: '/'});
+      path: '/'
+    });
+
+    if (account.role) {
+      response.cookies.set('user_role', account.role, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/'
+      });
+    }
 
     return response;
   } catch (error) {
