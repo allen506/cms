@@ -17,7 +17,7 @@ export default function OrderPage({ apiBaseUrl }: { apiBaseUrl?: string }) {
           </p>
         </div>
 
-        <OrderForm onOrderPlaced={() => {}} apiBaseUrl={apiBaseUrl} />
+        <OrderForm apiBaseUrl={apiBaseUrl} />
       </div>
     </PasswordGate>
   );

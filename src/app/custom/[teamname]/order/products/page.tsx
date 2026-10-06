@@ -103,7 +103,7 @@ export default async function ProductSelectionPage({
           </p>
         </div>
 
-        <OrderForm onOrderPlaced={() => {}} />
+        <OrderForm />
       </div>
     </div>
   );
