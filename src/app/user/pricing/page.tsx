@@ -91,7 +91,7 @@ export default function UserPricingPage({ apiBaseUrl }: { apiBaseUrl?: string })
             {/* Product Selector — grouped by category */}
             {(() => {
               const CATEGORY_LABELS: Record<string, string> = { jersey: "Jerseys", "enduro-short": "Enduro Short Sleeve", "enduro-long": "Enduro Long Sleeve", bib: "Bibs", vest: "Vests", gloves: "Gloves", shorts: "Shorts", socks: "Socks" };
-              const CATEGORY_ICONS: Record<string, string> = { jersey: "🚴", "enduro-short": "👕", "enduro-long": "🏔️", bib: "🩱", vest: "🧥", gloves: "🧤", shorts: "🩳", socks: "🧦" };
+              const CATEGORY_ICONS: Record<string, string> = { jersey: "J", "enduro-short": "J", "enduro-long": "J", bib: "B", vest: "V", gloves: "G", shorts: "S", socks: "S" };
               const grouped = catalog.productTypes.reduce<Record<string, typeof catalog.productTypes>>((acc, p) => {
                 const cat = (p as any).category || "other";
                 if (!acc[cat]) acc[cat] = [];

@@ -5,7 +5,7 @@ import Image from "next/image";
 import PasswordGate from "@/components/PasswordGate";
 
 const CATEGORY_LABELS: Record<string, string> = { jersey: "Jerseys", "enduro-short": "Enduro Short Sleeve", "enduro-long": "Enduro Long Sleeve", bib: "Bibs", vest: "Vests", gloves: "Gloves", shorts: "Shorts" };
-const CATEGORY_ICONS: Record<string, string> = { jersey: "🚴", "enduro-short": "👕", "enduro-long": "🏔️", bib: "🩱", vest: "🧥", gloves: "🧤", shorts: "🩳" };
+const CATEGORY_ICONS: Record<string, string> = { jersey: "J", "enduro-short": "J", "enduro-long": "J", bib: "B", vest: "V", gloves: "G", shorts: "S" };
 const CAT_ORDER = ["jersey", "enduro-short", "enduro-long", "bib", "vest"];
 
 function groupByPrimaryCategory(designs: FinalDesign[]) {

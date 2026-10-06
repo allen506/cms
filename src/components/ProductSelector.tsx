@@ -4,16 +4,16 @@ import { useState } from "react";
 import { ProductType } from "@/lib/types";
 
 const PRODUCT_ICONS: Record<string, string> = {
-  "pro-jersey": "🚴",
-  "enduro-jersey": "🏔️",
-  "enduro-short": "👕",
-  "wind-vest": "🧥",
-  jersey: "🚴",
-  bib: "🩱",
-  vest: "🧥",
-  shorts: "🩳",
-  socks: "🧦",
-  gloves: "🧤",
+  "pro-jersey": "J",
+  "enduro-jersey": "J",
+  "enduro-short": "J",
+  "wind-vest": "V",
+  jersey: "J",
+  bib: "B",
+  vest: "V",
+  shorts: "S",
+  socks: "S",
+  gloves: "G",
 };
 
 const PRODUCT_TAGLINES: Record<string, string> = {
@@ -24,13 +24,13 @@ const PRODUCT_TAGLINES: Record<string, string> = {
 };
 
 const PRODUCT_THUMBNAILS: Record<string, { bg: string; accent: string; icon: string }> = {
-  jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "🚴" },
-  bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "🩱" },
-  vest: { bg: "from-slate-100 via-gray-50 to-stone-100", accent: "text-slate-700", icon: "🧥" },
-  shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "🩳" },
-  socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "🧦" },
-  gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "🧤" },
-  default: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "📦" },
+  jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+  bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
+  vest: { bg: "from-slate-100 via-gray-50 to-stone-100", accent: "text-slate-700", icon: "V" },
+  shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "S" },
+  socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "S" },
+  gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "G" },
+  default: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "P" },
 };
 
 const isLikelyImageUrl = (value?: string | null) => {
@@ -59,14 +59,14 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  jersey: "🚴",
-  "enduro-short": "👕",
-  "enduro-long": "🏔️",
-  bib: "🩱",
-  vest: "🧥",
-  gloves: "🧤",
-  shorts: "🩳",
-  socks: "🧦",
+  jersey: "J",
+  "enduro-short": "J",
+  "enduro-long": "J",
+  bib: "B",
+  vest: "V",
+  gloves: "G",
+  shorts: "S",
+  socks: "S",
 };
 
 const CAT_ORDER = ["jersey", "enduro-short", "enduro-long", "bib", "vest"];
@@ -152,7 +152,7 @@ export default function ProductSelector({
                           />
                         ) : null}
                         {!isLikelyImageUrl(getProductThumbSource(pt)) && (
-                          <span className={`text-4xl drop-shadow-sm ${PRODUCT_THUMBNAILS[pt.category]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
+                          <span className={`text-4xl font-black tracking-tight drop-shadow-sm ${PRODUCT_THUMBNAILS[pt.category]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
                             {PRODUCT_ICONS[pt.id] || PRODUCT_ICONS[pt.category] || PRODUCT_THUMBNAILS[pt.category]?.icon || PRODUCT_THUMBNAILS.default.icon}
                           </span>
                         )}

@@ -161,27 +161,27 @@ export default function ProductSelectionForm({
     other: "Other",
   };
   const categoryIcons: Record<string, string> = {
-    jersey: "🚴",
-    "enduro-short": "👕",
-    "enduro-long": "🏔️",
-    bib: "🩱",
-    vest: "🧥",
-    gloves: "🧤",
-    shorts: "🩳",
-    socks: "🧦",
-    other: "📦",
+    jersey: "J",
+    "enduro-short": "J",
+    "enduro-long": "J",
+    bib: "B",
+    vest: "V",
+    gloves: "G",
+    shorts: "S",
+    socks: "S",
+    other: "P",
   };
 
   const categoryThumbStyles: Record<string, { bg: string; accent: string; icon: string }> = {
-    jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "🚴" },
-    "enduro-short": { bg: "from-sky-100 via-cyan-50 to-blue-100", accent: "text-sky-700", icon: "👕" },
-    "enduro-long": { bg: "from-stone-100 via-neutral-50 to-amber-100", accent: "text-stone-700", icon: "🏔️" },
-    bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "🩱" },
-    vest: { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "🧥" },
-    gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "🧤" },
-    shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "🩳" },
-    socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "🧦" },
-    other: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "📦" },
+    jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+    "enduro-short": { bg: "from-sky-100 via-cyan-50 to-blue-100", accent: "text-sky-700", icon: "J" },
+    "enduro-long": { bg: "from-stone-100 via-neutral-50 to-amber-100", accent: "text-stone-700", icon: "J" },
+    bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
+    vest: { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "V" },
+    gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "G" },
+    shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "S" },
+    socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "S" },
+    other: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "P" },
   };
 
   const isLikelyImageUrl = (value?: string | null) => {
@@ -474,7 +474,7 @@ export default function ProductSelectionForm({
                                 loading="lazy"
                               />
                             ) : (
-                              <span className={`text-4xl drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
+                              <span className={`text-4xl font-black tracking-tight drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
                             )}
                             <span className="absolute right-2 top-2 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-700">
                               {p.teamQty || 0}
