@@ -264,27 +264,51 @@ function IdentityGate({ onIdentified }: { onIdentified: (name: string, pin: stri
   );
 }
 
+function readSafeStorage(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSafeStorage(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage access failures in restricted browser contexts.
+  }
+}
+
+function removeSafeStorage(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage access failures in restricted browser contexts.
+  }
+}
+
 export default function UserPortal() {
   const [userName, setUserName] = useState<string | null>(null);
   const [userPin, setUserPin] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setUserName(localStorage.getItem("thinkmtb-user-name"));
-    setUserPin(localStorage.getItem("thinkmtb-user-pin"));
+    setUserName(readSafeStorage("thinkmtb-user-name"));
+    setUserPin(readSafeStorage("thinkmtb-user-pin"));
     setLoaded(true);
   }, []);
 
   const handleIdentified = (name: string, pin: string) => {
-    localStorage.setItem("thinkmtb-user-name", name);
-    localStorage.setItem("thinkmtb-user-pin", pin);
+    writeSafeStorage("thinkmtb-user-name", name);
+    writeSafeStorage("thinkmtb-user-pin", pin);
     setUserName(name);
     setUserPin(pin);
   };
 
   const handleSwitch = () => {
-    localStorage.removeItem("thinkmtb-user-name");
-    localStorage.removeItem("thinkmtb-user-pin");
+    removeSafeStorage("thinkmtb-user-name");
+    removeSafeStorage("thinkmtb-user-pin");
     setUserName(null);
     setUserPin(null);
   };

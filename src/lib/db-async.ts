@@ -4,16 +4,42 @@
  */
 
 import { Pool, QueryResultRow } from "pg";
+import { getDb } from "./db";
 
 let pgPool: Pool | null = null;
 let migrationsRan = false;
 
-/**
- * Convert SQLite placeholders (?) to PostgreSQL ($1, $2, etc)
- */
+function isSqliteRuntime(): boolean {
+  return process.env.DB_TYPE === "sqlite" || !process.env.DATABASE_URL;
+}
+
 function convertSqliteToPg(sql: string): string {
   let paramIndex = 1;
   return sql.replace(/\?/g, () => `$${paramIndex++}`);
+}
+
+function convertPgParamsToSqlite(sql: string): string {
+  return sql.replace(/\$\d+/g, "?");
+}
+
+function sqlitePrepare<T>(sql: string, params: any[] = []) {
+  const db = getDb();
+  const normalizedSql = convertPgParamsToSqlite(sql);
+  return db.prepare(normalizedSql).all(...params) as T[];
+}
+
+function sqlitePrepareOne<T>(sql: string, params: any[] = []) {
+  const db = getDb();
+  const normalizedSql = convertPgParamsToSqlite(sql);
+  return db.prepare(normalizedSql).get(...params) as T | undefined;
+}
+
+function sqliteExecute(sql: string, params: any[] = []) {
+  const db = getDb();
+  const normalizedSql = convertPgParamsToSqlite(sql);
+  const statement = db.prepare(normalizedSql);
+  const result = statement.run(...params);
+  return { changes: Number(result.changes ?? 0), lastId: String(result.lastInsertRowid ?? "") };
 }
 
 /**
@@ -529,6 +555,10 @@ export async function query<T extends QueryResultRow = any>(
   sql: string,
   params?: any[]
 ): Promise<T[]> {
+  if (isSqliteRuntime()) {
+    return sqlitePrepare<T>(sql, params ?? []);
+  }
+
   const pool = await initPostgres();
   const pgSql = convertSqliteToPg(sql);
   const result = await pool.query(pgSql, params);
@@ -542,6 +572,11 @@ export async function queryOne<T extends QueryResultRow = any>(
   sql: string,
   params?: any[]
 ): Promise<T | null> {
+  if (isSqliteRuntime()) {
+    const row = sqlitePrepareOne<T>(sql, params ?? []);
+    return row ?? null;
+  }
+
   const rows = await query<T>(sql, params);
   return rows.length > 0 ? rows[0] : null;
 }
@@ -553,6 +588,10 @@ export async function execute(
   sql: string,
   params?: any[]
 ): Promise<{ changes: number; lastId?: string }> {
+  if (isSqliteRuntime()) {
+    return sqliteExecute(sql, params ?? []);
+  }
+
   const pool = await initPostgres();
   const pgSql = convertSqliteToPg(sql);
   const result = await pool.query(pgSql, params);
@@ -565,6 +604,22 @@ export async function execute(
 export async function withTransaction<T>(
   callback: (tx: TransactionClient) => Promise<T>
 ): Promise<T> {
+  if (isSqliteRuntime()) {
+    const db = getDb();
+    const tx = db.transaction(() => callback({
+      query: async <U extends QueryResultRow = any>(sql: string, params?: any[]) => {
+        return sqlitePrepare<U>(sql, params ?? []);
+      },
+      queryOne: async <U extends QueryResultRow = any>(sql: string, params?: any[]) => {
+        return sqlitePrepareOne<U>(sql, params ?? []) ?? null;
+      },
+      execute: async (sql: string, params?: any[]) => {
+        return sqliteExecute(sql, params ?? []);
+      },
+    }));
+    return tx() as Promise<T>;
+  }
+
   const pool = await initPostgres();
   const client = await pool.connect();
 

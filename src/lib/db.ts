@@ -321,8 +321,36 @@ function initializeDb(db: Database.Database) {
   if (!designCols.includes('designed_for')) {
     db.prepare(`ALTER TABLE designs ADD COLUMN designed_for TEXT`).run();
   }
+  if (!designCols.includes('tenant_id')) {
+    db.prepare(`ALTER TABLE designs ADD COLUMN tenant_id TEXT`).run();
+  }
   if (!designCols.includes('team_id')) {
     db.prepare(`ALTER TABLE designs ADD COLUMN team_id TEXT`).run();
+  }
+
+  // Ensure catalog tables have the tenant/team columns expected by the app
+  const productTypeCols = (db.prepare(`PRAGMA table_info(product_types)`).all() as { name: string }[]).map(c => c.name);
+  if (!productTypeCols.includes('tenant_id')) {
+    db.prepare(`ALTER TABLE product_types ADD COLUMN tenant_id TEXT`).run();
+  }
+  if (!productTypeCols.includes('team_id')) {
+    db.prepare(`ALTER TABLE product_types ADD COLUMN team_id TEXT`).run();
+  }
+
+  const pricingTierCols = (db.prepare(`PRAGMA table_info(pricing_tiers)`).all() as { name: string }[]).map(c => c.name);
+  if (!pricingTierCols.includes('tenant_id')) {
+    db.prepare(`ALTER TABLE pricing_tiers ADD COLUMN tenant_id TEXT`).run();
+  }
+  if (!pricingTierCols.includes('team_id')) {
+    db.prepare(`ALTER TABLE pricing_tiers ADD COLUMN team_id TEXT`).run();
+  }
+
+  const productDesignCols = (db.prepare(`PRAGMA table_info(product_designs)`).all() as { name: string }[]).map(c => c.name);
+  if (!productDesignCols.includes('tenant_id')) {
+    db.prepare(`ALTER TABLE product_designs ADD COLUMN tenant_id TEXT`).run();
+  }
+  if (!productDesignCols.includes('team_id')) {
+    db.prepare(`ALTER TABLE product_designs ADD COLUMN team_id TEXT`).run();
   }
 
   // Create product_designs table if it doesn't exist

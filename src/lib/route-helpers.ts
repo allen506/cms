@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne, execute, withTransaction, TransactionClient } from "./db-async";
+import { getDb } from "./db";
 import bcryptjs from "bcryptjs";
 
 export interface RouteContext {
@@ -151,17 +152,34 @@ export async function requireAdminSession(request: NextRequest): Promise<{ error
   if (!token) {
     return { error: "Unauthorized" };
   }
-  
-  // Verify session exists and is not expired
-  const session = await queryOne<any>(
-    "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > NOW()",
-    [token]
-  );
-  
+
+  let session: { token?: string } | null = null;
+
+  const usePostgres = Boolean(process.env.DATABASE_URL) && process.env.DB_TYPE !== "sqlite";
+  if (usePostgres) {
+    try {
+      session = await queryOne<any>(
+        "SELECT token FROM admin_sessions WHERE token = $1 AND expires_at > NOW()",
+        [token]
+      );
+    } catch (error) {
+      console.warn("PostgreSQL admin session lookup failed, falling back to SQLite:", error);
+      const row = getDb()
+        .prepare("SELECT token FROM admin_sessions WHERE token = ? AND datetime(expires_at) > datetime('now')")
+        .get(token) as { token?: string } | undefined;
+      session = row ? { token: row.token } : null;
+    }
+  } else {
+    const row = getDb()
+      .prepare("SELECT token FROM admin_sessions WHERE token = ? AND datetime(expires_at) > datetime('now')")
+      .get(token) as { token?: string } | undefined;
+    session = row ? { token: row.token } : null;
+  }
+
   if (!session) {
     return { error: "Session expired or invalid" };
   }
-  
+
   return null;
 }
 

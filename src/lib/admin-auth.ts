@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryOne } from "@/lib/db-async";
+import { getDb } from "@/lib/db";
 
 /** Validates the admin session cookie. Returns true if authenticated. */
 export async function isAdminAuthenticated(request: NextRequest): Promise<boolean> {
@@ -23,11 +23,30 @@ export async function isAdminAuthenticated(request: NextRequest): Promise<boolea
   }
   
   try {
-    const session = await queryOne(
-      "SELECT token FROM admin_sessions WHERE token = $1 AND expires_at > NOW()",
-      [token]
-    );
-    
+    let session: { token?: string } | null = null;
+
+    const usePostgres = Boolean(process.env.DATABASE_URL) && process.env.DB_TYPE !== "sqlite";
+    if (usePostgres) {
+      try {
+        const row = await (await import("@/lib/db-async")).queryOne<any>(
+          "SELECT token FROM admin_sessions WHERE token = $1 AND expires_at > NOW()",
+          [token]
+        );
+        session = row ? { token: row.token } : null;
+      } catch (error) {
+        console.warn("PostgreSQL admin session lookup failed, falling back to SQLite:", error);
+        const row = getDb()
+          .prepare("SELECT token FROM admin_sessions WHERE token = ? AND datetime(expires_at) > datetime('now')")
+          .get(token) as { token?: string } | undefined;
+        session = row ? { token: row.token } : null;
+      }
+    } else {
+      const row = getDb()
+        .prepare("SELECT token FROM admin_sessions WHERE token = ? AND datetime(expires_at) > datetime('now')")
+        .get(token) as { token?: string } | undefined;
+      session = row ? { token: row.token } : null;
+    }
+
     if (session) {
       console.log("✅ Admin session valid");
       return true;

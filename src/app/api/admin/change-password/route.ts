@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getDb } from "@/lib/db";
 import {
-  queryOne, execute, requireAdminSession, hashPassword, verifyPassword} from "@/lib/route-helpers";
+  execute, requireAdminSession, hashPassword, verifyPassword} from "@/lib/route-helpers";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
@@ -18,19 +19,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "New password must be at least 8 characters" }, { status: 400 });
     }
 
-    // For now, check against env var (TODO: use tenant_admins table)
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (!adminPassword) {
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    const candidatePasswords = new Set<string>();
+    const envPassword = process.env.ADMIN_PASSWORD;
+    if (envPassword) candidatePasswords.add(envPassword);
+
+    try {
+      const dbPasswordRow = getDb()
+        .prepare("SELECT value FROM app_settings WHERE key = 'admin_password' LIMIT 1")
+        .get() as { value?: string } | undefined;
+      if (dbPasswordRow?.value) {
+        candidatePasswords.add(dbPasswordRow.value);
+      }
+    } catch (dbError) {
+      console.warn("Could not read admin_password from app_settings:", dbError);
     }
 
-    if (!(await verifyPassword(currentPassword, adminPassword))) {
+    const isCurrentPasswordValid = await Promise.all(
+      [...candidatePasswords].map(async (candidate) => {
+        if (!candidate) return false;
+        if (candidate === currentPassword) return true;
+        try {
+          return await verifyPassword(currentPassword, candidate);
+        } catch {
+          return false;
+        }
+      })
+    );
+
+    if (!isCurrentPasswordValid.some(Boolean)) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 401 });
     }
 
-    const hashedPassword = await hashPassword(newPassword);
-    // TODO: Update tenant_admins table with new password
-    // await execute("UPDATE tenant_admins SET password_hash = ? WHERE role = 'platform_admin'", [hashedPassword]);
+    await hashPassword(newPassword);
+    await execute("UPDATE app_settings SET value = ? WHERE key = 'admin_password'", [newPassword]);
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {

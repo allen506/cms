@@ -1,3 +1,5 @@
+// Production/public-server config only.
+// Local development must stay on its own .env file and never share this PM2 config.
 module.exports = {
   apps: [
     {

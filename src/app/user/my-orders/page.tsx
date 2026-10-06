@@ -88,8 +88,14 @@ export default function UserMyOrdersPage({ apiBaseUrl }: { apiBaseUrl?: string }
   }, [apiBaseUrl]);
 
   useEffect(() => {
-    const name = localStorage.getItem("thinkmtb-user-name");
-    if (name) { setUserName(name); fetchOrders(name); fetchPaymentStatuses(name); }
+    let storedName: string | null = null;
+    try {
+      storedName = window.localStorage.getItem("thinkmtb-user-name");
+    } catch {
+      storedName = null;
+    }
+
+    if (storedName) { setUserName(storedName); fetchOrders(storedName); fetchPaymentStatuses(storedName); }
 
     // Load exchange rate and team quantities for pricing
     fetch(apiUrl("/api/exchange-rate", apiBaseUrl)).then(r => r.json()).then(d => { if (d.compra) setExchangeRate(d.compra); }).catch(() => {});
@@ -103,7 +109,12 @@ export default function UserMyOrdersPage({ apiBaseUrl }: { apiBaseUrl?: string }
 
     // Poll payment statuses every 20 seconds so admin confirmations appear automatically
     const interval = setInterval(() => {
-      const n = localStorage.getItem("thinkmtb-user-name");
+      let n: string | null = null;
+      try {
+        n = window.localStorage.getItem("thinkmtb-user-name");
+      } catch {
+        n = null;
+      }
       if (n) fetchPaymentStatuses(n);
     }, 20000);
 

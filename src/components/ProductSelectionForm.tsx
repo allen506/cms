@@ -147,6 +147,42 @@ export default function ProductSelectionForm({
   const availableProducts = products.filter((p) => !p.locked);
   const selectedProduct = products.find((p) => p.id === productId);
 
+  const categoryOrder = ["jersey", "enduro-short", "enduro-long", "bib", "vest", "gloves", "shorts", "socks", "other"];
+  const categoryLabels: Record<string, string> = {
+    jersey: "Jerseys",
+    "enduro-short": "Enduro Short Sleeve",
+    "enduro-long": "Enduro Long Sleeve",
+    bib: "Bibs",
+    vest: "Vests",
+    gloves: "Gloves",
+    shorts: "Shorts",
+    socks: "Socks",
+    other: "Other",
+  };
+  const categoryIcons: Record<string, string> = {
+    jersey: "🚴",
+    "enduro-short": "👕",
+    "enduro-long": "🏔️",
+    bib: "🩱",
+    vest: "🧥",
+    gloves: "🧤",
+    shorts: "🩳",
+    socks: "🧦",
+    other: "📦",
+  };
+
+  const groupedProducts = availableProducts.reduce<Record<string, Product[]>>((acc, product) => {
+    const key = product.category || "other";
+    acc[key] = acc[key] || [];
+    acc[key].push(product);
+    return acc;
+  }, {});
+
+  const productCategories = [
+    ...categoryOrder.filter((key) => groupedProducts[key]?.length),
+    ...Object.keys(groupedProducts).filter((key) => !categoryOrder.includes(key)).sort(),
+  ];
+
   // Gender/fit options for the selected product.
   const fitOptions: string[] = (() => {
     if (!selectedProduct?.fit_options) return ["unisex"];
@@ -369,27 +405,60 @@ export default function ProductSelectionForm({
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-1">1. Choose a product</h3>
         <p className="text-sm text-gray-500 mb-4">Pick what you want to order.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {availableProducts.map((p) => {
-            const selected = p.id === productId;
+
+        <div className="space-y-6">
+          {productCategories.map((categoryKey) => {
+            const categoryProducts = groupedProducts[categoryKey] || [];
+            if (!categoryProducts.length) return null;
+
             return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => selectProduct(p.id)}
-                className={`text-left rounded-lg border-2 p-4 transition-all ${
-                  selected
-                    ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <p className="font-semibold text-gray-900">{p.name}</p>
-                {p.description && (
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                    {p.description}
-                  </p>
-                )}
-              </button>
+              <div key={categoryKey}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">{categoryIcons[categoryKey] || "📦"}</span>
+                  <h4 className="text-sm font-bold uppercase tracking-[0.14em] text-gray-700">
+                    {categoryLabels[categoryKey] || categoryKey}
+                  </h4>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {categoryProducts.map((p) => {
+                    const selected = p.id === productId;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => selectProduct(p.id)}
+                        className={`text-left rounded-xl border-2 p-3 transition-all ${
+                          selected
+                            ? "border-amber-500 ring-2 ring-amber-200 bg-amber-50"
+                            : "border-gray-200 hover:border-gray-300 bg-white"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900">{p.name}</p>
+                            {p.description && (
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                {p.description}
+                              </p>
+                            )}
+                          </div>
+                          <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-600">
+                            {p.teamQty || 0} ordered
+                          </span>
+                        </div>
+
+                        {p.example_url && (
+                          <div className="mt-2 text-[11px] font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2">
+                            Product reference ↗
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -397,9 +466,15 @@ export default function ProductSelectionForm({
 
       {/* Product info + team pricing tier */}
       {selectedProduct && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-lg font-bold text-gray-900">{selectedProduct.name}</h3>
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
+                <span>{categoryIcons[selectedProduct.category || "other"] || "📦"}</span>
+                {categoryLabels[selectedProduct.category || "other"] || selectedProduct.category || "Product"}
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mt-2">{selectedProduct.name}</h3>
+            </div>
             {selectedProduct.example_url && (
               <a
                 href={selectedProduct.example_url}
@@ -416,43 +491,50 @@ export default function ProductSelectionForm({
           </div>
 
           {selectedProduct.pricing.length > 0 ? (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-700">
-                  Team pricing (volume-based)
-                </p>
-                <span className="text-xs text-gray-500">
-                  Team ordered so far:{" "}
-                  <span className="font-semibold text-gray-900">
-                    {selectedProduct.teamQty || 0}
+            <div className="overflow-hidden border border-gray-200 rounded-xl">
+              <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-3 text-white">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold uppercase tracking-[0.12em] text-amber-100">Team pricing</p>
+                  <span className="rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
+                    Team qty {selectedProduct.teamQty || 0}
                   </span>
-                </span>
+                </div>
               </div>
-              <div className="space-y-1 text-sm">
+
+              <div className="divide-y divide-gray-200">
                 {selectedProduct.pricing.map((tier, idx) => {
                   const active = idx === activeTierIndex(selectedProduct, quantity);
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center gap-2 rounded px-2 py-1 ${
-                        active ? "bg-blue-50 text-blue-900 font-semibold" : "text-gray-600"
+                      className={`flex items-center justify-between gap-3 px-4 py-3 ${
+                        active ? "bg-amber-50" : "bg-white"
                       }`}
                     >
-                      <span>
-                        {tier.min_qty}-{tier.max_qty || "+"}: {formatMoney(tier.price_crc)}
-                      </span>
-                      {active && (
-                        <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                          Your team&apos;s tier
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold ${active ? "text-amber-900" : "text-gray-800"}`}>
+                          {tier.min_qty} - {tier.max_qty || "+"}
                         </span>
-                      )}
+                        <span className="text-xs text-gray-500">qty</span>
+                        {active && (
+                          <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                            Current tier
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {formatMoney(tier.price_crc)} CRC
+                        </div>
+                        <div className="text-xs text-green-700 font-semibold">
+                          ${tier.price_usd.toFixed(2)} USD
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                The more your team orders, the lower the unit price.
-              </p>
             </div>
           ) : (
             <p className="text-sm text-red-600">No pricing configured for this product.</p>

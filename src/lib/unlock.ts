@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { query, queryOne } from "@/lib/db-async";
 
 export const UNLOCK_CATEGORIES = [
@@ -7,7 +6,39 @@ export const UNLOCK_CATEGORIES = [
   "bib-licra",
 ] as const;
 
+export const UNLOCK_CATEGORY_ALIASES: Record<string, string[]> = {
+  jersey: ["jersey", "enduro-jersey", "cycling-jersey", "enduro-short", "enduro-long"],
+  "enduro-jersey": ["enduro-jersey", "enduro-short", "enduro-long", "jersey"],
+  "cycling-jersey": ["cycling-jersey", "jersey", "enduro-short", "enduro-long"],
+  "enduro-short": ["enduro-short", "enduro-jersey", "cycling-jersey", "jersey"],
+  "enduro-long": ["enduro-long", "enduro-jersey", "cycling-jersey", "jersey"],
+  bib: ["bib", "bib-licra"],
+  "bib-licra": ["bib-licra", "bib"],
+  vest: ["vest"],
+  gloves: ["gloves"],
+  shorts: ["shorts"],
+  socks: ["socks"],
+};
+
 export type UnlockCategory = (typeof UNLOCK_CATEGORIES)[number];
+
+export function expandUnlockCategories(rawCategories: Array<string | null | undefined>): string[] {
+  const expanded = new Set<string>();
+
+  for (const raw of rawCategories) {
+    if (!raw) continue;
+
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    expanded.add(trimmed);
+
+    const aliases = UNLOCK_CATEGORY_ALIASES[trimmed] ?? [];
+    for (const alias of aliases) expanded.add(alias);
+  }
+
+  return [...expanded];
+}
 
 /**
  * Returns the set of unlock categories available to a team: a category is
@@ -43,19 +74,21 @@ export async function getUnlockedCategories(
 
     const assignedCats: string[] = [];
     for (const a of assigned) {
-      if (a.category && (UNLOCK_CATEGORIES as readonly string[]).includes(a.category)) {
-        assignedCats.push(a.category);
-        continue;
-      }
-      try {
-        const arr = JSON.parse(a.designed_for || "[]");
-        if (Array.isArray(arr)) {
-          for (const c of arr) {
-            if ((UNLOCK_CATEGORIES as readonly string[]).includes(c)) assignedCats.push(c);
+      const candidates = [a.category, a.designed_for].filter(Boolean) as string[];
+      for (const candidate of candidates) {
+        if (!candidate) continue;
+        if (candidate.startsWith("[") || candidate.startsWith("{")) {
+          try {
+            const arr = JSON.parse(candidate);
+            if (Array.isArray(arr)) {
+              assignedCats.push(...expandUnlockCategories(arr.map((v) => String(v))));
+            }
+            continue;
+          } catch {
+            // Ignore malformed JSON and fall through below.
           }
         }
-      } catch {
-        /* ignore malformed designed_for */
+        assignedCats.push(...expandUnlockCategories([candidate]));
       }
     }
 
@@ -64,7 +97,7 @@ export async function getUnlockedCategories(
     const tagged = [
       ...rows.map((r) => r.unlock_category),
       ...assignedCats,
-    ].filter((c): c is string => !!c);
+    ].flatMap((value) => expandUnlockCategories([value]));
 
     // Unlocking exists but nothing is category-tagged → unlock everything.
     if (tagged.length === 0) return all;
@@ -100,6 +133,7 @@ export async function getCurrentTeamOrderAccess(
   };
 
   try {
+    const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
     const userId = cookieStore.get("tenant_user_id")?.value || null;
     if (!userId) return empty;

@@ -61,44 +61,66 @@ export default function PasswordGate({
   });
 
   useEffect(() => {
-    // Fetch ordering status
-    fetch("/api/orders/status")
-      .then((res) => res.json())
-      .then((data) => {
-        setOrderingActive(data.orderingActive);
-      })
-      .catch((err) => {
-        console.error("Error fetching ordering status:", err);
-        setOrderingActive(true);
-      });
+    const restoreSession = async () => {
+      // Fetch ordering status
+      fetch("/api/orders/status")
+        .then((res) => res.json())
+        .then((data) => {
+          setOrderingActive(data.orderingActive);
+        })
+        .catch((err) => {
+          console.error("Error fetching ordering status:", err);
+          setOrderingActive(true);
+        });
 
-    // Check if already authenticated this session and not expired
-    try {
-      const stored = sessionStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (
-          parsed && parsed.auth === true &&
-          typeof parsed.ts === "number" &&
-          Date.now() - parsed.ts < 3600 * 1000 // 1 hour
-        ) {
-          setAuthenticated(true);
+      // Prefer a valid server-side session cookie when available.
+      if (verifyEndpoint) {
+        try {
+          const res = await fetch("/api/admin/session", { credentials: "include" });
+          if (res.ok) {
+            try {
+              sessionStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
+              localStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
+            } catch {}
+            setAuthenticated(true);
+            setChecking(false);
+            return;
+          }
+        } catch {
+          // Ignore and fall through to local session check.
         }
       }
-    } catch {
-      // sessionStorage unavailable (e.g. private browsing)
-    }
 
-    if (passwordless) {
+      // Check if already authenticated this session and not expired
       try {
-        sessionStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
-        localStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
-      } catch {}
-      setAuthenticated(true);
-    }
+        const stored = sessionStorage.getItem(storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (
+            parsed && parsed.auth === true &&
+            typeof parsed.ts === "number" &&
+            Date.now() - parsed.ts < 3600 * 1000 // 1 hour
+          ) {
+            setAuthenticated(true);
+          }
+        }
+      } catch {
+        // sessionStorage unavailable (e.g. private browsing)
+      }
 
-    setChecking(false);
-  }, [storageKey, passwordless]);
+      if (passwordless) {
+        try {
+          sessionStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
+          localStorage.setItem(storageKey, JSON.stringify({ auth: true, ts: Date.now() }));
+        } catch {}
+        setAuthenticated(true);
+      }
+
+      setChecking(false);
+    };
+
+    restoreSession();
+  }, [storageKey, passwordless, verifyEndpoint]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
