@@ -71,7 +71,7 @@ export async function GET(request: Request) {
     let designSql = "SELECT * FROM designs WHERE active = 1";
     const designParams: any[] = [];
     if (effectiveTenantId) {
-      designSql += " AND tenant_id = ?";
+      designSql += " AND (tenant_id = ? OR tenant_id = 'default-tenant' OR tenant_id IS NULL)";
       designParams.push(effectiveTenantId);
     }
     if (effectiveTeamId && hasTeamScopedDesigns) {
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     let productDesignSql = "SELECT product_type_id, design_id FROM product_designs WHERE active = 1";
     const productDesignParams: any[] = [];
     if (effectiveTenantId) {
-      productDesignSql += " AND tenant_id = ?";
+      productDesignSql += " AND (tenant_id = ? OR tenant_id = 'default-tenant' OR tenant_id IS NULL)";
       productDesignParams.push(effectiveTenantId);
     }
     if (effectiveTeamId && hasTeamScopedDesigns) {
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
     let productTypesSql = "SELECT id, name, description, category, example_url, fit_options, active, sort_order, tenant_id FROM product_types WHERE active = 1";
     const productTypeParams: any[] = [];
     if (effectiveTenantId) {
-      productTypesSql += " AND tenant_id = ?";
+      productTypesSql += " AND (tenant_id = ? OR tenant_id = 'default-tenant' OR tenant_id IS NULL)";
       productTypeParams.push(effectiveTenantId);
     }
     if (effectiveTeamId && hasTeamScopedProducts) {
