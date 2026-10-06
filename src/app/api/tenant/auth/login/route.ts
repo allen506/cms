@@ -29,20 +29,26 @@ export async function POST(request: NextRequest) {
       [tenant.id, normalizedEmail]
     );
 
-    const tenantAdmin = !user ? await queryOne<any>(
+    const tenantAdmin = await queryOne<any>(
       `SELECT id, email, password_hash, full_name AS name, role, status
        FROM tenant_admins
        WHERE tenant_id = ? AND LOWER(email) = LOWER(?)`,
       [tenant.id, normalizedEmail]
-    ) : null;
+    );
 
-    const account = user || tenantAdmin;
+    const candidates = [user, tenantAdmin].filter(Boolean);
+    let account: any = null;
 
-    if (!account) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    for (const candidate of candidates) {
+      if (!candidate?.password_hash) continue;
+      const matches = await verifyPassword(String(password).trim(), candidate.password_hash);
+      if (matches) {
+        account = candidate;
+        break;
+      }
     }
 
-    if (!(await verifyPassword(String(password).trim(), account.password_hash))) {
+    if (!account) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
