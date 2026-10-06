@@ -31,13 +31,20 @@ export async function getUnlockedCategories(
       [teamId]
     );
 
-    if (rows.length === 0) return new Set(); // no approved designs yet
+    // Admin-assigned designs also unlock products (skipping the design request).
+    const assigned = await query<{ category: string | null }>(
+      `SELECT DISTINCT category FROM team_designs WHERE team_id = $1`,
+      [teamId]
+    );
 
-    const tagged = rows
-      .map((r) => r.unlock_category)
-      .filter((c): c is string => !!c);
+    if (rows.length === 0 && assigned.length === 0) return new Set(); // nothing unlocked
 
-    // Approved designs exist but none tagged → unlock everything.
+    const tagged = [
+      ...rows.map((r) => r.unlock_category),
+      ...assigned.map((r) => r.category),
+    ].filter((c): c is string => !!c);
+
+    // Unlocking exists but nothing is category-tagged → unlock everything.
     if (tagged.length === 0) return all;
 
     return new Set(tagged);

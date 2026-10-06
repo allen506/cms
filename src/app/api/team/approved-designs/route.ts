@@ -77,6 +77,29 @@ export async function GET(req: NextRequest) {
       imageUrl: fileSrc(r.file_path),
     }));
 
+    // Admin-assigned catalog designs (skip the design-request step).
+    const assigned = await query<{
+      design_id: string;
+      name: string;
+      category: string | null;
+    }>(
+      `SELECT td.design_id, d.name, td.category
+         FROM team_designs td
+         JOIN designs d ON d.id = td.design_id
+        WHERE td.tenant_id = ? AND td.team_id = ? AND d.active = 1
+        ORDER BY d.sort_order, d.name`,
+      [tenant.id, user.team_id]
+    );
+
+    for (const a of assigned) {
+      designs.push({
+        id: a.design_id,
+        name: a.name,
+        category: a.category,
+        imageUrl: `/api/designs/${a.design_id}/image`,
+      });
+    }
+
     return NextResponse.json({ designs });
   } catch (err) {
     console.error("approved-designs error:", err);

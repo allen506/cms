@@ -433,6 +433,19 @@ async function runMigrations(client: any): Promise<void> {
     // Link each order to the campaign it was placed in.
     `ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id TEXT`,
 
+    // Admin-assigned designs made available to a team (skips the design-request
+    // step). category optionally scopes a design to one product category.
+    `CREATE TABLE IF NOT EXISTS team_designs (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL REFERENCES tenants(id),
+      team_id TEXT NOT NULL,
+      design_id TEXT NOT NULL REFERENCES designs(id),
+      category TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_team_designs_unique ON team_designs(team_id, design_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_team_designs_team ON team_designs(tenant_id, team_id)`,
+
     // Legacy order/user metadata used by the app and payment flows.
     `ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_name TEXT`,
     `ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_email TEXT`,
