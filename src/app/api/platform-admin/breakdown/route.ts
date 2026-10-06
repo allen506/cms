@@ -16,11 +16,13 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenant_id');
 
     let tenantWhere = '';
+    let tenantWhereSummary = '';
     let paramIndex = 1;
     const params: any[] = [];
 
     if (tenantId) {
       tenantWhere = ` AND o.tenant_id = $${paramIndex}`;
+      tenantWhereSummary = ` AND orders.tenant_id = $${paramIndex}`;
       params.push(tenantId);
       paramIndex++;
     }
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
       exchangeRate,
       summary: {
         totalOrders: await queryOne<{ count: number }>(
-          `SELECT COUNT(*) as count FROM orders WHERE 1=1 ${tenantWhere}`,
+          `SELECT COUNT(*) as count FROM orders WHERE 1=1 ${tenantWhereSummary}`,
           params
         ),
         totalItems: await queryOne<{ total: number }>(
