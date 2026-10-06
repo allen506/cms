@@ -6,10 +6,13 @@ import { ProductType } from "@/lib/types";
 const PRODUCT_ICONS: Record<string, string> = {
   "pro-jersey": "J",
   "enduro-jersey": "J",
+  "cycling-jersey": "J",
   "enduro-short": "J",
+  "enduro-long": "J",
   "wind-vest": "V",
   jersey: "J",
   bib: "B",
+  "bib-licra": "B",
   vest: "V",
   shorts: "S",
   socks: "S",
@@ -26,11 +29,13 @@ const PRODUCT_TAGLINES: Record<string, string> = {
 const PRODUCT_THUMBNAILS: Record<string, { bg: string; accent: string; icon: string }> = {
   jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
   bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
+  "bib-licra": { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
   vest: { bg: "from-slate-100 via-gray-50 to-stone-100", accent: "text-slate-700", icon: "V" },
+  "wind-vest": { bg: "from-slate-100 via-gray-50 to-stone-100", accent: "text-slate-700", icon: "V" },
   shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "S" },
   socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "S" },
   gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "G" },
-  default: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "P" },
+  default: { bg: "from-slate-100 via-zinc-50 to-neutral-100", accent: "text-slate-700", icon: "P" },
 };
 
 const isLikelyImageUrl = (value?: string | null) => {
@@ -51,7 +56,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   jersey: "Jerseys",
   "enduro-short": "Enduro Short Sleeve",
   "enduro-long": "Enduro Long Sleeve",
+  "enduro-jersey": "Enduro Jerseys",
+  "cycling-jersey": "Cycling Jerseys",
+  "pro-jersey": "Pro Jerseys",
+  "wind-vest": "Wind Vests",
   bib: "Bibs",
+  "bib-licra": "Bib / Licra",
   vest: "Vests",
   gloves: "Gloves",
   shorts: "Shorts",
@@ -62,7 +72,12 @@ const CATEGORY_ICONS: Record<string, string> = {
   jersey: "J",
   "enduro-short": "J",
   "enduro-long": "J",
+  "enduro-jersey": "J",
+  "cycling-jersey": "J",
+  "pro-jersey": "J",
+  "wind-vest": "V",
   bib: "B",
+  "bib-licra": "B",
   vest: "V",
   gloves: "G",
   shorts: "S",
@@ -84,9 +99,22 @@ export default function ProductSelector({
 }: ProductSelectorProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
+  const normalizeCategory = (category?: string) => {
+    const value = (category || "").toLowerCase();
+    if (!value || value === "other") return "default";
+    if (value.includes("jersey")) return "jersey";
+    if (value.includes("bib")) return "bib";
+    if (value.includes("vest")) return "vest";
+    if (value.includes("glove")) return "gloves";
+    if (value.includes("sock")) return "socks";
+    if (value.includes("short")) return "shorts";
+    if (value.includes("long")) return "jersey";
+    return value;
+  };
+
   // Group products by category, preserving sort_order within each group
   const grouped = productTypes.reduce<Record<string, ProductType[]>>((acc, pt) => {
-    const cat = pt.category || "other";
+    const cat = normalizeCategory(pt.category);
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(pt);
     return acc;
@@ -136,7 +164,7 @@ export default function ProductSelector({
                     <div className="mb-4 rounded-2xl overflow-hidden border border-gray-200 shadow-inner">
                       <div
                         className={`relative flex h-24 items-center justify-center bg-gradient-to-br ${
-                          PRODUCT_THUMBNAILS[pt.category]?.bg || PRODUCT_THUMBNAILS.default.bg
+                          PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.bg || PRODUCT_THUMBNAILS.default.bg
                         }`}
                       >
                         {isLikelyImageUrl(getProductThumbSource(pt)) ? (
@@ -152,8 +180,8 @@ export default function ProductSelector({
                           />
                         ) : null}
                         {!isLikelyImageUrl(getProductThumbSource(pt)) && (
-                          <span className={`text-4xl font-black tracking-tight drop-shadow-sm ${PRODUCT_THUMBNAILS[pt.category]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
-                            {PRODUCT_ICONS[pt.id] || PRODUCT_ICONS[pt.category] || PRODUCT_THUMBNAILS[pt.category]?.icon || PRODUCT_THUMBNAILS.default.icon}
+                          <span className={`text-4xl font-black tracking-tight drop-shadow-sm ${PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
+                            {PRODUCT_ICONS[pt.id] || PRODUCT_ICONS[pt.category] || PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.icon || PRODUCT_THUMBNAILS.default.icon}
                           </span>
                         )}
                         {selectedProductId === pt.id && (

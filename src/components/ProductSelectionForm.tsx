@@ -148,12 +148,30 @@ export default function ProductSelectionForm({
   const availableProducts = products.filter((p) => !p.locked);
   const selectedProduct = products.find((p) => p.id === productId);
 
+  const normalizeCategory = (category?: string) => {
+    const value = (category || "").toLowerCase();
+    if (!value || value === "other") return "other";
+    if (value.includes("jersey")) return "jersey";
+    if (value.includes("bib")) return "bib";
+    if (value.includes("vest")) return "vest";
+    if (value.includes("glove")) return "gloves";
+    if (value.includes("sock")) return "socks";
+    if (value.includes("short")) return "shorts";
+    if (value.includes("long")) return "jersey";
+    return value;
+  };
+
   const categoryOrder = ["jersey", "enduro-short", "enduro-long", "bib", "vest", "gloves", "shorts", "socks", "other"];
   const categoryLabels: Record<string, string> = {
     jersey: "Jerseys",
     "enduro-short": "Enduro Short Sleeve",
     "enduro-long": "Enduro Long Sleeve",
+    "enduro-jersey": "Enduro Jerseys",
+    "cycling-jersey": "Cycling Jerseys",
+    "pro-jersey": "Pro Jerseys",
+    "wind-vest": "Wind Vests",
     bib: "Bibs",
+    "bib-licra": "Bib / Licra",
     vest: "Vests",
     gloves: "Gloves",
     shorts: "Shorts",
@@ -164,7 +182,12 @@ export default function ProductSelectionForm({
     jersey: "J",
     "enduro-short": "J",
     "enduro-long": "J",
+    "enduro-jersey": "J",
+    "cycling-jersey": "J",
+    "pro-jersey": "J",
+    "wind-vest": "V",
     bib: "B",
+    "bib-licra": "B",
     vest: "V",
     gloves: "G",
     shorts: "S",
@@ -174,14 +197,19 @@ export default function ProductSelectionForm({
 
   const categoryThumbStyles: Record<string, { bg: string; accent: string; icon: string }> = {
     jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "enduro-short": { bg: "from-sky-100 via-cyan-50 to-blue-100", accent: "text-sky-700", icon: "J" },
-    "enduro-long": { bg: "from-stone-100 via-neutral-50 to-amber-100", accent: "text-stone-700", icon: "J" },
+    "enduro-short": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+    "enduro-long": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+    "enduro-jersey": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+    "cycling-jersey": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+    "pro-jersey": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
+    "wind-vest": { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "V" },
     bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
+    "bib-licra": { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
     vest: { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "V" },
     gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "G" },
     shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "S" },
     socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "S" },
-    other: { bg: "from-amber-100 via-orange-100 to-stone-100", accent: "text-amber-800", icon: "P" },
+    other: { bg: "from-slate-100 via-zinc-50 to-neutral-100", accent: "text-slate-700", icon: "P" },
   };
 
   const isLikelyImageUrl = (value?: string | null) => {
@@ -199,7 +227,7 @@ export default function ProductSelectionForm({
   const getProductThumb = (p: Product) => p.example_url || p.image_url || "";
 
   const groupedProducts = availableProducts.reduce<Record<string, Product[]>>((acc, product) => {
-    const key = product.category || "other";
+    const key = normalizeCategory(product.category);
     acc[key] = acc[key] || [];
     acc[key].push(product);
     return acc;
