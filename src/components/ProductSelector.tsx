@@ -4,19 +4,19 @@ import { useState } from "react";
 import { ProductType } from "@/lib/types";
 
 const PRODUCT_ICONS: Record<string, string> = {
-  "pro-jersey": "J",
-  "enduro-jersey": "J",
-  "cycling-jersey": "J",
-  "enduro-short": "J",
-  "enduro-long": "J",
-  "wind-vest": "V",
-  jersey: "J",
-  bib: "B",
-  "bib-licra": "B",
-  vest: "V",
-  shorts: "S",
-  socks: "S",
-  gloves: "G",
+  "pro-jersey": "🚴",
+  "enduro-jersey": "🚴",
+  "cycling-jersey": "🚴",
+  "enduro-short": "👕",
+  "enduro-long": "🏔️",
+  "wind-vest": "🧥",
+  jersey: "🚴",
+  bib: "🩱",
+  "bib-licra": "🩱",
+  vest: "🧥",
+  shorts: "🩳",
+  socks: "🧦",
+  gloves: "🧤",
 };
 
 const PRODUCT_TAGLINES: Record<string, string> = {
@@ -27,15 +27,15 @@ const PRODUCT_TAGLINES: Record<string, string> = {
 };
 
 const PRODUCT_THUMBNAILS: Record<string, { bg: string; accent: string; icon: string }> = {
-  jersey: { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
-  bib: { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "B" },
-  "bib-licra": { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "B" },
-  vest: { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "V" },
-  "wind-vest": { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "V" },
-  shorts: { bg: "from-[#e7f4ea] via-[#edf8f1] to-[#dfeee4]", accent: "text-[#4d7c5d]", icon: "S" },
-  socks: { bg: "from-[#e8eefc] via-[#eef4ff] to-[#dfeaf9]", accent: "text-[#4c698d]", icon: "S" },
-  gloves: { bg: "from-[#f0ebfb] via-[#f7f3ff] to-[#e5def9]", accent: "text-[#5d4b8b]", icon: "G" },
-  default: { bg: "from-[#f5efe7] via-[#faf5ee] to-[#efe2d2]", accent: "text-[#6d5b4a]", icon: "P" },
+  jersey: { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "🚴" },
+  bib: { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "🩱" },
+  "bib-licra": { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "🩱" },
+  vest: { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "🧥" },
+  "wind-vest": { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "🧥" },
+  shorts: { bg: "from-[#e7f4ea] via-[#edf8f1] to-[#dfeee4]", accent: "text-[#4d7c5d]", icon: "🩳" },
+  socks: { bg: "from-[#e8eefc] via-[#eef4ff] to-[#dfeaf9]", accent: "text-[#4c698d]", icon: "🧦" },
+  gloves: { bg: "from-[#f0ebfb] via-[#f7f3ff] to-[#e5def9]", accent: "text-[#5d4b8b]", icon: "🧤" },
+  default: { bg: "from-[#f5efe7] via-[#faf5ee] to-[#efe2d2]", accent: "text-[#6d5b4a]", icon: "🧵" },
 };
 
 const isLikelyImageUrl = (value?: string | null) => {
