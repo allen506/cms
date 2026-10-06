@@ -152,18 +152,18 @@ export default function ProductSelector({
                   onClick={() => onSelect(pt.id)}
                   onMouseEnter={() => setHoveredId(pt.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className={`relative rounded-2xl overflow-hidden transition-all duration-200 text-left border-2 ${
+                  className={`relative rounded-[14px] overflow-hidden transition-all duration-200 text-left border-[1.5px] ${
                     selectedProductId === pt.id
-                      ? "border-blue-500 ring-4 ring-blue-100 shadow-md"
+                      ? "border-[#2d7ff9] ring-2 ring-[#dfeeff] shadow-[0_0_0_1px_rgba(45,127,249,0.1)]"
                       : hoveredId === pt.id
-                      ? "border-gray-200 shadow-md"
-                      : "border-transparent shadow-sm bg-white"
+                      ? "border-[#dfe3ea] shadow-sm"
+                      : "border-[#dfe3ea] shadow-sm bg-white"
                   }`}
                 >
-                  <div className="p-5 bg-white">
-                    <div className="mb-4 rounded-2xl overflow-hidden border border-gray-200 shadow-inner">
+                  <div className="p-3 bg-white">
+                    <div className="mb-3 rounded-[12px] overflow-hidden border border-[#dfe3ea] shadow-inner">
                       <div
-                        className={`relative flex h-24 items-center justify-center bg-gradient-to-br ${
+                        className={`relative flex h-[116px] items-center justify-center bg-gradient-to-br ${
                           PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.bg || PRODUCT_THUMBNAILS.default.bg
                         }`}
                       >
@@ -180,13 +180,13 @@ export default function ProductSelector({
                           />
                         ) : null}
                         {!isLikelyImageUrl(getProductThumbSource(pt)) && (
-                          <span className={`text-5xl font-semibold tracking-tight drop-shadow-sm ${PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
+                          <span className={`text-[52px] leading-none drop-shadow-sm ${PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
                             {PRODUCT_ICONS[pt.id] || PRODUCT_ICONS[pt.category] || PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.icon || PRODUCT_THUMBNAILS.default.icon}
                           </span>
                         )}
                         {selectedProductId === pt.id && (
-                          <div className="absolute right-2 top-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className="absolute right-2 top-2 bg-[#2d7ff9] text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                             </svg>
                           </div>
@@ -196,8 +196,8 @@ export default function ProductSelector({
 
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-sm text-gray-800">{pt.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="font-semibold text-[15px] text-gray-800 leading-snug">{pt.name}</p>
+                        <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
                           {PRODUCT_TAGLINES[pt.id] || pt.description}
                         </p>
                       </div>

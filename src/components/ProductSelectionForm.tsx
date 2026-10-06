@@ -487,14 +487,14 @@ export default function ProductSelectionForm({
                         key={p.id}
                         type="button"
                         onClick={() => selectProduct(p.id)}
-                        className={`text-left rounded-xl border-2 p-3 transition-all ${
+                        className={`text-left rounded-[14px] border-[1.5px] p-3 transition-all ${
                           selected
-                            ? "border-amber-500 ring-2 ring-amber-200 bg-amber-50"
-                            : "border-gray-200 hover:border-gray-300 bg-white"
+                            ? "border-[#2d7ff9] ring-2 ring-[#dfeeff] bg-[#f7fbff]"
+                            : "border-[#dfe3ea] hover:border-[#c8d1dc] bg-white"
                         }`}
                       >
-                        <div className="mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gradient-to-br shadow-inner">
-                          <div className={`relative flex h-24 items-center justify-center bg-gradient-to-br ${thumbnailStyle.bg}`}>
+                        <div className="mb-3 overflow-hidden rounded-[12px] border border-[#dfe3ea] bg-gradient-to-br shadow-inner">
+                          <div className={`relative flex h-[116px] items-center justify-center bg-gradient-to-br ${thumbnailStyle.bg}`}>
                             {isLikelyImageUrl(thumbUrl) ? (
                               <img
                                 src={thumbUrl}
@@ -503,7 +503,7 @@ export default function ProductSelectionForm({
                                 loading="lazy"
                               />
                             ) : (
-                              <span className={`text-5xl font-semibold tracking-tight drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
+                              <span className={`text-[52px] leading-none drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
                             )}
                             <span className="absolute right-2 top-2 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-700">
                               {p.teamQty || 0}
