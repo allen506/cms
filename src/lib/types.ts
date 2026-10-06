@@ -13,7 +13,8 @@ export interface ProductType {
   name: string;
   description: string;
   category: string;
-  example_url: string;
+  example_url?: string | null;
+  image_url?: string | null;
   active: number;
   sort_order: number;
   fit_options?: string; // JSON array e.g. '["unisex"]' or '["men","women"]'
