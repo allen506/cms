@@ -26,6 +26,15 @@ export function isAutoUnlockedTenant(tenantSlug?: string | null): boolean {
   return (tenantSlug ?? "").trim().toLowerCase() === "thinkmtb";
 }
 
+export function getAutoUnlockedTenantAccess(tenantSlug: string, teamId: string | null = null): TeamOrderAccess {
+  const unlocked = new Set<string>(UNLOCK_CATEGORIES);
+  return {
+    teamId,
+    unlocked,
+    hasApprovedDesign: isAutoUnlockedTenant(tenantSlug),
+  };
+}
+
 export function expandUnlockCategories(rawCategories: Array<string | null | undefined>): string[] {
   const expanded = new Set<string>();
 
@@ -137,6 +146,10 @@ export async function getCurrentTeamOrderAccess(
     unlocked: new Set(),
     hasApprovedDesign: false,
   };
+
+  if (isAutoUnlockedTenant(tenantSlug)) {
+    return getAutoUnlockedTenantAccess(tenantSlug);
+  }
 
   try {
     const { cookies } = await import("next/headers");

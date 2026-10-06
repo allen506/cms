@@ -1,11 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { expandUnlockCategories, isAutoUnlockedTenant } from "./unlock.ts";
+import { expandUnlockCategories, getAutoUnlockedTenantAccess, isAutoUnlockedTenant } from "./unlock.ts";
 
 test("ThinkMTB is treated as an auto-unlocked tenant", () => {
   assert.equal(isAutoUnlockedTenant("thinkmtb"), true);
   assert.equal(isAutoUnlockedTenant("other-team"), false);
+});
+
+test("public ThinkMTB access is auto-unlocked without a user session", () => {
+  const access = getAutoUnlockedTenantAccess("thinkmtb");
+
+  assert.equal(access.hasApprovedDesign, true);
+  assert.deepEqual([...access.unlocked].sort(), [...new Set(["enduro-jersey", "cycling-jersey", "bib-licra"])].sort());
 });
 
 test("expands cycling and enduro design categories to product categories", () => {
