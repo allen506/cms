@@ -52,13 +52,29 @@ export async function GET(request: Request) {
     const effectiveTenantId = scope.tenantId;
     const effectiveTeamId = scope.teamId;
 
+    const teamScopedDesignCount = effectiveTenantId && effectiveTeamId
+      ? await queryOne<{ count: bigint | number | string }>(
+          "SELECT COUNT(*) AS count FROM designs WHERE tenant_id = ? AND team_id = ? AND active = 1",
+          [effectiveTenantId, effectiveTeamId]
+        )
+      : null;
+    const teamScopedProductCount = effectiveTenantId && effectiveTeamId
+      ? await queryOne<{ count: bigint | number | string }>(
+          "SELECT COUNT(*) AS count FROM team_products WHERE tenant_id = ? AND team_id = ?",
+          [effectiveTenantId, effectiveTeamId]
+        )
+      : null;
+
+    const hasTeamScopedDesigns = Number(teamScopedDesignCount?.count ?? 0) > 0;
+    const hasTeamScopedProducts = Number(teamScopedProductCount?.count ?? 0) > 0;
+
     let designSql = "SELECT * FROM designs WHERE active = 1";
     const designParams: any[] = [];
     if (effectiveTenantId) {
       designSql += " AND tenant_id = ?";
       designParams.push(effectiveTenantId);
     }
-    if (effectiveTeamId) {
+    if (effectiveTeamId && hasTeamScopedDesigns) {
       designSql += " AND team_id = ?";
       designParams.push(effectiveTeamId);
     }
@@ -70,7 +86,7 @@ export async function GET(request: Request) {
       productDesignSql += " AND tenant_id = ?";
       productDesignParams.push(effectiveTenantId);
     }
-    if (effectiveTeamId) {
+    if (effectiveTeamId && hasTeamScopedDesigns) {
       productDesignSql += " AND team_id = ?";
       productDesignParams.push(effectiveTeamId);
     }
@@ -81,7 +97,7 @@ export async function GET(request: Request) {
       productTypesSql += " AND tenant_id = ?";
       productTypeParams.push(effectiveTenantId);
     }
-    if (effectiveTeamId) {
+    if (effectiveTeamId && hasTeamScopedProducts) {
       productTypesSql += " AND id IN (SELECT product_type_id FROM team_products WHERE tenant_id = ? AND team_id = ?)";
       productTypeParams.push(effectiveTenantId ?? "", effectiveTeamId);
     }
