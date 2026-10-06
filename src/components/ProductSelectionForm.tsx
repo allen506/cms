@@ -196,20 +196,20 @@ export default function ProductSelectionForm({
   };
 
   const categoryThumbStyles: Record<string, { bg: string; accent: string; icon: string }> = {
-    jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "enduro-short": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "enduro-long": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "enduro-jersey": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "cycling-jersey": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "pro-jersey": { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-    "wind-vest": { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "V" },
-    bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
-    "bib-licra": { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
-    vest: { bg: "from-slate-100 via-gray-50 to-zinc-100", accent: "text-slate-700", icon: "V" },
-    gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "G" },
-    shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "S" },
-    socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "S" },
-    other: { bg: "from-slate-100 via-zinc-50 to-neutral-100", accent: "text-slate-700", icon: "P" },
+    jersey: { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+    "enduro-short": { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+    "enduro-long": { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+    "enduro-jersey": { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+    "cycling-jersey": { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+    "pro-jersey": { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+    "wind-vest": { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "V" },
+    bib: { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "B" },
+    "bib-licra": { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "B" },
+    vest: { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "V" },
+    gloves: { bg: "from-[#f0ebfb] via-[#f7f3ff] to-[#e5def9]", accent: "text-[#5d4b8b]", icon: "G" },
+    shorts: { bg: "from-[#e7f4ea] via-[#edf8f1] to-[#dfeee4]", accent: "text-[#4d7c5d]", icon: "S" },
+    socks: { bg: "from-[#e8eefc] via-[#eef4ff] to-[#dfeaf9]", accent: "text-[#4c698d]", icon: "S" },
+    other: { bg: "from-[#f5efe7] via-[#faf5ee] to-[#efe2d2]", accent: "text-[#6d5b4a]", icon: "P" },
   };
 
   const isLikelyImageUrl = (value?: string | null) => {
@@ -503,7 +503,7 @@ export default function ProductSelectionForm({
                                 loading="lazy"
                               />
                             ) : (
-                              <span className={`text-4xl font-black tracking-tight drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
+                              <span className={`text-5xl font-semibold tracking-tight drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
                             )}
                             <span className="absolute right-2 top-2 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-700">
                               {p.teamQty || 0}

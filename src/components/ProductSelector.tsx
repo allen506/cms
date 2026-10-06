@@ -27,15 +27,15 @@ const PRODUCT_TAGLINES: Record<string, string> = {
 };
 
 const PRODUCT_THUMBNAILS: Record<string, { bg: string; accent: string; icon: string }> = {
-  jersey: { bg: "from-amber-100 via-orange-50 to-yellow-100", accent: "text-amber-700", icon: "J" },
-  bib: { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
-  "bib-licra": { bg: "from-rose-100 via-pink-50 to-orange-100", accent: "text-rose-700", icon: "B" },
-  vest: { bg: "from-slate-100 via-gray-50 to-stone-100", accent: "text-slate-700", icon: "V" },
-  "wind-vest": { bg: "from-slate-100 via-gray-50 to-stone-100", accent: "text-slate-700", icon: "V" },
-  shorts: { bg: "from-emerald-100 via-lime-50 to-green-100", accent: "text-emerald-700", icon: "S" },
-  socks: { bg: "from-cyan-100 via-sky-50 to-blue-100", accent: "text-cyan-700", icon: "S" },
-  gloves: { bg: "from-violet-100 via-purple-50 to-fuchsia-100", accent: "text-violet-700", icon: "G" },
-  default: { bg: "from-slate-100 via-zinc-50 to-neutral-100", accent: "text-slate-700", icon: "P" },
+  jersey: { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "J" },
+  bib: { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "B" },
+  "bib-licra": { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "B" },
+  vest: { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "V" },
+  "wind-vest": { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "V" },
+  shorts: { bg: "from-[#e7f4ea] via-[#edf8f1] to-[#dfeee4]", accent: "text-[#4d7c5d]", icon: "S" },
+  socks: { bg: "from-[#e8eefc] via-[#eef4ff] to-[#dfeaf9]", accent: "text-[#4c698d]", icon: "S" },
+  gloves: { bg: "from-[#f0ebfb] via-[#f7f3ff] to-[#e5def9]", accent: "text-[#5d4b8b]", icon: "G" },
+  default: { bg: "from-[#f5efe7] via-[#faf5ee] to-[#efe2d2]", accent: "text-[#6d5b4a]", icon: "P" },
 };
 
 const isLikelyImageUrl = (value?: string | null) => {
@@ -180,7 +180,7 @@ export default function ProductSelector({
                           />
                         ) : null}
                         {!isLikelyImageUrl(getProductThumbSource(pt)) && (
-                          <span className={`text-4xl font-black tracking-tight drop-shadow-sm ${PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
+                          <span className={`text-5xl font-semibold tracking-tight drop-shadow-sm ${PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
                             {PRODUCT_ICONS[pt.id] || PRODUCT_ICONS[pt.category] || PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.icon || PRODUCT_THUMBNAILS.default.icon}
                           </span>
                         )}
