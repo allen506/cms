@@ -542,13 +542,21 @@ export default function OrderForm({
                     const price = getItemPrice(item.productTypeId, item.quantity);
                     if (!price) return null;
                     return (
-                      <div className="mt-3 pt-3 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-1">
-                        <span className="text-gray-500 text-xs sm:text-sm">
-                          ${asNumber(price.unitUSD).toFixed(2)} × {item.quantity} · Based on {price.teamTotal} total team units
-                        </span>
-                        <span className="font-semibold text-gray-800">
-                          ${asNumber(price.totalUSD).toFixed(2)}
-                        </span>
+                      <div className="mt-4 p-4 bg-green-50 border border-green-300 rounded-lg">
+                        <p className="text-xs text-green-700 font-bold mb-2">PRICE FOR THIS ITEM</p>
+                        <div className="flex items-baseline justify-between">
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">
+                              ${asNumber(price.totalUSD).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              ${asNumber(price.unitUSD).toFixed(2)} × {item.quantity} units
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 text-right">
+                            Based on {price.teamTotal} total team units for pricing
+                          </p>
+                        </div>
                       </div>
                     );
                   })()}

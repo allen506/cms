@@ -749,23 +749,41 @@ export default function ProductSelectionForm({
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-gray-600">
-              {quantity} ×{" "}
-              {formatMoney(unitPriceFor(selectedProduct, quantity, addonIds).crc)} ={" "}
-              <span className="font-semibold text-gray-900">
-                {formatMoney(unitPriceFor(selectedProduct, quantity, addonIds).crc * quantity)}
-              </span>
-            </p>
-            <button
-              type="button"
-              onClick={addToCart}
-              disabled={!canAdd}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold px-5 py-2.5 rounded-lg"
-            >
-              + Add to Order
-            </button>
-          </div>
+          {(() => {
+            const price = unitPriceFor(selectedProduct, quantity, addonIds);
+            const totalCrc = price.crc * quantity;
+            return (
+              <div className="space-y-3 pt-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-xs text-blue-700 font-medium mb-2">PRICE FOR THIS ORDER</p>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">
+                        ${(price.usd * quantity).toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {quantity} × ${price.usd.toFixed(2)} per unit
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-gray-700">
+                        {formatMoney(totalCrc)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">CRC</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addToCart}
+                  disabled={!canAdd}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold px-5 py-3 rounded-lg transition-colors"
+                >
+                  + Add to Order
+                </button>
+              </div>
+            );
+          })()}
         </div>
       )}
 
