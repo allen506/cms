@@ -95,6 +95,7 @@ export default function ProductSelector({
   onSelect,
 }: ProductSelectorProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const normalizeCategory = (category?: string, productId?: string) => {
     const value = (category || "").toLowerCase();
@@ -131,13 +132,49 @@ export default function ProductSelector({
 
   const getProductThumbSource = (pt: ProductType) => pt.example_url || pt.image_url || "";
 
+  // Determine which categories to show based on filter
+  const categoriesToShow = selectedCategory ? [selectedCategory] : categories;
+
   return (
     <div>
       <h3 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800">
         Step 2 — Select Your Product
       </h3>
+
+      {/* Category Filter Tabs */}
+      <div className="mb-8">
+        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Filter by category:</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory(null)}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              selectedCategory === null
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            All Products
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {CATEGORY_ICONS[cat] || "📦"} {CATEGORY_LABELS[cat] || cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-6">
-        {categories.map((cat) => (
+        {categoriesToShow.map((cat) => (
           <div key={cat}>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">{CATEGORY_ICONS[cat] || "📦"}</span>
