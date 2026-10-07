@@ -249,7 +249,6 @@ export default function ProductManager() {
                   <option value="enduro-jersey">Enduro Jersey</option>
                   <option value="cycling-jersey">Cycling Jersey</option>
                   <option value="bib-licra">Bib / Licra</option>
-                  <option value="wind-vest">Wind Vest</option>
                   <option value="vest">Vest</option>
                   <option value="other">Other</option>
                 </select>

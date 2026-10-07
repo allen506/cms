@@ -383,8 +383,7 @@ function initializeDb(db: Database.Database) {
     VALUES ('enduro-short', 'Enduro Short Sleeve', 'Short Sleeve Dry Fit Jersey', 'jersey',
       'https://www.cmssportswear.com/tshirt-personalizada', 3)
   `).run();
-  // Shift wind-vest sort order if needed to make room
-  db.prepare(`UPDATE product_types SET sort_order = 4 WHERE id = 'wind-vest' AND sort_order = 3`).run();
+
 
   // Add enduro-short pricing tiers if not already present
   const shortTierCount = (db.prepare(
@@ -563,7 +562,6 @@ function seedData(db: Database.Database) {
     ["pro-jersey", "CMS PRO LINE Cycling Jersey", "Jersey Only - Pro line", "jersey", "https://www.cmssportswear.com/linea-pro-personalizados", 1],
     ["enduro-jersey", "Enduro Long Sleeve", "Long Sleeve Jersey", "jersey", "https://www.cmssportswear.com/jersey-downhill-bmx-enduro-personalizado", 2],
     ["enduro-short", "Enduro Short Sleeve", "Short Sleeve Dry Fit Jersey", "jersey", "https://www.cmssportswear.com/tshirt-personalizada", 3],
-    ["wind-vest", "Wind Vest (Windbreaker)", "Windbreaker Vest", "vest", "https://www.cmssportswear.com/hombres-corta-vientos-chalecos", 4],
   ];
   for (const p of products) {
     insertProduct.run(...p);
@@ -600,11 +598,6 @@ function seedData(db: Database.Database) {
   ];
   for (const t of enduroTiers) {
     insertTier.run("enduro-jersey", t[0], t[1], t[2], t[3]);
-  }
-
-  // Wind vest pricing (same as enduro long)
-  for (const t of enduroTiers) {
-    insertTier.run("wind-vest", t[0], t[1], t[2], t[3]);
   }
 
   // Enduro short sleeve pricing
