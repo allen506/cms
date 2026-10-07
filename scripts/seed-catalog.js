@@ -58,11 +58,12 @@ const STANDARD_DESIGNS = [
   { id: "fd-12", name: "Enduro Green Long Sleeve", sort_order: 15, description: "ThinkMTB legacy enduro long-sleeve design in green", image_url: "/final-designs/1774489869859_1000503582.png", designed_for: JSON.stringify(["enduro-jersey"]) },
   { id: "fd-13", name: "Enduro Black Long Sleeve", sort_order: 16, description: "ThinkMTB legacy enduro long-sleeve design in black", image_url: "/final-designs/1774489905710_1000503573.png", designed_for: JSON.stringify(["enduro-jersey"]) },
   { id: "fd-14", name: "Enduro White Long Sleeve", sort_order: 17, description: "ThinkMTB legacy enduro long-sleeve design in white", image_url: "/final-designs/1774489926095_1000503580.png", designed_for: JSON.stringify(["enduro-jersey"]) },
-  { id: "design-thinkmtb-enduro", name: "ThinkMTB Enduro Jersey", sort_order: 18, description: "Official ThinkMTB enduro jersey design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey"]) },
-  { id: "design-1787605520817", name: "Enduro Purple Long Sleeve", sort_order: 19, description: "ThinkMTB enduro long-sleeve purple design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-jersey"]) },
+  { id: "design-thinkmtb-enduro", name: "ThinkMTB Enduro Jersey", sort_order: 18, description: "Official ThinkMTB enduro jersey design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-long"]) },
+  { id: "design-1787605520817", name: "Enduro Purple Long Sleeve", sort_order: 19, description: "ThinkMTB enduro long-sleeve purple design", image_url: "/designs/design-1787605520814-enduro-purple-long-s.png", designed_for: JSON.stringify(["enduro-long"]) },
   { id: "design-1787605788329", name: "Enduro Purple Short Sleeve", sort_order: 20, description: "ThinkMTB enduro short-sleeve purple design", image_url: "/designs/design-1787605788327-enduro-purple-short-.png", designed_for: JSON.stringify(["enduro-short"]) },
   { id: "design-rivian-enduro", name: "Friends as Family", sort_order: 21, description: "Custom Rivian enduro jersey design featuring the Friends as Family graphic", image_url: "/designs/design-1791219676230-rivian-enduro.png", designed_for: JSON.stringify(["enduro-jersey", "enduro-short"]) },
   { id: "fd-16", name: "Bib ThinkMTB 2026 Black", sort_order: 22, description: "Legacy ThinkMTB bib design in black", image_url: "/final-designs/1787277944521_Gemini_Generated_Image_c6k784c6k784c6k7.jpeg", designed_for: JSON.stringify(["bib"]) },
+  { id: "design-rivian-enduro", name: "Friends as Family", sort_order: 21, description: "Custom Rivian enduro jersey design featuring the Friends as Family graphic", image_url: "/designs/design-1791219676230-rivian-enduro.png", designed_for: JSON.stringify(["enduro-long", "enduro-short"]) },
 ];
 
 const STANDARD_TIERS = (p) => [
@@ -94,8 +95,8 @@ const PRODUCTS = [
   {
     id: "pt_enduro_jersey_long",
     name: "Enduro/BMX/Downhill Jersey (Long Sleeve)",
-    category: "enduro-jersey",
-    unlock_category: "enduro-jersey",
+    category: "enduro-long",
+    unlock_category: "enduro-long",
     example_url: "https://www.cmssportswear.com/jersey-downhill-bmx-enduro-personalizado",
     fit_options: ["unisex"],
     sort_order: 10,
@@ -105,14 +106,14 @@ const PRODUCTS = [
   {
     id: "pt_enduro_tshirt_short",
     name: "Enduro/BMX/Downhill T-Shirt (Short Sleeve)",
-    category: "enduro-jersey",
-    unlock_category: "enduro-jersey",
+    category: "enduro-short",
+    unlock_category: "enduro-short",
     example_url: "https://www.cmssportswear.com/jersey-downhill-bmx-enduro-personalizado",
     fit_options: ["unisex"],
     sort_order: 20,
     tiers: STANDARD_TIERS([25000, 23000, 21000, 19000, 17000, 15000, 13000]),
     addons: [],
-  },
+  }
 
   // ----- Cycling Jerseys (long-sleeve add-on) -----
   {

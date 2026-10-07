@@ -153,29 +153,29 @@ export default function ProductSelectionForm({
     const productKey = (productId || category || "").toLowerCase();
 
     if (!value || value === "other") return "other";
-    if (productKey === "enduro-jersey" || productKey === "enduro-short" || productKey === "enduro-long") return "enduro-jersey";
+    if (productKey === "enduro-long") return "enduro-long";
+    if (productKey === "enduro-short") return "enduro-short";
+    if (productKey === "enduro-jersey") return "enduro-long"; // legacy mapping
     if (productKey === "cycling-jersey" || productKey === "pro-jersey") return "cycling-jersey";
-    if (value.includes("enduro") && (value.includes("short") || value.includes("long"))) return "enduro-jersey";
+    if (value.includes("enduro") && value.includes("long")) return "enduro-long";
+    if (value.includes("enduro") && value.includes("short")) return "enduro-short";
+    if (value.includes("enduro")) return "enduro-long"; // default to long
     if (value.includes("cycling") || value.includes("pro line") || (value.includes("jersey") && !value.includes("enduro"))) return "cycling-jersey";
     if (value.includes("bib")) return "bib";
     if (value.includes("vest")) return "vest";
     if (value.includes("glove")) return "gloves";
     if (value.includes("sock")) return "socks";
     if (value.includes("short")) return "shorts";
-    if (value.includes("long")) return "cycling-jersey";
     return value;
   };
 
-  const categoryOrder = ["enduro-jersey", "cycling-jersey", "bib", "vest", "gloves", "shorts", "socks", "other"];
+  const categoryOrder = ["jersey", "enduro-short", "enduro-long", "cycling-jersey", "bib", "vest", "gloves", "shorts", "socks", "other"];
   const categoryLabels: Record<string, string> = {
     jersey: "Jerseys",
-    "enduro-short": "Enduro MTB Short Sleeve",
-    "enduro-long": "Enduro MTB Long Sleeve",
-    "enduro-jersey": "Enduro MTB Jerseys",
+    "enduro-short": "Enduro Short Sleeve",
+    "enduro-long": "Enduro Long Sleeve",
     "cycling-jersey": "Cycling Jerseys",
-    "pro-jersey": "Pro Jerseys",
     bib: "Bibs",
-    "bib-licra": "Bib / Licra",
     vest: "Vests",
     gloves: "Gloves",
     shorts: "Shorts",
@@ -186,16 +186,13 @@ export default function ProductSelectionForm({
     jersey: "🚴",
     "enduro-short": "🏄",
     "enduro-long": "🏄",
-    "enduro-jersey": "🏄",
     "cycling-jersey": "🚴",
-    "pro-jersey": "🚴",
     bib: "🩳",
-    "bib-licra": "🩳",
     vest: "🧥",
     gloves: "🧤",
     shorts: "🩳",
     socks: "🧦",
-    other: "🧵",
+    other: "📦",
   };
 
   const categoryThumbStyles: Record<string, { bg: string; accent: string; icon: string }> = {
