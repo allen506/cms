@@ -540,7 +540,17 @@ export default function OrderForm({
                   {/* Per-item price */}
                   {item.productTypeId && (() => {
                     const price = getItemPrice(item.productTypeId, item.quantity);
-                    if (!price) return null;
+                    if (!price) {
+                      return (
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-xs text-amber-700 font-semibold">⚠️ Pricing data loading...</p>
+                          <p className="text-xs text-amber-600 mt-1">
+                            {!exchangeRate ? "Exchange rate not loaded " : ""}
+                            {exchangeRate && !getUnitPriceCRC(item.productTypeId, 1) ? "No pricing tier found" : ""}
+                          </p>
+                        </div>
+                      );
+                    }
                     return (
                       <div className="mt-4 p-4 bg-green-50 border border-green-300 rounded-lg">
                         <p className="text-xs text-green-700 font-bold mb-2">PRICE FOR THIS ITEM</p>
