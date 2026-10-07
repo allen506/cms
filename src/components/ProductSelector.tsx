@@ -181,11 +181,7 @@ export default function ProductSelector({
                             }}
                           />
                         ) : null}
-                        {!isLikelyImageUrl(getProductThumbSource(pt)) && (
-                          <span className={`text-[52px] leading-none drop-shadow-sm ${PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.accent || PRODUCT_THUMBNAILS.default.accent}`}>
-                            {PRODUCT_ICONS[pt.id] || PRODUCT_ICONS[pt.category] || PRODUCT_THUMBNAILS[normalizeCategory(pt.category)]?.icon || PRODUCT_THUMBNAILS.default.icon}
-                          </span>
-                        )}
+
                         {selectedProductId === pt.id && (
                           <div className="absolute right-2 top-2 bg-[#2d7ff9] text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

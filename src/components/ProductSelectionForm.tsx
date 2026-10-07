@@ -497,15 +497,13 @@ export default function ProductSelectionForm({
                       >
                         <div className="mb-3 overflow-hidden rounded-[12px] border border-[#dfe3ea] bg-gradient-to-br shadow-inner">
                           <div className={`relative flex h-[116px] items-center justify-center bg-gradient-to-br ${thumbnailStyle.bg}`}>
-                            {isLikelyImageUrl(thumbUrl) ? (
+                            {isLikelyImageUrl(thumbUrl) && (
                               <img
                                 src={thumbUrl}
                                 alt={p.name}
                                 className="h-full w-full object-cover"
                                 loading="lazy"
                               />
-                            ) : (
-                              <span className={`text-[52px] leading-none drop-shadow-sm ${thumbnailStyle.accent}`}>{thumbnailStyle.icon}</span>
                             )}
                             <span className="absolute right-2 top-2 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-700">
                               {p.teamQty || 0}
