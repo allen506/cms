@@ -5,7 +5,7 @@ import { ProductType } from "@/lib/types";
 
 const PRODUCT_ICONS: Record<string, string> = {
   "pro-jersey": "🚴",
-  "enduro-jersey": "�",
+  "enduro-jersey": "🏄",
   "cycling-jersey": "🚴",
   "enduro-short": "🏄",
   "enduro-long": "🏄",
