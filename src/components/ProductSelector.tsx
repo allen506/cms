@@ -5,13 +5,13 @@ import { ProductType } from "@/lib/types";
 
 const PRODUCT_ICONS: Record<string, string> = {
   "pro-jersey": "🚴",
-  "enduro-jersey": "🏔️",
+  "enduro-jersey": "�",
   "cycling-jersey": "🚴",
-  "enduro-short": "🏔️",
-  "enduro-long": "🏔️",
+  "enduro-short": "🏄",
+  "enduro-long": "🏄",
   jersey: "🚴",
-  bib: "🧢",
-  "bib-licra": "🧢",
+  bib: "🩳",
+  "bib-licra": "🩳",
   vest: "🧥",
   shorts: "🩳",
   socks: "🧦",
