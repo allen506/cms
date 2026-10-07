@@ -553,20 +553,29 @@ export default function OrderForm({
                     }
                     return (
                       <div className="mt-4 p-4 bg-green-50 border border-green-300 rounded-lg">
-                        <p className="text-xs text-green-700 font-bold mb-2">PRICE FOR THIS ITEM</p>
-                        <div className="flex items-baseline justify-between">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
+                            <p className="text-xs text-green-700 font-bold mb-1">PRICE PER ITEM</p>
+                            <p className="text-2xl font-bold text-gray-900">
+                              ${asNumber(price.unitUSD).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              ₡{price.unitCRC.toLocaleString("es-CR")}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-green-700 font-bold mb-1">TOTAL FOR {item.quantity} ITEM{item.quantity !== 1 ? 'S' : ''}</p>
                             <p className="text-2xl font-bold text-gray-900">
                               ${asNumber(price.totalUSD).toFixed(2)}
                             </p>
                             <p className="text-xs text-gray-600 mt-1">
-                              ${asNumber(price.unitUSD).toFixed(2)} × {item.quantity} units
+                              ₡{price.totalCRC.toLocaleString("es-CR")}
                             </p>
                           </div>
-                          <p className="text-xs text-gray-500 text-right">
-                            Based on {price.teamTotal} total team units for pricing
-                          </p>
                         </div>
+                        <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-green-200">
+                          Based on {price.teamTotal} total team units — pricing tier applied
+                        </p>
                       </div>
                     );
                   })()}
