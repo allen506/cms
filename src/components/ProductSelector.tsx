@@ -67,18 +67,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  jersey: "J",
-  "enduro-short": "J",
-  "enduro-long": "J",
-  "enduro-jersey": "J",
-  "cycling-jersey": "J",
-  "pro-jersey": "J",
-  bib: "B",
-  "bib-licra": "B",
-  vest: "V",
-  gloves: "G",
-  shorts: "S",
-  socks: "S",
+  jersey: "🚴",
+  "enduro-short": "🏄",
+  "enduro-long": "🏄",
+  "enduro-jersey": "🏄",
+  "cycling-jersey": "🚴",
+  "pro-jersey": "🚴",
+  bib: "🩳",
+  "bib-licra": "🩳",
+  vest: "🧥",
+  gloves: "🧤",
+  shorts: "🩳",
+  socks: "🧦",
 };
 
 const CAT_ORDER = ["jersey", "enduro-short", "enduro-long", "bib", "vest"];
