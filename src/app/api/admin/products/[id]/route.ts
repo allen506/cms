@@ -123,7 +123,8 @@ export async function DELETE(
       return NextResponse.json({ error: `Cannot delete product with ${orders.count} existing orders` }, { status: 400 });
     }
 
-    // Delete pricing tiers and product
+    // Delete dependent design links, pricing tiers, and the product itself.
+    await execute("DELETE FROM product_designs WHERE product_type_id = ?", [id]);
     await execute("DELETE FROM pricing_tiers WHERE product_type_id = ?", [id]);
     await execute("DELETE FROM product_types WHERE id = ?", [id]);
 

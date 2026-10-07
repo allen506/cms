@@ -148,20 +148,25 @@ export default function ProductSelectionForm({
   const availableProducts = products.filter((p) => !p.locked);
   const selectedProduct = products.find((p) => p.id === productId);
 
-  const normalizeCategory = (category?: string) => {
+  const normalizeCategory = (category?: string, productId?: string) => {
     const value = (category || "").toLowerCase();
+    const productKey = (productId || category || "").toLowerCase();
+
     if (!value || value === "other") return "other";
-    if (value.includes("jersey")) return "jersey";
+    if (productKey === "enduro-jersey" || productKey === "enduro-short" || productKey === "enduro-long") return "enduro-jersey";
+    if (productKey === "cycling-jersey" || productKey === "pro-jersey") return "cycling-jersey";
+    if (value.includes("enduro") && (value.includes("short") || value.includes("long"))) return "enduro-jersey";
+    if (value.includes("cycling") || value.includes("pro line") || (value.includes("jersey") && !value.includes("enduro"))) return "cycling-jersey";
     if (value.includes("bib")) return "bib";
     if (value.includes("vest")) return "vest";
     if (value.includes("glove")) return "gloves";
     if (value.includes("sock")) return "socks";
     if (value.includes("short")) return "shorts";
-    if (value.includes("long")) return "jersey";
+    if (value.includes("long")) return "cycling-jersey";
     return value;
   };
 
-  const categoryOrder = ["jersey", "enduro-short", "enduro-long", "bib", "vest", "gloves", "shorts", "socks", "other"];
+  const categoryOrder = ["enduro-jersey", "cycling-jersey", "bib", "vest", "gloves", "shorts", "socks", "other"];
   const categoryLabels: Record<string, string> = {
     jersey: "Jerseys",
     "enduro-short": "Enduro Short Sleeve",
@@ -227,7 +232,7 @@ export default function ProductSelectionForm({
   const getProductThumb = (p: Product) => p.example_url || p.image_url || "";
 
   const groupedProducts = availableProducts.reduce<Record<string, Product[]>>((acc, product) => {
-    const key = normalizeCategory(product.category);
+    const key = normalizeCategory(product.category, product.id);
     acc[key] = acc[key] || [];
     acc[key].push(product);
     return acc;

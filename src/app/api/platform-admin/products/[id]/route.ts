@@ -115,6 +115,7 @@ export async function DELETE(
       );
     }
 
+    await execute("DELETE FROM product_designs WHERE product_type_id = ?", [id]);
     await execute("DELETE FROM pricing_tiers WHERE product_type_id = ?", [id]);
     await execute("DELETE FROM product_types WHERE id = ?", [id]);
 

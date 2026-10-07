@@ -99,10 +99,15 @@ export default function ProductSelector({
 }: ProductSelectorProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const normalizeCategory = (category?: string) => {
+  const normalizeCategory = (category?: string, productId?: string) => {
     const value = (category || "").toLowerCase();
+    const productKey = (productId || category || "").toLowerCase();
+
     if (!value || value === "other") return "default";
-    if (value.includes("jersey")) return "jersey";
+    if (productKey === "enduro-jersey" || productKey === "enduro-short" || productKey === "enduro-long") return "enduro-jersey";
+    if (productKey === "cycling-jersey" || productKey === "pro-jersey") return "cycling-jersey";
+    if (value.includes("enduro") && (value.includes("short") || value.includes("long"))) return "enduro-jersey";
+    if (value.includes("cycling") || value.includes("pro line") || (value.includes("jersey") && !value.includes("enduro"))) return "cycling-jersey";
     if (value.includes("bib")) return "bib";
     if (value.includes("vest")) return "vest";
     if (value.includes("glove")) return "gloves";
@@ -114,14 +119,14 @@ export default function ProductSelector({
 
   // Group products by category, preserving sort_order within each group
   const grouped = productTypes.reduce<Record<string, ProductType[]>>((acc, pt) => {
-    const cat = normalizeCategory(pt.category);
+    const cat = normalizeCategory(pt.category, pt.id);
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(pt);
     return acc;
   }, {});
 
-  // Keep category order stable: jerseys → bibs → vests → everything else alphabetically
-  const categoryOrder = ["jersey", "bib", "vest"];
+  // Keep category order stable: enduro jerseys → cycling jerseys → bibs → vests → everything else alphabetically
+  const categoryOrder = ["enduro-jersey", "cycling-jersey", "bib", "vest"];
   const categories = [
     ...categoryOrder.filter(c => grouped[c]),
     ...Object.keys(grouped).filter(c => !categoryOrder.includes(c)).sort(),
