@@ -27,8 +27,8 @@ const PRODUCT_TAGLINES: Record<string, string> = {
 
 const PRODUCT_THUMBNAILS: Record<string, { bg: string; accent: string; icon: string }> = {
   jersey: { bg: "from-[#f5ead9] via-[#f9f2e9] to-[#f1e2c8]", accent: "text-[#a15b2a]", icon: "🚴" },
-  bib: { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "�" },
-  "bib-licra": { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "🧢" },
+  bib: { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "🩱" },
+  "bib-licra": { bg: "from-[#f8e5ea] via-[#f9edf0] to-[#f3dce4]", accent: "text-[#9a4b5a]", icon: "🩱" },
   vest: { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "🧥" },
   "wind-vest": { bg: "from-[#e8edf3] via-[#f3f6f9] to-[#dde7ef]", accent: "text-[#4b5d74]", icon: "🧥" },
   shorts: { bg: "from-[#e7f4ea] via-[#edf8f1] to-[#dfeee4]", accent: "text-[#4d7c5d]", icon: "🩳" },
