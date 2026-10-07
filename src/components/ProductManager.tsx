@@ -21,7 +21,7 @@ export default function ProductManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    category: "jersey",
+    category: "enduro-jersey",
     description: "",
     example_url: "",
     fit_options: ["unisex"] as string[],
@@ -118,7 +118,7 @@ export default function ProductManager() {
       );
       setFormData({
         name: "",
-        category: "jersey",
+        category: "enduro-jersey",
         description: "",
         example_url: "",
         fit_options: ["unisex"],
@@ -176,7 +176,7 @@ export default function ProductManager() {
     setEditingId(null);
     setFormData({
       name: "",
-      category: "jersey",
+      category: "enduro-jersey",
       description: "",
       example_url: "",
       fit_options: ["unisex"],
@@ -246,8 +246,10 @@ export default function ProductManager() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-black"
                 >
-                  <option value="jersey">Jersey</option>
-                  <option value="bib">Bib/Licra</option>
+                  <option value="enduro-jersey">Enduro Jersey</option>
+                  <option value="cycling-jersey">Cycling Jersey</option>
+                  <option value="bib-licra">Bib / Licra</option>
+                  <option value="wind-vest">Wind Vest</option>
                   <option value="vest">Vest</option>
                   <option value="other">Other</option>
                 </select>
