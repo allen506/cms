@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Design } from "@/lib/types";
+import { getCategoryLabel } from "@/lib/design-categories";
 
 export interface DesignSelection {
   designId: string;

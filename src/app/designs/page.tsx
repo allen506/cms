@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import PasswordGate from "@/components/PasswordGate";
+import { getCategoryLabel, UPLOADABLE_CATEGORIES } from "@/lib/design-categories";
 
-const CATEGORY_LABELS: Record<string, string> = { jersey: "Jerseys", "enduro-short": "Enduro Short Sleeve", "enduro-long": "Enduro Long Sleeve", bib: "Bibs", vest: "Vests", gloves: "Gloves", shorts: "Shorts" };
 const CATEGORY_ICONS: Record<string, string> = { jersey: "J", "enduro-short": "J", "enduro-long": "J", bib: "B", vest: "V", gloves: "G", shorts: "S" };
 const CAT_ORDER = ["jersey", "enduro-short", "enduro-long", "bib", "vest"];
 
@@ -172,8 +172,6 @@ function AdminPanel({
   const [savingId, setSavingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const UPLOAD_CATEGORIES = ["jersey", "enduro-short", "enduro-long", "bib", "vest"];
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
@@ -306,7 +304,7 @@ function AdminPanel({
               Apply to Product Categories
             </label>
             <div className="space-y-2">
-              {UPLOAD_CATEGORIES.map((cat) => (
+              {UPLOADABLE_CATEGORIES.map((cat) => (
                 <label key={cat} className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -320,7 +318,7 @@ function AdminPanel({
                     }}
                     className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-2 focus:ring-amber-500"
                   />
-                  <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat] || cat}</span>
+                  <span className="text-sm text-gray-700">{getCategoryLabel(cat)}</span>
                 </label>
               ))}
             </div>
@@ -475,7 +473,7 @@ export default function DesignsPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-base">{CATEGORY_ICONS[cat] || "🖴"}</span>
                     <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                      {CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      {getCategoryLabel(cat)}
                     </h2>
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getCategoryOptions } from "@/lib/design-categories";
 
 interface DesignRow {
   id: string;
@@ -9,17 +10,6 @@ interface DesignRow {
   assigned_category: string | null;
   assigned: boolean;
 }
-
-const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "All products" },
-  { value: "jersey", label: "Jersey" },
-  { value: "enduro-short", label: "Enduro Short Sleeve" },
-  { value: "enduro-long", label: "Enduro Long Sleeve" },
-  { value: "cycling-jersey", label: "Cycling Jersey" },
-  { value: "bib-licra", label: "Bib / Licra" },
-  { value: "vest", label: "Vest" },
-  { value: "kids", label: "Kids" },
-];
 
 export default function TeamDesignsAdmin({
   selectedTenantId,
@@ -30,6 +20,7 @@ export default function TeamDesignsAdmin({
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const categoryOptions = getCategoryOptions();
 
   const load = useCallback(async () => {
     if (!selectedTenantId) {
@@ -154,7 +145,7 @@ export default function TeamDesignsAdmin({
                     }
                     className="ml-auto text-xs px-2 py-1 border border-gray-300 rounded-lg text-gray-900 disabled:opacity-50"
                   >
-                    {CATEGORY_OPTIONS.map((o) => (
+                    {categoryOptions.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
