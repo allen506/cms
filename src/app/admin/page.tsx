@@ -253,20 +253,24 @@ export default function AdminPage() {
   };
 
   const exportToExcel = async () => {
-    if (!data) return;
+    try {
+      if (!data) {
+        alert("No data available to export");
+        return;
+      }
 
-    // Ensure per-person totals are loaded before exporting
-    let totals = userTotals;
-    if (totals.length === 0) {
-      try {
-        const res = await fetch("/api/orders/user-totals");
-        const json = await res.json();
-        totals = json.userTotals || [];
-        setUserTotals(totals);
-      } catch { totals = []; }
-    }
+      // Ensure per-person totals are loaded before exporting
+      let totals = userTotals;
+      if (totals.length === 0) {
+        try {
+          const res = await fetch("/api/orders/user-totals");
+          const json = await res.json();
+          totals = json.userTotals || [];
+          setUserTotals(totals);
+        } catch { totals = []; }
+      }
 
-    const wb = XLSX.utils.book_new();
+      const wb = XLSX.utils.book_new();
 
     // Sheet 1: Per Person (for collecting money)
     const perPersonRows: any[] = [];
@@ -365,6 +369,10 @@ export default function AdminPage() {
     XLSX.utils.book_append_sheet(wb, wsBreakdown, "Full Breakdown");
 
     XLSX.writeFile(wb, `ThinkMTB_Orders_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      alert("Error exporting to Excel: " + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   if (loading) {
