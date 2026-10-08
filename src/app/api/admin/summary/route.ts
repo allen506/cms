@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Total orders and items
     const stats = await queryOne<{ total_orders: number; total_items: number }>(
       `SELECT 
-        (SELECT COUNT(*) FROM orders) as total_orders,
+        (SELECT COUNT(*) FROM orders_old) as total_orders,
         (SELECT COALESCE(SUM(quantity), 0) FROM order_items) as total_items`
     );
 
@@ -44,10 +44,60 @@ export async function GET(request: NextRequest) {
         totalUSD: priceUSD * p.total_qty};
     });
 
+    // Get breakdown by design
+    const byDesign = await query<{ design_id: string; design_name: string; total_qty: number }>(
+      `SELECT 
+        oi.design_id,
+        d.name as design_name,
+        SUM(oi.quantity) as total_qty
+       FROM order_items oi
+       JOIN designs d ON oi.design_id = d.id
+       GROUP BY oi.design_id, d.name
+       ORDER BY d.name`
+    );
+
+    // Get breakdown by size
+    const bySize = await query<{ size_id: string; size_name: string; total_qty: number }>(
+      `SELECT 
+        oi.size_id,
+        s.name as size_name,
+        SUM(oi.quantity) as total_qty
+       FROM order_items oi
+       JOIN sizes s ON oi.size_id = s.id
+       GROUP BY oi.size_id, s.name
+       ORDER BY s.name`
+    );
+
+    // Get full breakdown by product/design/size
+    const fullBreakdown = await query<{
+      product_type_id: string;
+      product_name: string;
+      design_id: string;
+      design_name: string;
+      size_id: string;
+      size_name: string;
+      total_qty: number;
+    }>(
+      `SELECT 
+        oi.product_type_id,
+        pt.name as product_name,
+        oi.design_id,
+        d.name as design_name,
+        oi.size_id,
+        s.name as size_name,
+        SUM(oi.quantity) as total_qty
+       FROM order_items oi
+       JOIN product_types pt ON oi.product_type_id = pt.id
+       JOIN designs d ON oi.design_id = d.id
+       JOIN sizes s ON oi.size_id = s.id
+       GROUP BY oi.product_type_id, pt.name, oi.design_id, d.name, oi.size_id, s.name
+       ORDER BY pt.sort_order, d.name, s.name`
+    );
+
     // All orders with basic info (design and size fields not available in current schema)
     const orders = await query<any>(
       `SELECT o.*
-       FROM orders o 
+       FROM orders_old o 
        ORDER BY o.created_at DESC`
     );
 
@@ -56,10 +106,10 @@ export async function GET(request: NextRequest) {
         totalOrders: stats?.total_orders ?? 0,
         totalItems: stats?.total_items ?? 0,
         byProduct: byProductWithPricing,
-        byDesign: [],
-        bySize: [],
+        byDesign: byDesign,
+        bySize: bySize,
         byFit: [],
-        fullBreakdown: []},
+        fullBreakdown: fullBreakdown},
       orders: orders,
       exchangeRate});
   } catch (error) {

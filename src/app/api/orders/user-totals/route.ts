@@ -37,7 +37,7 @@ export async function GET() {
       created_at: string;
     }>(
       `SELECT o.id, o.user_name, o.created_at
-       FROM orders o
+       FROM orders_old o
        WHERE o.status != ?
        ORDER BY o.user_name, o.created_at`,
       ["cancelled"]
