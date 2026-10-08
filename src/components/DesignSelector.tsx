@@ -41,10 +41,11 @@ export default function DesignSelector({
   const toggleDesign = (designId: string) => {
     const existing = selectedDesigns.find((s) => s.designId === designId);
     if (existing) {
-      onSelectDesigns(selectedDesigns.filter((s) => s.designId !== designId));
+      // If clicking the same design, deselect it
+      onSelectDesigns([]);
     } else {
-      // Always start with quantity 1, can be adjusted in Step 4
-      onSelectDesigns([...selectedDesigns, { designId, quantity: 1 }]);
+      // Single-select: clear any previous selection and set this one
+      onSelectDesigns([{ designId, quantity: 1 }]);
     }
   };
 
@@ -54,10 +55,10 @@ export default function DesignSelector({
   return (
     <div>
       <h3 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800">
-        Step 3 — Select Your Designs
+        Step 3 — Select Your Design
       </h3>
       <p className="text-sm text-gray-500 mb-4">
-        Click to select multiple designs. You&apos;ll set quantities in the next step.
+        Click to select a design. You'll set quantities and sizes in the next step.
       </p>
       {!productCategory ? (
         <p className="text-gray-400 text-sm py-2">Select a product first to see available designs.</p>
