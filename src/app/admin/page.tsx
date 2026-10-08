@@ -326,8 +326,8 @@ export default function AdminPage() {
     XLSX.utils.book_append_sheet(wb, wsPerPerson, "Per Person");
 
     // Sheet 2: All Orders (one row per item)
-    const orderRows = data.orders.flatMap((order) =>
-      order.items.map((item) => ({
+    const orderRows = (data.orders || []).flatMap((order) =>
+      (order.items || []).map((item) => ({
         "Order #": order.order_number || '',
         Name: order.user_name,
         Status: order.status,
@@ -346,7 +346,7 @@ export default function AdminPage() {
     XLSX.utils.book_append_sheet(wb, wsOrders, "All Orders");
 
     // Sheet 3: By Product
-    const productRows = data.summary.byProduct.map((p) => ({
+    const productRows = (data.summary?.byProduct || []).map((p) => ({
       Product: p.product_name,
       "Total Qty": p.total_qty,
       "Unit Price (CRC)": p.tierPriceCRC,
@@ -358,7 +358,7 @@ export default function AdminPage() {
     XLSX.utils.book_append_sheet(wb, wsProducts, "By Product");
 
     // Sheet 4: Full Breakdown
-    const breakdownRows = data.summary.fullBreakdown.map((item) => ({
+    const breakdownRows = (data.summary?.fullBreakdown || []).map((item) => ({
       Product: item.product_name,
       Design: item.design_name,
       Size: item.size_name,
