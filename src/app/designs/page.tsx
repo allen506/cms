@@ -164,12 +164,15 @@ function AdminPanel({
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const UPLOAD_CATEGORIES = ["jersey", "enduro-short", "enduro-long", "bib", "vest"];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
@@ -194,7 +197,7 @@ function AdminPanel({
       fd.append("description", description.trim());
       fd.append("active", "true");
       fd.append("sort_order", "999");
-      fd.append("designed_for", "[]");
+      fd.append("designed_for", JSON.stringify(selectedCategories));
       const res = await fetch("/api/admin/designs", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) {
@@ -204,6 +207,7 @@ function AdminPanel({
         setDescription("");
         setFile(null);
         setPreview(null);
+        setSelectedCategories([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
         onRefresh();
       }
@@ -296,6 +300,31 @@ function AdminPanel({
               className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 transition-colors"
             />
             <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP or GIF — max 10 MB</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Apply to Product Categories
+            </label>
+            <div className="space-y-2">
+              {UPLOAD_CATEGORIES.map((cat) => (
+                <label key={cat} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedCategories([...selectedCategories, cat]);
+                      } else {
+                        setSelectedCategories(selectedCategories.filter(c => c !== cat));
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-2 focus:ring-amber-500"
+                  />
+                  <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat] || cat}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Select which product types this design can be used for</p>
           </div>
           {preview && (
             <div className="relative w-40 h-28 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
