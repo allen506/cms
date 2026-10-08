@@ -176,6 +176,17 @@ export const PRICING: Record<string, PricingTier[]> = {
     { minQty: 31, maxQty: 50, priceCRC: 48000 },
     { minQty: 51, maxQty: 100, priceCRC: 46000 },
   ],
+
+  // Wind Vest
+  "wind-vest": [
+    { minQty: 1, maxQty: 1, priceCRC: 18000 },
+    { minQty: 2, maxQty: 5, priceCRC: 17000 },
+    { minQty: 6, maxQty: 10, priceCRC: 16000 },
+    { minQty: 11, maxQty: 20, priceCRC: 15000 },
+    { minQty: 21, maxQty: 30, priceCRC: 14000 },
+    { minQty: 31, maxQty: 50, priceCRC: 13000 },
+    { minQty: 51, maxQty: 100, priceCRC: 12000 },
+  ],
 };
 
 /**
