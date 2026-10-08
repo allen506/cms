@@ -94,12 +94,26 @@ export async function GET(request: NextRequest) {
        ORDER BY pt.sort_order, d.name, s.name`
     );
 
-    // All orders with basic info (design and size fields not available in current schema)
+    // All orders with items
     const orders = await query<any>(
       `SELECT o.*
        FROM orders_old o 
        ORDER BY o.created_at DESC`
     );
+
+    // Fetch items for each order
+    for (const order of orders) {
+      order.items = await query<any>(
+        `SELECT oi.*, pt.name as product_name, d.name as design_name, s.name as size_name
+         FROM order_items oi
+         JOIN product_types pt ON oi.product_type_id = pt.id
+         JOIN designs d ON oi.design_id = d.id
+         JOIN sizes s ON oi.size_id = s.id
+         WHERE oi.order_id = ?
+         ORDER BY oi.id`,
+        [order.id]
+      );
+    }
 
     return NextResponse.json({
       summary: {
