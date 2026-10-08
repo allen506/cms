@@ -12,9 +12,12 @@ interface DesignRow {
 
 const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "", label: "All products" },
-  { value: "enduro-jersey", label: "Enduro Jersey" },
+  { value: "jersey", label: "Jersey" },
+  { value: "enduro-short", label: "Enduro Short Sleeve" },
+  { value: "enduro-long", label: "Enduro Long Sleeve" },
   { value: "cycling-jersey", label: "Cycling Jersey" },
   { value: "bib-licra", label: "Bib / Licra" },
+  { value: "vest", label: "Vest" },
   { value: "kids", label: "Kids" },
 ];
 
