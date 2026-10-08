@@ -177,15 +177,15 @@ export const PRICING: Record<string, PricingTier[]> = {
     { minQty: 51, maxQty: 100, priceCRC: 46000 },
   ],
 
-  // Wind Vest
+  // Wind Vest (Chaleco - Corta Vientos)
   "wind-vest": [
-    { minQty: 1, maxQty: 1, priceCRC: 18000 },
-    { minQty: 2, maxQty: 5, priceCRC: 17000 },
-    { minQty: 6, maxQty: 10, priceCRC: 16000 },
-    { minQty: 11, maxQty: 20, priceCRC: 15000 },
-    { minQty: 21, maxQty: 30, priceCRC: 14000 },
-    { minQty: 31, maxQty: 50, priceCRC: 13000 },
-    { minQty: 51, maxQty: 100, priceCRC: 12000 },
+    { minQty: 1, maxQty: 1, priceCRC: 32000 },
+    { minQty: 2, maxQty: 5, priceCRC: 30000 },
+    { minQty: 6, maxQty: 10, priceCRC: 28000 },
+    { minQty: 11, maxQty: 20, priceCRC: 26000 },
+    { minQty: 21, maxQty: 30, priceCRC: 24000 },
+    { minQty: 31, maxQty: 50, priceCRC: 22000 },
+    { minQty: 51, maxQty: 100, priceCRC: 20000 },
   ],
 };
 
