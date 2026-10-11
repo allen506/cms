@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params;
     
     const order = await queryOne<any>(
-      "SELECT * FROM orders WHERE id = ?",
+      "SELECT * FROM orders_old WHERE id = ?",
       [id]
     );
 
@@ -45,14 +45,14 @@ export async function PATCH(
 
     if (body.status) {
       await execute(
-        "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?",
+        "UPDATE orders_old SET status = ? WHERE id = ?",
         [body.status, id]
       );
     }
 
     if (body.notes !== undefined) {
       await execute(
-        "UPDATE orders SET notes = ?, updated_at = NOW() WHERE id = ?",
+        "UPDATE orders_old SET notes = ? WHERE id = ?",
         [body.notes, id]
       );
     }
@@ -70,7 +70,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await execute("DELETE FROM orders WHERE id = ?", [id]);
+    await execute("DELETE FROM orders_old WHERE id = ?", [id]);
     return NextResponse.json({ message: "Order deleted successfully" });
   } catch (error) {
     console.error("Error deleting order:", error);
