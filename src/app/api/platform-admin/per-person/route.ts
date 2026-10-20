@@ -26,24 +26,24 @@ export async function GET(request: NextRequest) {
     // Per-person totals
     const personTotals = await query<any>(
       `SELECT 
-        o.user_id,
+        o.user_name as user_id,
         COUNT(o.id) as order_count,
         COALESCE(SUM(oi.quantity), 0) as total_items
-       FROM orders o
+       FROM orders_old o
        LEFT JOIN order_items oi ON o.id = oi.order_id
        WHERE 1=1 ${tenantWhere}
-       GROUP BY o.user_id
-       ORDER BY o.user_id`,
+       GROUP BY o.user_name
+       ORDER BY o.user_name`,
       params
     );
 
     // Statistics
     const stats = await queryOne<any>(
       `SELECT 
-        COUNT(DISTINCT o.user_id) as total_people,
+        COUNT(DISTINCT o.user_name) as total_people,
         COUNT(o.id) as total_orders,
         COALESCE(SUM(oi.quantity), 0) as total_items
-       FROM orders o
+       FROM orders_old o
        LEFT JOIN order_items oi ON o.id = oi.order_id
        WHERE 1=1 ${tenantWhere}`,
       params
