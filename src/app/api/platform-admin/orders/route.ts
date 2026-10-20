@@ -36,26 +36,24 @@ export async function GET(request: NextRequest) {
 
     params.push(limit, offset);
 
+    // Note: Currently using orders_old (single-tenant) because orders table is empty
+    // TODO: Migrate data to orders table when multi-tenant support is fully implemented
     const orders = await query<any>(
-      `SELECT o.id, o.tenant_id, o.user_name, o.user_email, o.order_number, o.status, o.created_at,
-              t.name as tenant_name, t.slug as tenant_slug,
+      `SELECT o.id, null as tenant_id, o.user_name, null as user_email, o.order_number, o.status, o.created_at,
+              null as tenant_name, null as tenant_slug,
               COUNT(oi.id) as item_count
-       FROM orders o
-       LEFT JOIN tenants t ON o.tenant_id = t.id
+       FROM orders_old o
        LEFT JOIN order_items oi ON o.id = oi.order_id
-       WHERE ${whereClause}
-       GROUP BY o.id, o.tenant_id, o.user_name, o.user_email, o.order_number, o.status, o.created_at, t.id, t.name, t.slug
+       WHERE 1=1
+       GROUP BY o.id, o.user_name, o.order_number, o.status, o.created_at
        ORDER BY o.created_at DESC
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      params
+      [limit, offset]
     );
 
-    const countParams = params.slice(0, params.length - 2);
     const total = await queryOne<{ count: number }>(
-      `SELECT COUNT(DISTINCT o.id) as count FROM orders o
-       LEFT JOIN tenants t ON o.tenant_id = t.id
-       WHERE ${whereClause}`,
-      countParams
+      `SELECT COUNT(DISTINCT o.id) as count FROM orders_old o`,
+      []
     );
 
     return NextResponse.json({

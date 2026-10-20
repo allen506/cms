@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
 
     const { compra: exchangeRate } = await getExchangeRate();
 
+    // Note: Currently using orders_old (single-tenant) because orders table is empty
+    // TODO: Migrate data to orders table when multi-tenant support is fully implemented
     // Breakdown by product
     const byProduct = await query<any>(
       `SELECT 
@@ -38,11 +40,11 @@ export async function GET(request: NextRequest) {
         COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
        JOIN product_types pt ON oi.product_type_id = pt.id
-       JOIN orders o ON oi.order_id = o.id
-       WHERE 1=1 ${tenantWhere}
+       JOIN orders_old o ON oi.order_id = o.id
+       WHERE 1=1
        GROUP BY pt.id, pt.name
        ORDER BY total_qty DESC`,
-      params
+      []
     );
 
     // Breakdown by order status
@@ -52,25 +54,25 @@ export async function GET(request: NextRequest) {
         COUNT(DISTINCT o.id) as order_count,
         COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
-       JOIN orders o ON oi.order_id = o.id
-       WHERE 1=1 ${tenantWhere}
+       JOIN orders_old o ON oi.order_id = o.id
+       WHERE 1=1
        GROUP BY o.status
        ORDER BY total_qty DESC`,
-      params
+      []
     );
 
     // By user
     const byUser = await query<any>(
       `SELECT 
-        o.user_id,
+        o.user_name,
         COUNT(DISTINCT o.id) as order_count,
         COALESCE(SUM(oi.quantity), 0) as total_qty
        FROM order_items oi
-       JOIN orders o ON oi.order_id = o.id
-       WHERE 1=1 ${tenantWhere}
-       GROUP BY o.user_id
+       JOIN orders_old o ON oi.order_id = o.id
+       WHERE 1=1
+       GROUP BY o.user_name
        ORDER BY total_qty DESC`,
-      params
+      []
     );
 
 
@@ -81,14 +83,13 @@ export async function GET(request: NextRequest) {
       exchangeRate,
       summary: {
         totalOrders: await queryOne<{ count: number }>(
-          `SELECT COUNT(*) as count FROM orders WHERE 1=1 ${tenantWhereSummary}`,
-          params
+          `SELECT COUNT(*) as count FROM orders_old`,
+          []
         ),
         totalItems: await queryOne<{ total: number }>(
           `SELECT COALESCE(SUM(quantity), 0) as total FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE 1=1 ${tenantWhere}`,
-          params
+           JOIN orders_old o ON oi.order_id = o.id`,
+          []
         )}});
   } catch (error) {
     console.error('Get breakdown error:', error);
